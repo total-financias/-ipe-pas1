@@ -200,7 +200,8 @@ textarea.chip-input{resize:vertical;min-height:64px;}
 .trail-body{flex:1;padding-top:5px;}
 .trail-name{font-weight:700;font-size:.9rem;}
 .trail-sub{font-size:.76rem;color:var(--muted);}
-.trail-node.locked{opacity:.55;}
+.trail-node.suggested .trail-dot{background:var(--surface);border-style:dashed;border-color:var(--accent-2);}
+.trail-node.suggested .trail-sub{color:var(--accent-2);font-weight:600;}
 .trail-node:hover .trail-name{color:var(--accent);}
 .sim-type-card{cursor:pointer;transition:border-color .15s;}
 .sim-type-card:hover{border-color:var(--accent);}
@@ -1741,13 +1742,13 @@ function trilhaHTML(area){
         const c = contentFor(a.id);
         const prereqId = PREREQ[a.id];
         const prereqAssunto = prereqId ? getAssunto(prereqId) : null;
-        const locked = prereqAssunto && c.status==='red' && contentFor(prereqId).status!=='green';
-        const icon = locked ? '🔒' : STATUS_TRAIL_ICON[c.status];
-        const sub = locked ? `Sugerido depois de "${prereqAssunto.nome}"` : STATUS_TRAIL_LABEL[c.status];
-        return `<div class="trail-node" data-action="assunto-detail" data-assunto="${a.id}">
+        const suggested = prereqAssunto && c.status==='red' && contentFor(prereqId).status!=='green';
+        const icon = suggested ? '💡' : STATUS_TRAIL_ICON[c.status];
+        const sub = suggested ? `Sugestão: depois de "${prereqAssunto.nome}" — mas pode começar aqui já` : STATUS_TRAIL_LABEL[c.status];
+        return `<div class="trail-node ${suggested?'suggested':''}" data-action="assunto-detail" data-assunto="${a.id}">
           ${i<mat.assuntos.length-1?'<div class="trail-line"></div>':''}
-          <div class="trail-dot" style="${locked?'opacity:.7;':''}">${icon}</div>
-          <div class="trail-body ${locked?'locked':''}">
+          <div class="trail-dot">${icon}</div>
+          <div class="trail-body">
             <div class="trail-name">${a.nome}</div>
             <div class="trail-sub">${sub}</div>
           </div>
@@ -1758,14 +1759,20 @@ function trilhaHTML(area){
 }
 function treeView(){
   const area = AREAS.find(a=>a.id===MINDMAP_AREA) || AREAS[0];
+  const diasRestantes = daysLeft();
   return `
+  <div class="card-flat" style="display:flex;align-items:center;gap:10px;">
+    <span style="font-size:1.3rem;">🔓</span>
+    <div style="flex:1;font-size:.82rem;line-height:1.45;">Nada aqui é bloqueado — a trilha é só uma sugestão de ordem, nunca uma trava. Com ${diasRestantes} dias até a prova, se preferir ir direto para questões oficiais de provas anteriores, sem seguir ordem nenhuma, é só usar o atalho abaixo.</div>
+  </div>
+  <button class="btn btn-primary btn-block" data-action="mode" data-mode="oficiais">🏛️ Ir direto para questões oficiais</button>
   <div class="card">
     <div class="section-title"><h2>Trilha — ${area.emoji} ${area.nome}</h2></div>
     <div class="tabs" style="padding:0 0 10px;">
       ${AREAS.map(ar=>`<button class="tab ${MINDMAP_AREA===ar.id?'active':''}" data-action="mindmap-area" data-area="${ar.id}">${ar.emoji} ${ar.nome}</button>`).join('')}
     </div>
     ${trilhaHTML(area)}
-    <div class="footer-note">🌱 não iniciado · 🟠 aprendendo · 🟡 precisa revisar · 🟢 dominado · 🔒 tem um pré-requisito sugerido ainda não dominado (é uma ordem de currículo nossa, não uma regra oficial da matriz — pode pular à vontade). Toque em qualquer assunto para ver detalhes, estudar, praticar ou revisar.</div>
+    <div class="footer-note">🌱 não iniciado · 🟠 aprendendo · 🟡 precisa revisar · 🟢 dominado · 💡 tem uma sugestão de ordem de currículo (não é regra oficial da matriz, nem trava — pode pular à vontade). Toque em qualquer assunto, a qualquer momento, para ver detalhes, estudar, praticar ou revisar.</div>
   </div>`;
 }
 
@@ -1793,7 +1800,7 @@ function assuntoDetailModalHTML(id){
       <div class="card-flat"><div class="label-eyebrow">Importância na matriz</div><div style="font-weight:700;margin-top:2px;">${'★'.repeat(a.peso)}${'☆'.repeat(3-a.peso)}</div></div>
       <div class="card-flat"><div class="label-eyebrow">Tempo estimado</div><div style="font-weight:700;margin-top:2px;">${taskDuration('aprender')} min</div></div>
     </div>
-    ${prereqAssunto ? `<p style="font-size:.78rem;color:var(--muted);margin:0 0 10px;">Pré-requisito sugerido (ordem de currículo, não oficial): <b>${prereqAssunto.nome}</b> (${STATUS_TRAIL_LABEL[contentFor(prereqId).status]}).</p>` : ''}
+    ${prereqAssunto ? `<p style="font-size:.78rem;color:var(--muted);margin:0 0 10px;">💡 Sugestão de ordem (não é regra oficial nem trava): estudar <b>${prereqAssunto.nome}</b> antes ajuda (${STATUS_TRAIL_LABEL[contentFor(prereqId).status]}) — mas você pode estudar, praticar ou revisar este assunto agora mesmo se preferir.</p>` : ''}
     ${acc!==null ? `
     <div class="card-flat" style="margin-bottom:12px;">
       <div class="row-between"><span style="font-size:.82rem;">Seu desempenho</span><span class="mono" style="font-weight:700;">${acc}%</span></div>
