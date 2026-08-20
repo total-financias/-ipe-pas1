@@ -47,7 +47,7 @@ a{color:inherit;}
 button{font-family:var(--font-body);cursor:pointer;}
 ::selection{background:var(--accent);color:var(--accent-ink);}
 
-#app{max-width:900px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+#app{max-width:1160px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
 
 /* header */
 .topbar{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--border);}
@@ -66,12 +66,12 @@ button{font-family:var(--font-body);cursor:pointer;}
 .tab.active{background:var(--surface-2);color:var(--ink);border-color:var(--border);}
 .tab:hover:not(.active){color:var(--ink-soft);}
 
-main{flex:1;padding:18px 16px 90px;}
-.view{display:flex;flex-direction:column;gap:16px;animation:fade .25s ease;}
+main{flex:1;padding:18px 16px 90px;max-width:100%;}
+.view{display:flex;flex-direction:column;gap:var(--view-gap,16px);animation:fade .25s ease;}
 @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
 
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);}
-.card-flat{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:var(--card-pad,18px);box-shadow:var(--shadow);}
+.card-flat{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:var(--flat-pad,16px);}
 .row{display:flex;gap:10px;align-items:center;}
 .row-between{display:flex;gap:10px;align-items:center;justify-content:space-between;}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
@@ -228,6 +228,35 @@ input[type=color]{width:44px;height:34px;border:1px solid var(--border);border-r
 .level-up-toast{animation:levelPop .5s ease;}
 @keyframes levelPop{from{opacity:0;transform:scale(.92);}to{opacity:1;transform:none;}}
 .chat-bubble{border-radius:var(--radius-sm);}
+
+/* ---- Fase 4: densidade/texto, layout, menu lateral, bottom nav, foco, microinterações ---- */
+:root{ --card-pad:18px; --flat-pad:16px; --view-gap:16px; }
+:root[data-density="compacto"]{ --card-pad:12px; --flat-pad:10px; --view-gap:10px; }
+:root[data-density="amplo"]{ --card-pad:26px; --flat-pad:22px; --view-gap:22px; }
+html[data-textsize="p"]{ font-size:15px; }
+html[data-textsize="g"]{ font-size:18px; }
+.hero-greeting{font-family:var(--font-display);font-weight:600;color:var(--ink-soft);font-size:1rem;}
+@keyframes popScale{0%{transform:scale(.88);opacity:.5;}60%{transform:scale(1.04);}100%{transform:scale(1);opacity:1;}}
+.opt.correct{animation:popScale .3s ease;}
+.layout-preview{text-align:center;cursor:pointer;}
+.layout-preview.sel{border-color:var(--accent);border-width:2px;}
+.reorder-item{display:flex;align-items:center;gap:6px;padding:8px 4px;border-top:1px solid var(--border);font-size:.86rem;}
+.bottom-nav{display:none;}
+@media(max-width:640px){
+  .topbar .tabs{display:none;}
+  .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);z-index:30;padding:6px 4px calc(4px + env(safe-area-inset-bottom));}
+  .bottom-nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;color:var(--muted);font-size:.62rem;font-weight:700;padding:6px 2px;border-radius:10px;}
+  .bottom-nav button.active{color:var(--accent);background:var(--surface-2);}
+}
+@media(min-width:900px){
+  :root[data-menu="sidebar"] #app{flex-direction:row;align-items:flex-start;max-width:1160px;}
+  :root[data-menu="sidebar"] .topbar{position:sticky;top:0;align-self:flex-start;width:220px;flex-shrink:0;border-bottom:none;border-right:1px solid var(--border);height:100vh;overflow-y:auto;}
+  :root[data-menu="sidebar"] .topbar-inner{flex-direction:column;align-items:flex-start;gap:10px;}
+  :root[data-menu="sidebar"] .stat-pills{flex-direction:column;align-items:flex-start;width:100%;}
+  :root[data-menu="sidebar"] .tabs{flex-direction:column;overflow-x:visible;padding:6px 10px 16px;}
+  :root[data-menu="sidebar"] .tab{width:100%;justify-content:flex-start;}
+  :root[data-menu="sidebar"] main{flex:1;min-width:0;}
+}
 
 hr{border:none;border-top:1px solid var(--border);margin:2px 0;}
 </style>
@@ -528,7 +557,7 @@ function defaultState(){
     simulados:[], // {id,date,tipo,areaId,total,acertos,erros,brancos,tempoTotal,tempoMedio,fracos:[assuntoId]}
     activity:{}, // dateISO -> {questoes,minutos,revisoes,obras,simulados} — base da Visão Semanal
     timeStats:{totalSeg:0,count:0},
-    appearance:{colorTheme:'original', mode:'system'}, // colorTheme: original|azul|roxo|laranja|rosa|mono|custom (+customHex); mode: system|light|dark
+    appearance:{colorTheme:'original', mode:'system', layout:'dashboard', menu:'top', density:'confortavel', textSize:'m', homeOrder:['nivel','pontos','revisoes','desafio'], homeHidden:[]}, // colorTheme: original|azul|roxo|laranja|rosa|mono|custom (+customHex); mode: system|light|dark; layout: dashboard|foco|game; menu: top|sidebar; density: compacto|confortavel|amplo; textSize: p|m|g
     desafio:{date:null, questionId:null, answered:false}, // desafio do dia — seleção determinística por data
   };
 }
@@ -622,6 +651,10 @@ function applyAppearance(){
   } else if(ap.colorTheme && ap.colorTheme!=='original'){
     root.setAttribute('data-color-theme', ap.colorTheme);
   }
+  root.setAttribute('data-layout', ap.layout||'dashboard');
+  root.setAttribute('data-menu', ap.menu||'top');
+  root.setAttribute('data-density', ap.density||'confortavel');
+  root.setAttribute('data-textsize', ap.textSize||'m');
 }
 
 /* ============================= PHASE & PRIORITY ============================= */
@@ -754,9 +787,13 @@ const ACHIEVEMENTS = [
   {id:'sim1', emoji:'🏁', nome:'Primeiro simulado completo', desc:'Finalize um simulado.', check:()=>STATE.simulados.length>=1},
   {id:'oficial100', emoji:'🏛️', nome:'100 questões oficiais', desc:'Responda (ou revise) 100 vezes questões oficiais do PAS.', check:()=>totalOficiaisRespondidas()>=100},
 ];
+let ACHIEVEMENT_TOAST = null;
 function refreshAchievements(){
   ACHIEVEMENTS.forEach(ach=>{
-    if(!STATE.achievements.find(x=>x.id===ach.id) && ach.check()) STATE.achievements.push({id:ach.id, date:todayISO()});
+    if(!STATE.achievements.find(x=>x.id===ach.id) && ach.check()){
+      STATE.achievements.push({id:ach.id, date:todayISO()});
+      ACHIEVEMENT_TOAST = ach;
+    }
   });
 }
 
@@ -949,15 +986,59 @@ function fmtMinutes(m){
 function render(){
   refreshAllStatuses();
   const app = document.getElementById('app');
-  const toast = levelUpToastHTML();
+  const toast = levelUpToastHTML() + achievementToastHTML();
+  const inFocusQuiz = !!(QUIZ_SESSION && QUIZ_SESSION.focusMode && !QUIZ_SESSION.simulado);
   app.innerHTML = `
-    ${topbarHTML()}
+    ${inFocusQuiz ? '' : topbarHTML()}
     <main><div class="view">${toast}${viewHTML()}</div></main>
+    ${inFocusQuiz ? '' : mobileBottomNavHTML()}
     ${MODAL? modalHTML(): ''}
   `;
   LEVEL_UP_TOAST = null;
+  ACHIEVEMENT_TOAST = null;
   attachEvents();
   window.scrollTo(0,0);
+}
+function achievementToastHTML(){
+  if(!ACHIEVEMENT_TOAST) return '';
+  const a = ACHIEVEMENT_TOAST;
+  return `<div class="card level-up-toast" style="text-align:center;border:1.5px solid var(--accent-2);">
+    <div style="font-size:1.8rem;">${a.emoji}</div>
+    <div style="font-weight:800;">Conquista desbloqueada!</div>
+    <div class="subtitle">${a.nome}</div>
+  </div>`;
+}
+function mobileBottomNavHTML(){
+  const items = [['home','🏠','Hoje'],['mapa','🗺️','Mapa'],['questoes','✏️','Questões'],['simulados','🏁','Simulados']];
+  return `<div class="bottom-nav">
+    ${items.map(([id,icon,label])=>`<button class="${ROUTE===id?'active':''}" data-route="${id}">${icon}<span>${label}</span></button>`).join('')}
+    <button class="${MODAL==='moreMenu'?'active':''}" data-action="open-more-menu">☰<span>Mais</span></button>
+  </div>`;
+}
+function moreMenuHTML(){
+  const items = [['semana','📅','Semana'],['diagnostico','🧭','Diagnóstico'],['erros','🧠','Caderno de erros'],['obras','📚','Obras'],['desafio','⚔️','Desafio do dia'],['conquistas','🏆','Conquistas'],['professor','🤖','Professor Ipê'],['estrategia','🎯','Estratégia'],['progresso','📈','Progresso'],['ajustes','🎨','Ajustes']];
+  return `<div class="modal-bg" data-action="close-modal"><div class="modal" onclick="event.stopPropagation()">
+    <h3>Mais opções</h3>
+    <div style="display:flex;flex-direction:column;gap:4px;margin-top:8px;">
+      ${items.map(([id,icon,label])=>`<button class="btn btn-secondary btn-block" style="justify-content:flex-start;" data-route="${id}">${icon} ${label}</button>`).join('')}
+    </div>
+  </div></div>`;
+}
+function dayRecapHTML(){
+  const today = todayISO();
+  const act = (STATE.activity && STATE.activity[today]) || {questoes:0,minutos:0,revisoes:0,obras:0,simulados:0};
+  const next = rankedAssuntos()[0];
+  return `<div class="modal-bg" data-action="close-modal"><div class="modal" onclick="event.stopPropagation()">
+    <h3>📋 Hoje você fez</h3>
+    <div class="grid2" style="margin-top:8px;">
+      <div class="card-flat"><div class="label-eyebrow">Minutos</div><div style="font-weight:700;font-size:1.2rem;">${act.minutos||0}</div></div>
+      <div class="card-flat"><div class="label-eyebrow">Questões</div><div style="font-weight:700;font-size:1.2rem;">${act.questoes||0}</div></div>
+      <div class="card-flat"><div class="label-eyebrow">Revisões</div><div style="font-weight:700;font-size:1.2rem;">${act.revisoes||0}</div></div>
+      <div class="card-flat"><div class="label-eyebrow">Obras</div><div style="font-weight:700;font-size:1.2rem;">${act.obras||0}</div></div>
+    </div>
+    ${next? `<div class="card-flat" style="margin-top:10px;"><div class="label-eyebrow">Amanhã sua prioridade será</div><div style="font-weight:700;margin-top:2px;">${next.nome}</div><div class="task-sub">${next.materiaNome}</div></div>` : ''}
+    <button class="btn btn-secondary btn-block" style="margin-top:12px;" data-action="close-modal">Fechar</button>
+  </div></div>`;
 }
 
 function topbarHTML(){
@@ -1030,6 +1111,57 @@ function diaPerdidoBanner(){
   if(gap<=1) return '';
   return `<div class="banner-info">👋 Você ficou ${gap} dias sem estudar — sem problema. Recalculamos suas prioridades pra hoje, nada se acumula mecanicamente.</div>`;
 }
+const HOME_SECTION_LABELS = {
+  nivel:{icon:'⭐', label:'Nível & XP'},
+  pontos:{icon:'🎯', label:'Ponto forte/fraco'},
+  revisoes:{icon:'🔁', label:'Revisões de hoje'},
+  desafio:{icon:'⚔️', label:'Desafio do dia'},
+};
+function pontosGridHTML(weakest, strongest){
+  return `<div class="grid2">
+    <div class="card-flat">
+      <div class="label-eyebrow">Maior ponto fraco</div>
+      <div style="font-weight:700;margin-top:4px;">${weakest? weakest.nome : '—'}</div>
+      <div style="font-size:.8rem;color:var(--muted);">${weakest? weakest.materiaNome : 'Continue praticando'}</div>
+    </div>
+    <div class="card-flat">
+      <div class="label-eyebrow">Maior ponto forte</div>
+      <div style="font-weight:700;margin-top:4px;">${strongest? strongest.nome : '—'}</div>
+      <div style="font-size:.8rem;color:var(--muted);">${strongest? strongest.materiaNome : 'Ainda sem dados'}</div>
+    </div>
+  </div>`;
+}
+function revisoesCardHTML(){
+  const {contentDue, errorsDue} = dueReviewsToday();
+  return `<div class="card">
+    <div class="section-title"><h2>Revisões de hoje</h2></div>
+    ${(contentDue.length+errorsDue.length)===0 ? `<div class="empty">Nenhuma revisão pendente hoje. 🎉</div>` : `
+      <div style="font-size:.85rem;color:var(--ink-soft);">
+        ${contentDue.length? `<div>🔄 ${contentDue.length} assunto(s) com revisão espaçada vencida</div>`:''}
+        ${errorsDue.length? `<div>🧠 ${errorsDue.length} questão(ões) do caderno de erros para refazer</div>`:''}
+      </div>`}
+  </div>`;
+}
+function desafioTeaserHTML(){
+  ensureDesafioDoDia();
+  const answered = STATE.desafio.answered;
+  return `<div class="card-flat row-between">
+    <div><div class="label-eyebrow">⚔️ Desafio do dia</div><div style="font-weight:700;font-size:.88rem;margin-top:2px;">${answered? 'Você já resolveu o de hoje ✓' : 'Uma questão especial te espera'}</div></div>
+    <button class="btn ${answered?'btn-ghost':'btn-secondary'} btn-sm" data-route="desafio">${answered?'Ver':'Encarar'}</button>
+  </div>`;
+}
+function homeSectionHTML(key, ctx){
+  if(key==='nivel') return levelCardHTML();
+  if(key==='pontos') return pontosGridHTML(ctx.weakest, ctx.strongest);
+  if(key==='revisoes') return revisoesCardHTML();
+  if(key==='desafio') return desafioTeaserHTML();
+  return '';
+}
+function homeExtrasOrder(ap){
+  const order = (ap.homeOrder && ap.homeOrder.length ? ap.homeOrder : defaultState().appearance.homeOrder).slice();
+  Object.keys(HOME_SECTION_LABELS).forEach(k=>{ if(!order.includes(k)) order.push(k); }); // migração: saves antigos ganham as chaves novas no fim
+  return order;
+}
 function homeView(){
   if(ACTIVE_TASK) return taskRunnerHTML();
   const total = ASSUNTOS.length;
@@ -1037,9 +1169,27 @@ function homeView(){
   const domPct = Math.round(green/total*100);
   const phase = phaseInfo();
   const plan = ensureTodayPlan();
-  const {contentDue, errorsDue} = dueReviewsToday();
   const weakest = weakestAssunto(); const strongest = strongestAssunto();
   const firstPending = plan ? plan.tasks.find(t=>t.status==='pendente') : null;
+  const ap = STATE.appearance;
+
+  const hidden = new Set(ap.homeHidden||[]);
+  let order = homeExtrasOrder(ap).filter(k=>!hidden.has(k));
+  if(ap.layout==='game' && order.includes('nivel')) order = ['nivel', ...order.filter(k=>k!=='nivel')]; // Game: nível/XP em destaque no topo dos extras (só se não estiver oculto)
+  const ctx = {weakest, strongest};
+
+  let extrasHTML;
+  if(ap.layout==='dashboard'){
+    const hasNivel = order.includes('nivel'), hasRev = order.includes('revisoes');
+    const paired = (hasNivel && hasRev) ? `<div class="grid2">${homeSectionHTML('nivel',ctx)}${homeSectionHTML('revisoes',ctx)}</div>` : '';
+    const rest = order.filter(k=> !((hasNivel&&hasRev) && (k==='nivel'||k==='revisoes')));
+    extrasHTML = paired + rest.map(k=>homeSectionHTML(k,ctx)).join('');
+  } else {
+    extrasHTML = order.map(k=>homeSectionHTML(k,ctx)).join('');
+  }
+  if(ap.layout==='foco' && extrasHTML){
+    extrasHTML = `<details class="card-flat"><summary style="cursor:pointer;font-weight:700;">Ver mais detalhes</summary><div style="margin-top:12px;display:flex;flex-direction:column;gap:var(--view-gap,16px);">${extrasHTML}</div></details>`;
+  }
 
   return `
   <div class="card">
@@ -1057,9 +1207,9 @@ function homeView(){
     <div class="bar" style="margin-top:10px;"><div style="width:${domPct}%"></div></div>
   </div>
 
-  ${levelCardHTML()}
   ${diaPerdidoBanner()}
   ${alertsHTML()}
+  <div class="row" style="justify-content:flex-end;"><button class="btn btn-ghost btn-sm" data-action="open-day-recap">📋 Resumo do dia</button></div>
 
   ${!plan ? `
   <div class="card">
@@ -1087,27 +1237,7 @@ function homeView(){
     </div>
   </div>`}
 
-  <div class="grid2">
-    <div class="card-flat">
-      <div class="label-eyebrow">Maior ponto fraco</div>
-      <div style="font-weight:700;margin-top:4px;">${weakest? weakest.nome : '—'}</div>
-      <div style="font-size:.8rem;color:var(--muted);">${weakest? weakest.materiaNome : 'Continue praticando'}</div>
-    </div>
-    <div class="card-flat">
-      <div class="label-eyebrow">Maior ponto forte</div>
-      <div style="font-weight:700;margin-top:4px;">${strongest? strongest.nome : '—'}</div>
-      <div style="font-size:.8rem;color:var(--muted);">${strongest? strongest.materiaNome : 'Ainda sem dados'}</div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="section-title"><h2>Revisões de hoje</h2></div>
-    ${(contentDue.length+errorsDue.length)===0 ? `<div class="empty">Nenhuma revisão pendente hoje. 🎉</div>` : `
-      <div style="font-size:.85rem;color:var(--ink-soft);">
-        ${contentDue.length? `<div>🔄 ${contentDue.length} assunto(s) com revisão espaçada vencida</div>`:''}
-        ${errorsDue.length? `<div>🧠 ${errorsDue.length} questão(ões) do caderno de erros para refazer</div>`:''}
-      </div>`}
-  </div>`;
+  ${extrasHTML}`;
 }
 
 function taskRowHTML(t){
@@ -1247,13 +1377,22 @@ function quizRunnerHTML(){
   const q = s.questions[s.idx];
   const a = q.assuntoId ? getAssunto(q.assuntoId) : null;
   const r = s.answered ? s.results[s.idx] : null;
+  const elapsedMin = Math.floor((Date.now()-s.startTs)/60000);
   return `
   <div class="card qcard">
     <div class="row-between">
       <span class="label-eyebrow">${s.simulado? (SIMULADO_TYPES.find(t=>t.key===s.tipo)||{}).nome+' · ' : ''}Questão ${s.idx+1}/${s.questions.length}</span>
-      <button class="btn btn-ghost btn-sm" data-action="cancel-task">Sair</button>
+      <div class="row" style="gap:6px;">
+        ${!s.simulado? `<button class="btn btn-ghost btn-sm" data-action="toggle-focus">${s.focusMode?'🔎 Sair do foco':'🎯 Foco'}</button>` : ''}
+        <button class="btn btn-ghost btn-sm" data-action="cancel-task">Sair</button>
+      </div>
     </div>
     ${s.simulado? `<div class="timer" style="text-align:center;">⏱ ${fmtElapsed(Date.now()-s.startTs)}</div>` : ''}
+    ${(!s.simulado && s.focusMode) ? `<div class="row" style="gap:6px;justify-content:center;flex-wrap:wrap;">
+      ${[['livre','Livre'],['25','25 min'],['45','45 min']].map(([k,l])=>`<button class="btn ${((s.timerMode||'livre')===k)?'btn-secondary':'btn-ghost'} btn-sm" data-action="set-timer-mode" data-tm="${k}">${l}</button>`).join('')}
+      <span class="mono" style="font-size:.8rem;color:var(--muted);align-self:center;">${elapsedMin} min${(s.timerMode&&s.timerMode!=='livre')? ' / '+s.timerMode+' min':''}</span>
+    </div>` : ''}
+    ${(!s.simulado && elapsedMin>=50 && !s.pauseDismissed) ? `<div class="banner-info row-between">🧘 Você estudou ${elapsedMin} min. Que tal 5 min de pausa? <button class="btn btn-ghost btn-sm" data-action="dismiss-pause">Continuar</button></div>` : ''}
     <div class="qmeta">
       <span class="badge b-neutral">${a ? a.materiaNome : 'Obras PAS'}</span>
       ${difBadge(q.dif,q.pas)}
@@ -1326,15 +1465,24 @@ function quizFeedbackHTML(q,s){
   </div>` : ''}
   <button class="btn btn-primary btn-block" data-action="next-question">${s.idx+1<s.questions.length? 'Próxima questão':'Ver resultado'}</button>`;
 }
+function sessionXP(s){
+  let xp = s.results.reduce((sum,r)=>{ if(!r || r.branco) return sum; return sum + (r.correct?10:3); },0);
+  if(s.mode==='desafio' && s.results[0] && s.results[0].correct) xp += 25;
+  return xp;
+}
 function quizResultHTML(){
   const s = QUIZ_SESSION;
-  const acc = Math.round(s.correctCount/s.questions.length*100);
+  const answeredCount = s.results.filter(r=>r && !r.branco).length;
+  const acc = answeredCount ? Math.round(s.correctCount/answeredCount*100) : 0;
   const totalTime = Math.round((Date.now()-s.startTs)/1000);
+  const xp = sessionXP(s);
+  const next = rankedAssuntos()[0];
   return `
   <div class="card" style="text-align:center;">
-    <div class="label-eyebrow">Resultado</div>
+    <div class="label-eyebrow">Sessão concluída 🎯</div>
     <div style="font-size:2.2rem;font-weight:800;font-family:var(--font-display);color:var(--accent);">${acc}%</div>
-    <div style="color:var(--muted);font-size:.85rem;">${s.correctCount} de ${s.questions.length} corretas · ${totalTime}s</div>
+    <div style="color:var(--muted);font-size:.85rem;">${s.correctCount} de ${s.questions.length} corretas · ${Math.max(1,Math.round(totalTime/60))} min · +${xp} XP</div>
+    ${next ? `<div class="card-flat" style="margin-top:14px;text-align:left;"><div class="label-eyebrow">Próxima recomendação</div><div style="font-weight:700;margin-top:2px;">${next.nome}</div><div class="task-sub">${next.materiaNome}</div></div>` : ''}
     <div class="row" style="justify-content:center;gap:10px;margin-top:14px;">
       <button class="btn btn-secondary" data-action="cancel-task">Voltar</button>
       <button class="btn btn-primary" data-action="finish-task">Concluir tarefa</button>
@@ -2036,6 +2184,25 @@ const COLOR_THEMES = [
   {key:'rosa', emoji:'🌸', nome:'Rosa'},
   {key:'mono', emoji:'⚫', nome:'Monocromático'},
 ];
+const LAYOUTS = [
+  {key:'dashboard', emoji:'📊', nome:'Dashboard', desc:'Tudo visível, em colunas no desktop.'},
+  {key:'foco', emoji:'🎯', nome:'Foco', desc:'Só a missão em destaque, resto recolhido.'},
+  {key:'game', emoji:'🎮', nome:'Game', desc:'Nível, XP e desafios em 1º plano.'},
+];
+function homeOrderRows(ap){
+  const order = homeExtrasOrder(ap);
+  const hidden = new Set(ap.homeHidden||[]);
+  return order.map((k,i)=>{
+    const info = HOME_SECTION_LABELS[k];
+    const isHidden = hidden.has(k);
+    return `<div class="reorder-item">
+      <span style="flex:1;${isHidden?'opacity:.45;':''}">${info.icon} ${info.label}</span>
+      <button class="btn btn-ghost btn-sm" data-action="home-move" data-key="${k}" data-dir="up" ${i===0?'disabled':''}>↑</button>
+      <button class="btn btn-ghost btn-sm" data-action="home-move" data-key="${k}" data-dir="down" ${i===order.length-1?'disabled':''}>↓</button>
+      <button class="btn btn-ghost btn-sm" data-action="home-toggle" data-key="${k}">${isHidden?'Mostrar':'Ocultar'}</button>
+    </div>`;
+  }).join('');
+}
 function ajustesView(){
   const ap = STATE.appearance;
   return `
@@ -2062,6 +2229,40 @@ function ajustesView(){
       <button class="${ap.mode==='light'?'sel':''}" data-action="set-mode" data-mode="light">☀️ Claro</button>
       <button class="${ap.mode==='dark'?'sel':''}" data-action="set-mode" data-mode="dark">🌙 Escuro</button>
       <button class="${ap.mode==='system'?'sel':''}" data-action="set-mode" data-mode="system">💻 Sistema</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="label-eyebrow" style="margin-bottom:8px;">Layout da Home</div>
+    <div class="grid3">
+      ${LAYOUTS.map(l=>`<button class="card-flat layout-preview ${(ap.layout||'dashboard')===l.key?'sel':''}" data-action="set-layout" data-layout="${l.key}">
+        <div style="font-size:1.3rem;">${l.emoji}</div><div style="font-size:.8rem;font-weight:700;margin-top:2px;">${l.nome}</div><div style="font-size:.68rem;color:var(--muted);margin-top:2px;">${l.desc}</div>
+      </button>`).join('')}
+    </div>
+  </div>
+  <div class="card">
+    <div class="label-eyebrow" style="margin-bottom:8px;">Densidade</div>
+    <div class="time-choice">
+      <button class="${(ap.density||'confortavel')==='compacto'?'sel':''}" data-action="set-density" data-density="compacto">Compacto</button>
+      <button class="${(ap.density||'confortavel')==='confortavel'?'sel':''}" data-action="set-density" data-density="confortavel">Confortável</button>
+      <button class="${(ap.density||'confortavel')==='amplo'?'sel':''}" data-action="set-density" data-density="amplo">Amplo</button>
+    </div>
+    <div class="label-eyebrow" style="margin:14px 0 8px;">Tamanho do texto</div>
+    <div class="time-choice">
+      <button class="${(ap.textSize||'m')==='p'?'sel':''}" data-action="set-textsize" data-ts="p">A−</button>
+      <button class="${(ap.textSize||'m')==='m'?'sel':''}" data-action="set-textsize" data-ts="m">A</button>
+      <button class="${(ap.textSize||'m')==='g'?'sel':''}" data-action="set-textsize" data-ts="g">A+</button>
+    </div>
+    <div class="label-eyebrow" style="margin:14px 0 8px;">Menu (telas grandes)</div>
+    <div class="time-choice" style="grid-template-columns:1fr 1fr;">
+      <button class="${(ap.menu||'top')==='top'?'sel':''}" data-action="set-menu" data-menu="top">Superior</button>
+      <button class="${(ap.menu||'top')==='sidebar'?'sel':''}" data-action="set-menu" data-menu="sidebar">Lateral</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="label-eyebrow" style="margin-bottom:2px;">Organizar Home</div>
+    <p class="subtitle" style="margin-top:2px;">Missão do dia e dias restantes ficam sempre fixos no topo.</p>
+    <div style="display:flex;flex-direction:column;">
+      ${homeOrderRows(ap)}
     </div>
   </div>
   <div class="card">
@@ -2279,12 +2480,14 @@ function modalHTML(){
   if(MODAL==='assuntoDetail'){
     return assuntoDetailModalHTML(ASSUNTO_DETAIL_ID);
   }
+  if(MODAL==='moreMenu') return moreMenuHTML();
+  if(MODAL==='dayRecap') return dayRecapHTML();
   return '';
 }
 
 /* ============================= EVENTS ============================= */
 function attachEvents(){
-  document.querySelectorAll('[data-route]').forEach(el=>el.addEventListener('click',()=>{ROUTE=el.dataset.route; ACTIVE_TASK=null; QUIZ_SESSION=null; render();}));
+  document.querySelectorAll('[data-route]').forEach(el=>el.addEventListener('click',()=>{ROUTE=el.dataset.route; ACTIVE_TASK=null; QUIZ_SESSION=null; MODAL=null; render();}));
   document.querySelectorAll('[data-time]').forEach(el=>el.addEventListener('click',()=>{
     const v = el.dataset.time;
     if(v==='custom'){ MODAL='customTime'; render(); return; }
@@ -2508,11 +2711,52 @@ function attachEvents(){
   }));
   const restoreAppearanceBtn = document.querySelector('[data-action="restore-appearance"]');
   if(restoreAppearanceBtn) restoreAppearanceBtn.addEventListener('click',()=>{
-    if(confirm('Restaurar aparência padrão (Ipê Original, modo sistema)?')){
-      STATE.appearance = {colorTheme:'original', mode:'system'};
+    if(confirm('Restaurar aparência padrão (Ipê Original, modo sistema, Dashboard)?')){
+      STATE.appearance = defaultState().appearance;
       save(); applyAppearance(); render();
     }
   });
+
+  document.querySelectorAll('[data-action="set-layout"]').forEach(el=>el.addEventListener('click',()=>{
+    STATE.appearance.layout = el.dataset.layout; save(); applyAppearance(); render();
+  }));
+  document.querySelectorAll('[data-action="set-density"]').forEach(el=>el.addEventListener('click',()=>{
+    STATE.appearance.density = el.dataset.density; save(); applyAppearance(); render();
+  }));
+  document.querySelectorAll('[data-action="set-textsize"]').forEach(el=>el.addEventListener('click',()=>{
+    STATE.appearance.textSize = el.dataset.ts; save(); applyAppearance(); render();
+  }));
+  document.querySelectorAll('[data-action="set-menu"]').forEach(el=>el.addEventListener('click',()=>{
+    STATE.appearance.menu = el.dataset.menu; save(); applyAppearance(); render();
+  }));
+  document.querySelectorAll('[data-action="home-move"]').forEach(el=>el.addEventListener('click',()=>{
+    const ap = STATE.appearance;
+    const order = homeExtrasOrder(ap);
+    const i = order.indexOf(el.dataset.key);
+    const j = i + (el.dataset.dir==='up'? -1 : 1);
+    if(i<0 || j<0 || j>=order.length) return;
+    [order[i],order[j]] = [order[j],order[i]];
+    ap.homeOrder = order; save(); render();
+  }));
+  document.querySelectorAll('[data-action="home-toggle"]').forEach(el=>el.addEventListener('click',()=>{
+    const ap = STATE.appearance;
+    const hidden = new Set(ap.homeHidden||[]);
+    if(hidden.has(el.dataset.key)) hidden.delete(el.dataset.key); else hidden.add(el.dataset.key);
+    ap.homeHidden = [...hidden]; save(); render();
+  }));
+
+  const openRecapBtn = document.querySelector('[data-action="open-day-recap"]');
+  if(openRecapBtn) openRecapBtn.addEventListener('click',()=>{ MODAL='dayRecap'; render(); });
+  const moreMenuBtn = document.querySelector('[data-action="open-more-menu"]');
+  if(moreMenuBtn) moreMenuBtn.addEventListener('click',()=>{ MODAL = MODAL==='moreMenu'? null : 'moreMenu'; render(); });
+
+  const focusBtn = document.querySelector('[data-action="toggle-focus"]');
+  if(focusBtn) focusBtn.addEventListener('click',()=>{ QUIZ_SESSION.focusMode = !QUIZ_SESSION.focusMode; render(); });
+  document.querySelectorAll('[data-action="set-timer-mode"]').forEach(el=>el.addEventListener('click',()=>{
+    QUIZ_SESSION.timerMode = el.dataset.tm; render();
+  }));
+  const dismissPauseBtn = document.querySelector('[data-action="dismiss-pause"]');
+  if(dismissPauseBtn) dismissPauseBtn.addEventListener('click',()=>{ QUIZ_SESSION.pauseDismissed = true; render(); });
 }
 
 async function doExport(){
@@ -2530,7 +2774,13 @@ function doImport(ev){
   reader.onload = e=>{
     try{
       const parsed = JSON.parse(e.target.result);
-      STATE = Object.assign(defaultState(), parsed);
+      const def = defaultState();
+      const defDiagnostic = def.diagnostic, defProfile = def.profile, defAppearance = def.appearance;
+      const merged = Object.assign(def, parsed);
+      merged.diagnostic = Object.assign(defDiagnostic, parsed.diagnostic||{});
+      merged.profile = Object.assign(defProfile, parsed.profile||{});
+      merged.appearance = Object.assign(defAppearance, parsed.appearance||{});
+      STATE = merged;
       applyAppearance();
       save(); render();
     }catch(err){ alert('Arquivo inválido.'); }
