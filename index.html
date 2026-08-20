@@ -1,0 +1,1636 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ipê PAS1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FBF7EE; --surface:#FFFFFF; --surface-2:#F2EAD3; --border:#E3D6B4;
+  --ink:#20281F; --ink-soft:#4B5245; --muted:#8A8267;
+  --accent:#2F6E4F; --accent-strong:#1F5138; --accent-ink:#F6FBF3;
+  --accent-2:#D9642A; --accent-2-ink:#FFF6EF;
+  --red:#C1442A; --red-bg:#FBE7E1; --orange:#DE8A2E; --orange-bg:#FBEEDA;
+  --yellow:#C9A227; --yellow-bg:#FAF3D6; --green:#2F8F5B; --green-bg:#E4F3EA;
+  --shadow: 0 1px 2px rgba(32,40,31,.06), 0 6px 20px -8px rgba(32,40,31,.18);
+  --radius:16px; --radius-sm:10px;
+  --font-display:'Fraunces',Georgia,serif; --font-body:'Manrope',system-ui,sans-serif; --font-mono:'JetBrains Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12160F; --surface:#1A2018; --surface-2:#222A1D; --border:#333B2B;
+    --ink:#ECE7D8; --ink-soft:#C6C2AC; --muted:#8D9184;
+    --accent:#5FBE8B; --accent-strong:#7ED3A5; --accent-ink:#0E1A13;
+    --accent-2:#F0925B; --accent-2-ink:#2A1408;
+    --red:#F0897A; --red-bg:#3A1E17; --orange:#F0B26B; --orange-bg:#3A2C13;
+    --yellow:#E3CE6E; --yellow-bg:#38310F; --green:#7ED3A5; --green-bg:#173322;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -10px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12160F; --surface:#1A2018; --surface-2:#222A1D; --border:#333B2B;
+  --ink:#ECE7D8; --ink-soft:#C6C2AC; --muted:#8D9184;
+  --accent:#5FBE8B; --accent-strong:#7ED3A5; --accent-ink:#0E1A13;
+  --accent-2:#F0925B; --accent-2-ink:#2A1408;
+  --red:#F0897A; --red-bg:#3A1E17; --orange:#F0B26B; --orange-bg:#3A2C13;
+  --yellow:#E3CE6E; --yellow-bg:#38310F; --green:#7ED3A5; --green-bg:#173322;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -10px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.5;-webkit-font-smoothing:antialiased;}
+h1,h2,h3{font-family:var(--font-display);font-weight:600;text-wrap:balance;margin:0 0 .3em;}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+button{font-family:var(--font-body);cursor:pointer;}
+::selection{background:var(--accent);color:var(--accent-ink);}
+
+#app{max-width:900px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+
+/* header */
+.topbar{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--border);}
+.topbar-inner{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px 10px;}
+.brand{display:flex;align-items:center;gap:9px;font-family:var(--font-display);font-weight:700;font-size:1.05rem;}
+.brand-mark{width:28px;height:28px;border-radius:8px;background:linear-gradient(155deg,var(--accent),var(--accent-strong));display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.stat-pills{display:flex;gap:8px;align-items:center;}
+.pill{display:flex;align-items:center;gap:5px;background:var(--surface-2);border:1px solid var(--border);padding:5px 10px;border-radius:100px;font-size:.78rem;font-weight:600;color:var(--ink-soft);white-space:nowrap;}
+.pill b{color:var(--ink);font-family:var(--font-mono);}
+.pill.days{background:var(--accent);color:var(--accent-ink);border-color:transparent;}
+.pill.days b{color:var(--accent-ink);}
+
+.tabs{display:flex;gap:4px;overflow-x:auto;padding:0 12px 10px;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:100px;border:1px solid transparent;background:transparent;color:var(--muted);font-weight:600;font-size:.85rem;}
+.tab.active{background:var(--surface-2);color:var(--ink);border-color:var(--border);}
+.tab:hover:not(.active){color:var(--ink-soft);}
+
+main{flex:1;padding:18px 16px 90px;}
+.view{display:flex;flex-direction:column;gap:16px;animation:fade .25s ease;}
+@keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);}
+.card-flat{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.row{display:flex;gap:10px;align-items:center;}
+.row-between{display:flex;gap:10px;align-items:center;justify-content:space-between;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:560px){.grid2{grid-template-columns:1fr;}}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+@media(max-width:640px){.grid3{grid-template-columns:1fr 1fr;}}
+
+.btn{display:inline-flex;align-items:center;gap:6px;justify-content:center;padding:10px 16px;border-radius:100px;border:none;font-weight:700;font-size:.88rem;transition:transform .1s;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--accent);color:var(--accent-ink);}
+.btn-secondary{background:var(--surface-2);color:var(--ink);border:1px solid var(--border);}
+.btn-ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--border);}
+.btn-warn{background:var(--accent-2);color:var(--accent-2-ink);}
+.btn-sm{padding:6px 12px;font-size:.78rem;}
+.btn:disabled{opacity:.4;cursor:default;}
+.btn-block{width:100%;}
+
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:100px;font-size:.72rem;font-weight:700;letter-spacing:.02em;}
+.b-red{background:var(--red-bg);color:var(--red);} .b-orange{background:var(--orange-bg);color:var(--orange);}
+.b-yellow{background:var(--yellow-bg);color:var(--yellow);} .b-green{background:var(--green-bg);color:var(--green);}
+.b-neutral{background:var(--surface-2);color:var(--muted);border:1px solid var(--border);}
+
+.status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.dot-red{background:var(--red);} .dot-orange{background:var(--orange);} .dot-yellow{background:var(--yellow);} .dot-green{background:var(--green);}
+
+.bar{height:8px;border-radius:100px;background:var(--surface-2);overflow:hidden;border:1px solid var(--border);}
+.bar > div{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-strong));border-radius:100px;transition:width .4s;}
+
+.label-eyebrow{font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+
+.task{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--border);}
+.task:last-child{border-bottom:none;}
+.task-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;background:var(--surface-2);}
+.task-body{flex:1;min-width:0;}
+.task-title{font-weight:700;font-size:.92rem;}
+.task-sub{font-size:.78rem;color:var(--muted);}
+.task.done .task-title{text-decoration:line-through;color:var(--muted);}
+.task.done .task-icon{background:var(--green-bg);color:var(--green);}
+
+.qcard{display:flex;flex-direction:column;gap:14px;}
+.qmeta{display:flex;gap:6px;flex-wrap:wrap;}
+.qstatement{font-size:1.02rem;line-height:1.55;}
+.opt{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface);font-weight:600;font-size:.92rem;text-align:left;}
+.opt:hover{border-color:var(--accent);}
+.opt.correct{border-color:var(--green);background:var(--green-bg);color:var(--green);}
+.opt.wrong{border-color:var(--red);background:var(--red-bg);color:var(--red);}
+.opt-row{display:flex;gap:10px;}
+.opt-row .opt{flex:1;}
+
+.chip-input{width:100%;padding:10px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);color:var(--ink);font-family:var(--font-body);font-size:.88rem;}
+select.chip-input{appearance:none;}
+textarea.chip-input{resize:vertical;min-height:64px;}
+
+.tree-materia{margin-bottom:6px;}
+.tree-materia > summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;padding:11px 4px;font-weight:700;font-size:.94rem;}
+.tree-materia > summary::-webkit-details-marker{display:none;}
+.tree-materia[open] > summary{color:var(--accent);}
+.assunto-row{display:flex;align-items:center;gap:10px;padding:9px 4px 9px 14px;border-top:1px solid var(--border);font-size:.86rem;}
+.assunto-row .name{flex:1;}
+.assunto-row .hab{font-size:.7rem;color:var(--muted);font-family:var(--font-mono);}
+
+.section-title{display:flex;align-items:center;gap:8px;}
+.section-title h2{margin:0;font-size:1.15rem;}
+
+.empty{text-align:center;padding:30px 10px;color:var(--muted);}
+
+.footer-note{font-size:.74rem;color:var(--muted);line-height:1.6;padding:10px 4px 40px;}
+.footer-note a{color:var(--accent);}
+
+.timer{font-family:var(--font-mono);font-weight:700;font-size:1.4rem;}
+
+.sparkline{display:flex;align-items:flex-end;gap:5px;height:70px;}
+.spark-bar{flex:1;background:var(--surface-2);border-radius:4px 4px 0 0;position:relative;min-height:4px;}
+.spark-bar > div{position:absolute;bottom:0;left:0;right:0;background:var(--accent);border-radius:4px 4px 0 0;}
+
+.obra-card{border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;background:var(--surface);}
+.obra-cat{font-size:.68rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--accent-2);}
+
+.modal-bg{position:fixed;inset:0;background:rgba(20,24,17,.5);display:flex;align-items:flex-end;justify-content:center;z-index:50;padding:0;}
+@media(min-width:640px){.modal-bg{align-items:center;}}
+.modal{background:var(--surface);border-radius:20px 20px 0 0;max-width:480px;width:100%;max-height:88vh;overflow-y:auto;padding:22px;box-shadow:var(--shadow);}
+@media(min-width:640px){.modal{border-radius:20px;}}
+
+.gauge-wrap{display:flex;align-items:center;gap:14px;}
+.check{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;}
+.check.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
+
+.time-choice{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.time-choice button{padding:12px 6px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface);font-weight:700;font-size:.85rem;}
+.time-choice button.sel{border-color:var(--accent);background:var(--green-bg);color:var(--accent-strong);}
+
+hr{border:none;border-top:1px solid var(--border);margin:2px 0;}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+/* ============================= DATA ============================= */
+const EXAM_DATE = new Date('2026-12-06T13:00:00');
+const STORAGE_KEY = 'ipe_pas1_mvp_v1';
+
+const AREAS = [
+ {id:'hum', nome:'Humanidades', emoji:'🏛️', interdisciplinar:true, materias:[
+   {id:'filo', nome:'Filosofia', assuntos:[
+     {id:'filo_mitos', nome:'Mitologias e saberes ancestrais', hab:'CH2', peso:2},
+     {id:'filo_existencia', nome:'A existência humana como questão filosófica', hab:'CH2', peso:2},
+     {id:'filo_logica', nome:'Lógica e argumentação', hab:'CH1', peso:3},
+     {id:'filo_estetica', nome:'Estética e fruição das artes', hab:'CH5', peso:2},
+     {id:'filo_decolonial', nome:'Perspectiva decolonial da filosofia', hab:'CH10', peso:2},
+     {id:'filo_metodo', nome:'Método científico e produção de discursos', hab:'CH3, CH4', peso:2},
+     {id:'filo_correntes', nome:'Correntes de pensamento e problematização crítica', hab:'CH18, CH20, CH21, CH23, CH24', peso:3},
+   ]},
+   {id:'geo', nome:'Geografia', assuntos:[
+     {id:'geo_raciocinio', nome:'Raciocínio geográfico: lugar, região, território, paisagem', hab:'CH13, CH16', peso:3},
+     {id:'geo_cartografia', nome:'Linguagem cartográfica e imagética', hab:'CH13', peso:2},
+     {id:'geo_populacao', nome:'Distribuição da população e apropriação do espaço', hab:'CH14', peso:2},
+     {id:'geo_urbanizacao', nome:'Urbanização e impactos socioambientais', hab:'CH17', peso:3},
+     {id:'geo_economia', nome:'Questões econômicas contemporâneas e meio ambiente', hab:'CH15', peso:3},
+     {id:'geo_atlantico', nome:'Formação do espaço Atlântico', hab:'—', peso:1},
+   ]},
+   {id:'hist', nome:'História', assuntos:[
+     {id:'hist_protagonismo', nome:'Protagonismo indígena e afro-brasileiro na formação do Brasil', hab:'CH7', peso:3},
+     {id:'hist_diversidade', nome:'Processos históricos da diversidade sociocultural do Brasil', hab:'CH8, CH12', peso:3},
+     {id:'hist_colonialidade', nome:'Colonialidade e (re)interpretação dos povos colonizados', hab:'CH10', peso:2},
+     {id:'hist_prehistoria', nome:'Cultura na pré-história africana e pré-colombiana', hab:'—', peso:1},
+     {id:'hist_diaspora', nome:'Diáspora Atlântica e invasão europeia da América', hab:'—', peso:2},
+     {id:'hist_poder', nome:'Das cidades-estado às monarquias nacionais', hab:'—', peso:1},
+     {id:'hist_conceitos', nome:'Categorias e conceitos da história', hab:'CH19', peso:1},
+   ]},
+   {id:'socio', nome:'Sociologia', assuntos:[
+     {id:'socio_desigualdades', nome:'Desigualdades sociais de classe, gênero e etnia', hab:'CH6, CH12', peso:3},
+     {id:'socio_cultura', nome:'Cultura, etnocentrismo e relativismo cultural', hab:'CH11', peso:2},
+     {id:'socio_marcadores', nome:'Marcadores sociais: classe, raça, gênero, religião', hab:'CH6', peso:2},
+     {id:'socio_papeis', nome:'Indivíduos e coletividades na contemporaneidade', hab:'CH6', peso:2},
+     {id:'socio_tecnologia', nome:'Tecnologias digitais e modos de pensar contemporâneos', hab:'CH22', peso:1},
+     {id:'socio_praticas', nome:'Práticas sociais e produção de discursos', hab:'CH25', peso:1},
+   ]},
+ ]},
+ {id:'ling', nome:'Linguagens', emoji:'📖', materias:[
+   {id:'port', nome:'Língua Portuguesa', assuntos:[
+     {id:'port_morfo', nome:'Morfossintaxe (classes e funções)', hab:'LING5-LING8', peso:3},
+     {id:'port_coesao', nome:'Coesão e coerência textual', hab:'LING9-LING10', peso:3},
+     {id:'port_variacao', nome:'Variação linguística', hab:'LING11', peso:2},
+     {id:'port_interpret', nome:'Interpretação de texto (transversal)', hab:'todas', peso:3},
+   ]},
+   {id:'lit', nome:'Literatura', assuntos:[
+     {id:'lit_trovador', nome:'Trovadorismo e literatura medieval', hab:'LING12', peso:2},
+     {id:'lit_classic', nome:'Classicismo (Camões)', hab:'LING13', peso:2},
+     {id:'lit_barroco', nome:'Barroco (Gregório de Matos, Pe. Vieira)', hab:'LING14', peso:2},
+     {id:'lit_arcadismo', nome:'Arcadismo (Cláudio Manuel da Costa)', hab:'LING15', peso:2},
+     {id:'lit_contemp', nome:'Literatura contemporânea e identidade', hab:'LING16-LING18', peso:2},
+     {id:'lit_generos', nome:'Gêneros literários e multimodalidade', hab:'LING19-LING20', peso:1},
+   ]},
+   {id:'le', nome:'Língua Estrangeira', assuntos:[
+     {id:'le_leitura', nome:'Leitura e compreensão em língua estrangeira', hab:'LING1-LING4', peso:2},
+   ]},
+   {id:'artes', nome:'Artes e Música', assuntos:[
+     {id:'artes_elementos', nome:'Elementos da linguagem artística e musical', hab:'LING1-LING3', peso:1},
+   ]},
+ ]},
+ {id:'mat', nome:'Matemática', emoji:'📐', materias:[
+   {id:'mat_base', nome:'Matemática', assuntos:[
+     {id:'mat_conjuntos', nome:'Conjuntos numéricos e números reais', hab:'MAT1-MAT2', peso:2},
+     {id:'mat_geometria', nome:'Geometria plana', hab:'MAT3-MAT4', peso:2},
+     {id:'mat_cartesiano', nome:'Plano cartesiano e medidas de área', hab:'MAT4-MAT5', peso:2},
+     {id:'mat_trigo', nome:'Trigonometria no triângulo retângulo', hab:'MAT6', peso:2},
+     {id:'mat_funcoes', nome:'Funções: conceito, domínio e imagem', hab:'MAT7', peso:2},
+     {id:'mat_afim', nome:'Função afim', hab:'MAT8', peso:3},
+     {id:'mat_quadratica', nome:'Função quadrática', hab:'MAT9-MAT10', peso:3},
+     {id:'mat_exponencial', nome:'Função exponencial', hab:'MAT11-MAT12', peso:3},
+     {id:'mat_log', nome:'Função logarítmica', hab:'MAT13', peso:2},
+     {id:'mat_pa_pg', nome:'Progressões (PA e PG)', hab:'MAT14-MAT15', peso:2},
+     {id:'mat_financeira', nome:'Matemática financeira', hab:'MAT16', peso:2},
+   ]},
+ ]},
+ {id:'nat', nome:'Ciências da Natureza', emoji:'🧪', materias:[
+   {id:'bio', nome:'Biologia', assuntos:[
+     {id:'bio_metodo', nome:'Métodos de investigação científica', hab:'CN1', peso:1},
+     {id:'bio_bioquimica', nome:'Bioquímica (moléculas da vida)', hab:'CN10-CN11', peso:2},
+     {id:'bio_citologia', nome:'Citologia (membrana e transporte celular)', hab:'CN11-CN12', peso:3},
+     {id:'bio_ecologia', nome:'Ecologia', hab:'CN13-CN14', peso:3},
+   ]},
+   {id:'quim', nome:'Química', assuntos:[
+     {id:'quim_historia', nome:'Evolução histórica da química e método científico', hab:'ref. Químicos 5', peso:1},
+     {id:'quim_materia', nome:'Propriedades e transformações da matéria', hab:'ref. Químicos 6', peso:2},
+     {id:'quim_atomica', nome:'Constituição da matéria: modelos atômicos', hab:'ref. Químicos 7', peso:2},
+     {id:'quim_ligacoes', nome:'Ligações químicas (iônica, metálica, covalente) e tabela periódica', hab:'ref. Químicos 8', peso:3},
+     {id:'quim_conservacao', nome:'Conservação da matéria e energia: balanceamento e estequiometria', hab:'ref. Químicos 9', peso:2},
+   ]},
+   {id:'fis', nome:'Física', assuntos:[
+     {id:'fis_mecanica', nome:'Mecânica newtoniana (grandezas, leis de Newton, trabalho, energia, gravitação)', hab:'ref. Físicos 1', peso:3},
+     {id:'fis_astro', nome:'Astronomia (modelos astronômicos, geolocalização e satélites)', hab:'ref. Físicos 2', peso:2},
+     {id:'fis_moderna', nome:'Introdução à física moderna (espaço-tempo, princípio da incerteza)', hab:'ref. Físicos 3', peso:1},
+     {id:'fis_historia', nome:'História da mecânica e da astronomia', hab:'ref. Físicos 4', peso:1},
+   ]},
+ ]},
+];
+
+// flat index of assuntos with back-reference to area/materia
+const ASSUNTOS = [];
+AREAS.forEach(area=>area.materias.forEach(mat=>mat.assuntos.forEach(a=>{
+  ASSUNTOS.push({...a, areaId:area.id, areaNome:area.nome, materiaId:mat.id, materiaNome:mat.nome});
+})));
+function getAssunto(id){return ASSUNTOS.find(a=>a.id===id);}
+
+/* ---- Banco de questões (autoral, estilo PAS — NÃO são questões oficiais do Cebraspe) ---- */
+const QUESTOES = [
+ {id:'mat1',assuntoId:'mat_conjuntos',tipo:'CE',dif:'facil',diag:true,enun:'O conjunto dos números naturais é subconjunto do conjunto dos números inteiros.',gab:'C',res:'Todo número natural (0,1,2,3...) também é um número inteiro, então N ⊂ Z.'},
+ {id:'mat2',assuntoId:'mat_afim',tipo:'CE',dif:'facil',diag:true,enun:'Na função f(x) = 3x − 6, a raiz da função é x = 2.',gab:'C',res:'Basta igualar a função a zero: 3x−6=0 → x=2. Correto.'},
+ {id:'mat3',assuntoId:'mat_quadratica',tipo:'CE',dif:'dificil',diag:false,pas:true,enun:'A função f(x) = x² − 4x + 4 possui duas raízes reais distintas.',gab:'E',res:'O discriminante é Δ=(-4)²-4·1·4=0. Quando Δ=0 a função tem uma raiz real dupla, não duas raízes distintas.'},
+ {id:'mat4',assuntoId:'mat_geometria',tipo:'CE',dif:'facil',diag:true,enun:'A soma dos ângulos internos de qualquer triângulo é igual a 180°.',gab:'C',res:'Propriedade fundamental da geometria plana euclidiana para triângulos.'},
+ {id:'mat5',assuntoId:'mat_trigo',tipo:'CE',dif:'medio',diag:true,enun:'Em um triângulo retângulo, sen(30°) = 1/2.',gab:'C',res:'É um valor notável da trigonometria: sen(30°)=1/2.'},
+ {id:'mat6',assuntoId:'mat_pa_pg',tipo:'CE',dif:'medio',diag:false,enun:'Em uma progressão aritmética de razão 5, com primeiro termo igual a 3, o quinto termo vale 23.',gab:'C',res:'a5 = a1 + (5-1)·r = 3 + 4·5 = 23. Correto.'},
+ {id:'mat7',assuntoId:'mat_exponencial',tipo:'CE',dif:'medio',diag:true,enun:'A função f(x) = 2^x é decrescente para todo x real.',gab:'E',res:'Como a base (2) é maior que 1, a função exponencial é crescente, não decrescente.'},
+ {id:'mat8',assuntoId:'mat_log',tipo:'CE',dif:'facil',diag:false,enun:'log₂(8) é igual a 3.',gab:'C',res:'2³=8, logo log₂(8)=3.'},
+ {id:'mat9',assuntoId:'mat_cartesiano',tipo:'MC',dif:'medio',diag:true,enun:'Qual é a distância entre os pontos (0,0) e (3,4) no plano cartesiano?',opts:['5','7','12','25'],gab:0,res:'Pela fórmula da distância: √(3²+4²) = √25 = 5.'},
+ {id:'mat10',assuntoId:'mat_financeira',tipo:'CE',dif:'medio',diag:false,enun:'Em uma progressão geométrica de razão 2, com primeiro termo igual a 1, a soma dos 4 primeiros termos é 15.',gab:'C',res:'1+2+4+8 = 15. Correto.'},
+ {id:'cn1',assuntoId:'bio_citologia',tipo:'CE',dif:'facil',diag:true,enun:'A membrana plasmática é composta por uma bicamada fosfolipídica com proteínas associadas.',gab:'C',res:'É o modelo do mosaico fluido, aceito atualmente para a estrutura da membrana.'},
+ {id:'cn2',assuntoId:'bio_citologia',tipo:'CE',dif:'medio',diag:true,pas:true,enun:'A osmose é definida como o transporte de moléculas de soluto através de uma membrana semipermeável.',gab:'E',res:'Osmose é o transporte de água (o solvente), não do soluto, a favor do gradiente de concentração.'},
+ {id:'cn3',assuntoId:'bio_ecologia',tipo:'CE',dif:'facil',diag:true,enun:'Em uma cadeia alimentar, os produtores (como plantas) ocupam o primeiro nível trófico.',gab:'C',res:'Produtores realizam fotossíntese e são a base energética da cadeia alimentar.'},
+ {id:'quim1',assuntoId:'quim_materia',tipo:'CE',dif:'medio',diag:true,enun:'Átomos de um mesmo elemento químico podem ter números de massa diferentes entre si (isótopos).',gab:'C',res:'Isótopos têm o mesmo número atômico (Z) mas número de nêutrons diferente, alterando a massa.'},
+ {id:'quim2',assuntoId:'quim_ligacoes',tipo:'CE',dif:'dificil',diag:false,pas:true,enun:'A ligação iônica ocorre tipicamente entre dois elementos metálicos.',gab:'E',res:'Ligação iônica ocorre entre metal (doa elétron) e não-metal/ametal (recebe elétron); entre dois metais o mais comum é ligação metálica.'},
+ {id:'fis1',assuntoId:'fis_mecanica',tipo:'CE',dif:'medio',diag:true,enun:'Segundo a primeira lei de Newton, um corpo em repouso tende a permanecer em repouso na ausência de força resultante.',gab:'C',res:'É o princípio da inércia (1ª Lei de Newton).'},
+ {id:'fis2',assuntoId:'fis_astro',tipo:'CE',dif:'facil',diag:false,enun:'A Terra leva aproximadamente 365 dias para completar uma translação ao redor do Sol.',gab:'C',res:'Esse é o período de translação terrestre, que define o ano.'},
+ {id:'cn4',assuntoId:'bio_bioquimica',tipo:'CE',dif:'facil',diag:false,enun:'As proteínas são formadas por unidades menores chamadas aminoácidos.',gab:'C',res:'Aminoácidos são os monômeros que, unidos por ligações peptídicas, formam as proteínas.'},
+ {id:'fis3',assuntoId:'fis_moderna',tipo:'CE',dif:'medio',diag:false,enun:'A luz visível é a única forma de radiação eletromagnética existente.',gab:'E',res:'O espectro eletromagnético inclui também rádio, micro-ondas, infravermelho, ultravioleta, raios X e gama.'},
+ {id:'cn5',assuntoId:'bio_metodo',tipo:'MC',dif:'medio',diag:true,enun:'No método científico, qual etapa costuma vir logo após a formulação da hipótese?',opts:['Publicação dos resultados','Experimentação/teste da hipótese','Conclusão final','Escolha do tema'],gab:1,res:'Depois de formular a hipótese, o passo seguinte é testá-la por meio de experimentação/observação controlada.'},
+ {id:'hum1',assuntoId:'filo_correntes',tipo:'CE',dif:'facil',diag:true,enun:'Sócrates é considerado um marco da filosofia ocidental por defender o método do diálogo e do questionamento (maiêutica).',gab:'C',res:'A maiêutica socrática busca, por meio de perguntas, "dar à luz" o conhecimento no interlocutor.'},
+ {id:'hum2',assuntoId:'geo_urbanizacao',tipo:'CE',dif:'medio',diag:true,enun:'O processo de urbanização acelerada no Brasil ocorreu majoritariamente a partir da segunda metade do século XX.',gab:'C',res:'O êxodo rural e a industrialização impulsionaram forte crescimento urbano no Brasil sobretudo após 1950.'},
+ {id:'hum3',assuntoId:'hist_protagonismo',tipo:'CE',dif:'facil',diag:true,enun:'O Quilombo dos Palmares foi um dos maiores e mais duradouros quilombos do período colonial brasileiro.',gab:'C',res:'Palmares resistiu por a maior parte do século XVII, sendo um símbolo de resistência negra.'},
+ {id:'hum4',assuntoId:'socio_desigualdades',tipo:'CE',dif:'dificil',diag:false,pas:true,enun:'A desigualdade social no Brasil pode ser plenamente compreendida considerando-se apenas o critério de renda, sem relação com raça ou território.',gab:'E',res:'A desigualdade brasileira é multidimensional: renda, raça, gênero e território se entrelaçam (ex.: racismo estrutural, segregação espacial).'},
+ {id:'hum5',assuntoId:'geo_raciocinio',tipo:'CE',dif:'medio',diag:true,enun:'O conceito geográfico de território envolve necessariamente relações de poder sobre um espaço.',gab:'C',res:'Território, diferente de espaço, pressupõe controle/poder (político, econômico ou simbólico) sobre uma área.'},
+ {id:'hum6',assuntoId:'filo_estetica',tipo:'MC',dif:'medio',diag:false,enun:'A estética, como campo da filosofia, estuda principalmente:',opts:['A lógica formal e os silogismos','A experiência da beleza e da arte','As estruturas de poder político','Os fenômenos econômicos'],gab:1,res:'A estética filosófica investiga a natureza da beleza, da arte e do julgamento estético.'},
+ {id:'hum7',assuntoId:'hist_protagonismo',tipo:'CE',dif:'medio',diag:false,enun:'A historiografia contemporânea tem buscado dar maior protagonismo às narrativas indígenas e afro-brasileiras na construção da história do Brasil.',gab:'C',res:'É uma tendência historiográfica recente, presente inclusive nas obras de referência do PAS deste ciclo.'},
+ {id:'hum8',assuntoId:'geo_economia',tipo:'CE',dif:'medio',diag:false,enun:'Questões econômico-ambientais podem ser analisadas sem qualquer relação com impactos sociais das atividades produtivas.',gab:'E',res:'Impactos ambientais (ex.: garimpo, desmatamento) costumam estar diretamente ligados a consequências sociais, como no caso Yanomami.'},
+ {id:'hum9',assuntoId:'filo_logica',tipo:'CE',dif:'medio',diag:true,enun:'Um argumento é considerado logicamente válido quando, se as premissas forem verdadeiras, a conclusão necessariamente também é verdadeira.',gab:'C',res:'Essa é a definição de validade lógica de um argumento dedutivo.'},
+ {id:'hum10',assuntoId:'socio_cultura',tipo:'CE',dif:'facil',diag:false,enun:'A diversidade sociocultural brasileira é fruto, entre outros fatores, da miscigenação entre povos indígenas, europeus e africanos.',gab:'C',res:'A formação do povo brasileiro envolveu esses três grandes grupos, entre outros.'},
+ {id:'hum11',assuntoId:'filo_mitos',tipo:'CE',dif:'medio',diag:false,enun:'Os mitos, embora não sigam os critérios do método científico, possuem uma lógica interna própria que organiza a experiência humana do mundo.',gab:'C',res:'As mitologias são formas de expressão com lógica interna própria, distinta da lógica científica, mas igualmente organizadora de sentido.'},
+ {id:'hum12',assuntoId:'filo_metodo',tipo:'CE',dif:'medio',diag:false,enun:'O conhecimento científico se diferencia de outras formas de discurso sobre o mundo social justamente por não possuir método nem resultados verificáveis.',gab:'E',res:'É o oposto: o conhecimento científico se distingue por ter métodos e resultados verificáveis, diferentemente do senso comum.'},
+ {id:'hum13',assuntoId:'geo_cartografia',tipo:'CE',dif:'medio',diag:false,enun:'Mapas são representações neutras do espaço, sem nenhuma escolha ou intenção por parte de quem os produz.',gab:'E',res:'Toda representação cartográfica envolve escolhas (escala, projeção, o que destacar) que refletem intenções de quem a produz.'},
+ {id:'hum14',assuntoId:'geo_populacao',tipo:'CE',dif:'facil',diag:false,enun:'A distribuição da população humana pelo espaço está relacionada tanto a fatores físicos (relevo, clima, recursos) quanto a fatores sociais e econômicos.',gab:'C',res:'A ocupação do espaço resulta da combinação entre condições físicas e dinâmicas sociais/econômicas.'},
+ {id:'hum15',assuntoId:'geo_atlantico',tipo:'CE',dif:'medio',diag:false,enun:'A formação do espaço Atlântico, conectando África, Europa e América, não teve relação com a exploração colonial.',gab:'E',res:'Pelo contrário: a construção do espaço Atlântico está diretamente ligada à exploração colonial e ao tráfico transatlântico.'},
+ {id:'hum16',assuntoId:'hist_diversidade',tipo:'CE',dif:'dificil',diag:false,pas:true,enun:'Os processos históricos e políticos que constituíram a diversidade sociocultural do Brasil geraram relações socioeconômicas igualitárias entre os diferentes grupos étnicos.',gab:'E',res:'Geraram relações desiguais — a formação da diversidade brasileira envolveu processos de exploração e hierarquização entre grupos.'},
+ {id:'hum17',assuntoId:'hist_colonialidade',tipo:'CE',dif:'medio',diag:false,enun:'Os estudos decoloniais buscam resgatar e reinterpretar os saberes e identidades dos povos afetados pela lógica produtiva e simbólica colonial.',gab:'C',res:'Esse é justamente o objetivo dos estudos decoloniais: relativizar a narrativa colonial hegemônica.'},
+ {id:'hum18',assuntoId:'hist_prehistoria',tipo:'CE',dif:'facil',diag:false,enun:'Havia produção cultural organizada em sociedades da África e da América antes da chegada dos europeus.',gab:'C',res:'Diversas culturas africanas e pré-colombianas tinham organização social e produção cultural complexas antes do contato europeu.'},
+ {id:'hum19',assuntoId:'hist_diaspora',tipo:'CE',dif:'facil',diag:false,enun:'A diáspora atlântica refere-se ao deslocamento forçado de povos africanos para o continente americano no contexto da colonização.',gab:'C',res:'A diáspora atlântica está associada ao tráfico transatlântico de pessoas escravizadas.'},
+ {id:'hum20',assuntoId:'hist_poder',tipo:'CE',dif:'medio',diag:false,enun:'A formação das monarquias nacionais europeias foi um processo anterior e sem relação com as antigas cidades-estado.',gab:'E',res:'Houve um processo histórico de transição das cidades-estado para as monarquias nacionais, com disputas de poder territorial.'},
+ {id:'hum21',assuntoId:'hist_conceitos',tipo:'CE',dif:'medio',diag:false,enun:'Historicidade e geograficidade são formas de registrar e representar a memória sociocultural dos grupos humanos.',gab:'C',res:'Ambas as categorias tratam de como a memória social é registrada em diferentes dimensões (tempo/história e espaço/geografia).'},
+ {id:'hum22',assuntoId:'socio_marcadores',tipo:'CE',dif:'facil',diag:false,enun:'Classe, raça, gênero e religião são exemplos de marcadores sociais que podem influenciar a posição de um indivíduo na sociedade.',gab:'C',res:'Esses são marcadores sociais amplamente discutidos pela sociologia para entender desigualdades e identidades.'},
+ {id:'hum23',assuntoId:'socio_papeis',tipo:'CE',dif:'medio',diag:false,enun:'Na contemporaneidade, os papéis desempenhados por indivíduos e coletividades independem completamente das desigualdades de classe, gênero e etnia.',gab:'E',res:'Esses papéis estão frequentemente condicionados por desigualdades de classe, gênero e etnia presentes no processo produtivo, cultural e político.'},
+ {id:'hum24',assuntoId:'socio_tecnologia',tipo:'CE',dif:'facil',diag:false,enun:'As tecnologias digitais têm influenciado os modos de pensar contemporâneos, sendo um tema relevante para a análise sociológica atual.',gab:'C',res:'A influência das tecnologias digitais sobre a cognição e a vida social é um objeto de análise sociológica contemporânea.'},
+ {id:'hum25',assuntoId:'socio_praticas',tipo:'CE',dif:'medio',diag:false,enun:'As práticas sociais não têm relação com a produção e a ressignificação de discursos e valores em uma sociedade.',gab:'E',res:'As práticas sociais estão diretamente ligadas à produção, significação e ressignificação de discursos e valores.'},
+ {id:'ling1',assuntoId:'port_morfo',tipo:'CE',dif:'medio',diag:true,enun:'Na frase "Os alunos estudaram muito para a prova", o termo "muito" exerce função de advérbio de intensidade.',gab:'C',res:'"Muito" modifica o verbo "estudaram", indicando intensidade — função típica de advérbio.'},
+ {id:'ling2',assuntoId:'port_coesao',tipo:'CE',dif:'dificil',diag:true,pas:true,enun:'A coesão textual refere-se exclusivamente ao uso de conectivos, sem relação com a organização lógica das ideias.',gab:'E',res:'Coesão envolve conectivos, mas também recursos como referenciação e substituição; a organização lógica está mais ligada à coerência, que dialoga com a coesão.'},
+ {id:'ling3',assuntoId:'port_variacao',tipo:'CE',dif:'facil',diag:true,enun:'A norma-padrão é a única forma linguística considerada adequada em qualquer contexto de comunicação.',gab:'E',res:'A adequação linguística depende do contexto; variações informais são adequadas em diversas situações comunicativas.'},
+ {id:'ling4',assuntoId:'lit_trovador',tipo:'CE',dif:'medio',diag:false,enun:'As cantigas de amigo, típicas do trovadorismo galego-português, são geralmente narradas por uma voz feminina.',gab:'C',res:'Diferente da cantiga de amor (voz masculina), a cantiga de amigo tem eu-lírico feminino.'},
+ {id:'ling5',assuntoId:'lit_classic',tipo:'CE',dif:'facil',diag:true,enun:'Luís de Camões é autor de "Os Lusíadas", épico que narra as navegações portuguesas.',gab:'C',res:'"Os Lusíadas" é a principal obra do Classicismo português, de autoria de Camões.'},
+ {id:'ling6',assuntoId:'lit_barroco',tipo:'CE',dif:'medio',diag:false,enun:'O Barroco literário caracteriza-se, entre outros aspectos, pelo conflito entre valores espirituais e materiais.',gab:'C',res:'Esse conflito (fusão barroca) é típico da literatura barroca, presente em Gregório de Matos, por exemplo.'},
+ {id:'ling7',assuntoId:'lit_arcadismo',tipo:'CE',dif:'medio',diag:false,enun:'O Arcadismo valoriza temas como a vida simples no campo (bucolismo) em contraposição à vida urbana.',gab:'C',res:'O ideal bucólico é uma marca central da estética arcádica.'},
+ {id:'ling8',assuntoId:'port_interpret',tipo:'MC',dif:'medio',diag:true,enun:'Identificar o gênero textual de um texto (carta, notícia, poema...) ajuda principalmente a:',opts:['Decorar regras gramaticais','Compreender melhor sua função comunicativa e estrutura esperada','Contar o número de páginas do texto','Memorizar o nome do autor'],gab:1,res:'Reconhecer o gênero orienta expectativas sobre estrutura, finalidade e forma de leitura do texto.'},
+ {id:'ling9',assuntoId:'le_leitura',tipo:'CE',dif:'facil',diag:false,enun:'A leitura em língua estrangeira no PAS avalia apenas vocabulário isolado, sem exigir interpretação do texto.',gab:'E',res:'A prova de língua estrangeira do PAS avalia compreensão leitora e interpretação, não só vocabulário solto.'},
+ {id:'ling10',assuntoId:'lit_contemp',tipo:'CE',dif:'medio',diag:false,enun:'A literatura contemporânea brasileira, incluindo autores indígenas e afrodescendentes, amplia o debate sobre identidade e representatividade.',gab:'C',res:'Autores como Graça Graúna e Jeferson Tenório (presentes nas obras do PAS 1) trazem essas discussões.'},
+
+ /* ===== QUESTÕES OFICIAIS REAIS — PAS 1, Subprograma 2023 (triênio 2023/2025), Cebraspe/UnB, aplicado em 03/12/2023 =====
+    Extraídas do caderno de provas oficial (Parte 2) e conferidas item a item com o gabarito oficial definitivo publicado pela Cebraspe. */
+ {id:'p23_16',assuntoId:'mat_conjuntos',tipo:'CE',dif:'medio',diag:false,oficial:true,ano:2023,itemOriginal:16,fonte:'PAS 1 — Subprograma 2023 (triênio 2023/2025), Cebraspe/UnB, aplicado em 03/12/2023',enun:'Um texto sobre o Cerrado brasileiro afirma que esse bioma detém "5% das espécies de todo o planeta e 30% da biodiversidade nacional". Considerando essa informação, é correto concluir que as espécies do Brasil correspondem a 3/20 das espécies da Terra.',gab:'E',res:'Se o Cerrado tem 5% das espécies do planeta e isso equivale a 30% da biodiversidade brasileira, o total do Brasil é 5%/0,30 ≈ 16,67% (1/6) das espécies da Terra — não 3/20 (15%). Um clássico erro de regra de três.'},
+ {id:'p23_20',assuntoId:'mat_quadratica',tipo:'CE',dif:'dificil',diag:false,pas:true,oficial:true,ano:2023,itemOriginal:20,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'Tabela de produção anual de um pequizeiro entre 10 e 15 anos após o plantio: 10→80, 11→117, 12→152, 13→185, 14→216, 15→245 frutos. Considere que a produção seja dada por Q(t) = -2t² + 108t - 576, para 10 ≤ t ≤ 45. No ano de maior produtividade, o pequizeiro produziu mais de 800 frutos.',gab:'C',res:'Vértice da parábola: t = -b/(2a) = -108/(-4) = 27 (dentro do domínio). Q(27) = -2(729)+108(27)-576 = -1458+2916-576 = 882 > 800. Correto.'},
+ {id:'p23_21',assuntoId:'mat_quadratica',tipo:'CE',dif:'dificil',diag:false,pas:true,oficial:true,ano:2023,itemOriginal:21,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'Ainda sobre o pequizeiro (10→80 frutos, 11→117, ...): se a função Q(t) = -t² + bt - 400 também representasse essa produção, o valor de b deveria ser superior a 80.',gab:'E',res:'Usando t=10, Q(10)=80: -100+10b-400=80 → 10b=580 → b=58. Como 58 não é superior a 80, o item está errado.'},
+ {id:'p23_43',assuntoId:'mat_cartesiano',tipo:'NUM',dif:'medio',diag:false,oficial:true,ano:2023,itemOriginal:43,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'A obra "A última ceia", de Leonardo da Vinci, mede 4,60 m de altura por 8,80 m de largura. Uma reprodução mantém a mesma proporção e tem largura de 22 cm. Calcule, em cm², a área da reprodução (despreze a parte fracionária).',gab:253,res:'Altura da reprodução = 22 × (4,60/8,80) = 11,5 cm. Área = 22 × 11,5 = 253 cm².'},
+ {id:'p23_90',assuntoId:'mat_conjuntos',tipo:'NUM',dif:'dificil',diag:false,pas:true,oficial:true,ano:2023,itemOriginal:90,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'Um relatório da ONU estima que, em 2050, haverá no mundo duas pessoas com mais de 65 anos para cada uma com idade entre 0 e 4 anos. Considere que, em 2050, a população mundial será de 9 bilhões, das quais 10% serão crianças de 0 a 4 anos. Calcule, em dezenas de milhões, a quantidade de pessoas com idade entre 4 e 65 anos (despreze a parte fracionária).',gab:630,res:'Crianças (0–4): 10% de 9 bi = 900 milhões. Pessoas >65: o dobro = 1.800 milhões. Entre 4 e 65: 9.000 − 900 − 1.800 = 6.300 milhões = 630 dezenas de milhões.'},
+ {id:'p23_100',assuntoId:'fis_mecanica',tipo:'NUM',dif:'dificil',diag:false,pas:true,oficial:true,ano:2023,itemOriginal:100,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'Uma cadeira de rodas motorizada (20 kg), transportando uma pessoa de 120 kg, sobe em 25 s uma rampa com desnível h = 1,50 m. Desconsiderando dissipação de energia e usando g = 10 m/s², calcule, em watts, a potência do motor (despreze a parte fracionária).',gab:84,res:'Energia: E = m·g·h = 140×10×1,5 = 2.100 J. Potência = E/t = 2100/25 = 84 W.'},
+ {id:'p23_64',assuntoId:'fis_astro',tipo:'CE',dif:'medio',diag:false,oficial:true,ano:2023,itemOriginal:64,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'A teoria sobre a esfericidade da Terra tem origem no pensamento aristotélico, na Grécia antiga, e pôde ser comprovada na contemporaneidade por meio de imagens de satélites e do GPS.',gab:'C',res:'Correto: Aristóteles defendeu a esfericidade da Terra em "Do Céu"; hoje isso é confirmado por satélites e GPS, tecnologias que dependem de um planeta esférico para funcionar.'},
+ {id:'p23_67',assuntoId:'fis_mecanica',tipo:'CE',dif:'dificil',diag:false,pas:true,oficial:true,ano:2023,itemOriginal:67,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'Somente conhecimentos comprovados por evidências empíricas podem ser considerados científicos; por isso, a teoria de Newton foi completamente descartada quando Einstein reformulou a ideia de espaço-tempo.',gab:'E',res:'Errado: a física newtoniana não foi descartada — continua sendo eficaz para descrever o movimento de corpos no sistema solar e na superfície da Terra; a relatividade só revela seus limites em outras escalas.'},
+ {id:'p23_66',assuntoId:'filo_metodo',tipo:'CE',dif:'medio',diag:false,oficial:true,ano:2023,itemOriginal:66,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'A despeito do que sugerem os terraplanistas, a impossibilidade de reproduzir o Big Bang em laboratório não deslegitima as teorias científicas sobre a origem do universo.',gab:'C',res:'Correto: a ciência valida teorias também por evidências indiretas e previsões testáveis, não apenas por reprodução direta em laboratório.'},
+ {id:'p23_69',assuntoId:'bio_metodo',tipo:'CE',dif:'dificil',diag:false,pas:true,oficial:true,ano:2023,itemOriginal:69,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'A teoria da panspermia cósmica postula que os primeiros seres surgiram nos oceanos e realizavam quimiossíntese a partir de compostos inorgânicos simples.',gab:'E',res:'Errado: a panspermia propõe que a vida (ou seus precursores) veio do espaço — não que tenha surgido nos oceanos terrestres. A descrição do item corresponde a outra hipótese.'},
+ {id:'p23_52',assuntoId:'quim_historia',tipo:'CE',dif:'facil',diag:false,oficial:true,ano:2023,itemOriginal:52,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'Considere a reação a C6H12O6 → b C2H5OH + c CO2, usada na produção de vinho e de etanol combustível. Técnicas experimentais, como a destilação, contribuíram para o desenvolvimento da química enquanto ciência.',gab:'C',res:'Correto: técnicas de separação e purificação como a destilação foram fundamentais para consolidar o método experimental da química.'},
+ {id:'p23_53',assuntoId:'quim_conservacao',tipo:'CE',dif:'medio',diag:false,oficial:true,ano:2023,itemOriginal:53,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'Sobre a mesma reação de fermentação (glicose → etanol + CO2): o etanol é uma fonte de energia não renovável, e sua produção a partir da cana-de-açúcar é motivada pela redução da poluição e do aquecimento global.',gab:'E',res:'Errado: o etanol de cana-de-açúcar é justamente um exemplo de fonte RENOVÁVEL (a cana pode ser replantada) — parte do motivo de seu uso como alternativa mais limpa.'},
+ {id:'p23_54',assuntoId:'quim_ligacoes',tipo:'CE',dif:'dificil',diag:false,pas:true,oficial:true,ano:2023,itemOriginal:54,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'A água gaseificada é obtida a partir da água por adição de gás carbônico sob pressão. Esse processo aumenta a solubilidade do gás carbônico em decorrência de intensas interações intermoleculares.',gab:'C',res:'Correto: sob pressão, mais moléculas de CO2 interagem com as moléculas de água, aumentando sua solubilidade.'},
+ {id:'p23_44',assuntoId:'bio_bioquimica',tipo:'CE',dif:'medio',diag:false,oficial:true,ano:2023,itemOriginal:44,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'Sobre o pão ázimo (assado sem fermento, feito com farinha e água): na sua produção, observa-se um caso de fermentação lática, em que o carboidrato da massa é convertido em CO2 e água.',gab:'E',res:'Errado — pegadinha de leitura: o texto diz que o pão ázimo é feito "sem fermento". Sem fermento, não há fermentação nenhuma acontecendo.'},
+ {id:'p23_45',assuntoId:'bio_bioquimica',tipo:'CE',dif:'medio',diag:false,oficial:true,ano:2023,itemOriginal:45,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'O vinho é produzido com base em fermentação alcoólica, na qual as bactérias presentes no suco da uva esmagada convertem o açúcar em CO2 e álcool.',gab:'E',res:'Errado: quem realiza a fermentação alcoólica são leveduras (fungos), não bactérias.'},
+ {id:'p23_46',assuntoId:'bio_bioquimica',tipo:'CE',dif:'facil',diag:false,oficial:true,ano:2023,itemOriginal:46,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'Nos pães feitos com farinha de trigo, o glúten forma uma rede de proteínas que proporciona elasticidade à massa.',gab:'C',res:'Correto: o glúten é formado por proteínas (glutenina e gliadina) que, hidratadas e sovadas, criam uma rede elástica.'},
+ {id:'p23_47',assuntoId:'geo_economia',tipo:'CE',dif:'medio',diag:false,oficial:true,ano:2023,itemOriginal:47,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'O trigo, matéria-prima do pão e de diversos outros alimentos, é uma commodity, e o Brasil é autossuficiente na sua produção.',gab:'E',res:'Errado: o trigo é de fato uma commodity, mas o Brasil NÃO é autossuficiente — importa parte significativa do que consome.'},
+ {id:'p23_55',assuntoId:'filo_correntes',tipo:'CE',dif:'facil',diag:false,oficial:true,ano:2023,itemOriginal:55,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'Trecho de "O manual de Epicteto": "É ação de quem não se educou acusar os outros pelas coisas que ele próprio faz erroneamente. De quem começou a se educar, acusar a si próprio. De quem já se educou, não acusar os outros nem a si próprio." A educação pode transformar pessoas e sua postura frente aos próprios erros.',gab:'C',res:'Correto: o trecho descreve três estágios (não educado → começando a se educar → já educado), cada um com postura diferente frente ao erro.'},
+ {id:'p23_56',assuntoId:'filo_correntes',tipo:'CE',dif:'medio',diag:false,oficial:true,ano:2023,itemOriginal:56,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'Sobre o mesmo trecho de Epicteto: seu pensamento faz parte da tradição estoica e seus ensinamentos priorizam a ética.',gab:'C',res:'Correto: Epicteto é um dos principais filósofos estoicos, escola que enfatiza a ética e o autocontrole.'},
+ {id:'p23_57',assuntoId:'filo_correntes',tipo:'CE',dif:'dificil',diag:false,pas:true,oficial:true,ano:2023,itemOriginal:57,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'Ainda sobre o trecho: quem já se educou acusa a si próprio quando acusa os outros.',gab:'E',res:'Errado — leitura atenta: quem "já se educou" NÃO acusa nem os outros nem a si próprio. O item inventa uma relação que o texto não afirma.'},
+ {id:'p23_58',assuntoId:'lit_generos',tipo:'MC',dif:'medio',diag:false,oficial:true,ano:2023,itemOriginal:58,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'Na peça Antígona, de Sófocles, Antígona enterra:',opts:['sua irmã, cumprindo as ordens de Édipo, logo não pratica crime algum.','seu pai, contrariando as ordens de Creonte, logo pratica um crime.','sua mãe, cumprindo as ordens de Édipo, logo não pratica crime algum.','seu irmão, contrariando as ordens de Creonte, logo pratica um crime.'],gab:3,res:'Antígona desafia o decreto de Creonte (que proibira sepultar Polinices, tido como traidor) e enterra seu irmão mesmo assim — um ato de desobediência que, pela lei de Creonte, é um crime.'},
+ {id:'p23_73',assuntoId:'lit_arcadismo',tipo:'CE',dif:'medio',diag:false,oficial:true,ano:2023,itemOriginal:73,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'Poema de Cláudio Manoel da Costa: "Torno a ver-vos, ó montes; o destino / Aqui me torna a pôr nestes outeiros [...] Aqui descanse a louca fantasia, / E o que até agora se tornava em pranto / Se converta em afetos de alegria." O poema se organiza com base na expressão poética objetivista, sem expressividade lírica em primeira pessoa.',gab:'E',res:'Errado: o poema é claramente lírico e em primeira pessoa ("Torno a ver-vos", "Aqui estou").'},
+ {id:'p23_74',assuntoId:'lit_arcadismo',tipo:'CE',dif:'medio',diag:false,oficial:true,ano:2023,itemOriginal:74,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'Sobre o mesmo poema: ele se adéqua à estética do Trovadorismo, pela forma como retrata o ambiente natural brasileiro.',gab:'E',res:'Errado: Cláudio Manoel da Costa é autor arcadista, não trovadoresco — o poema usa o bucolismo típico do Arcadismo (vida simples no campo vs. vida na Corte).'},
+ {id:'p23_76',assuntoId:'lit_arcadismo',tipo:'CE',dif:'medio',diag:false,oficial:true,ano:2023,itemOriginal:76,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'Ainda sobre o poema: nele, o sujeito lírico desvaloriza a natureza que por ele mesmo é descrita.',gab:'E',res:'Errado: é o oposto — o eu lírico valoriza a vida simples do campo, dizendo que "o bem desta choupana" vale mais que "da cidade o lisonjeiro encanto".'},
+ {id:'p23_77',assuntoId:'lit_arcadismo',tipo:'CE',dif:'facil',diag:false,oficial:true,ano:2023,itemOriginal:77,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'Ainda sobre o poema: ele pode ser classificado como um soneto, haja vista seu esquema de rimas, métrica e estrofação.',gab:'C',res:'Correto: o poema tem 14 versos em dois quartetos e dois tercetos — a estrutura clássica do soneto.'},
+ {id:'p23_80',assuntoId:'lit_arcadismo',tipo:'MC',dif:'medio',diag:false,oficial:true,ano:2023,itemOriginal:80,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'Considerando o estilo de época do poema, os nomes "Almendro" e "Corino" referem-se a:',opts:['personagens mitológicos da Grécia antiga.','montes aos quais o sujeito lírico dirige o seu discurso.','membros da Corte de onde retorna o sujeito lírico.','"companheiros" do sujeito lírico, transfigurados em pastores árcades.'],gab:3,res:'No Arcadismo, o eu lírico assume um pseudônimo pastoril e convive com "companheiros" também transfigurados em pastores — exatamente o caso de Almendro e Corino.'},
+ {id:'p23_12',assuntoId:'geo_economia',tipo:'CE',dif:'dificil',diag:false,pas:true,oficial:true,ano:2023,itemOriginal:12,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'Os latossolos (solos avermelhados) do bioma Cerrado são ricos em nutrientes, o que garante sua fertilidade e proporciona êxito na produção agropecuária, razão por que a população da região Centro-Oeste se mantém predominantemente rural.',gab:'E',res:'Errado: apesar da força do agronegócio, a população do Centro-Oeste é majoritariamente URBANA — a conclusão não decorre logicamente da premissa sobre o solo.'},
+ {id:'p23_15',assuntoId:'bio_ecologia',tipo:'CE',dif:'medio',diag:false,oficial:true,ano:2023,itemOriginal:15,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'O desmatamento nos biomas brasileiros tende a afetar o clima, uma vez que, quanto menos florestas, maior a concentração de calor na superfície terrestre e menor a retenção da água da chuva.',gab:'C',res:'Correto: florestas regulam temperatura e ajudam a reter água no solo; sua remoção intensifica calor e reduz retenção hídrica.'},
+ {id:'p23_87',assuntoId:'socio_marcadores',tipo:'CE',dif:'medio',diag:false,oficial:true,ano:2023,itemOriginal:87,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'O aumento da expectativa de vida no Brasil não foi acompanhado de políticas de salvaguarda à população idosa, visto que inexiste legislação no país que priorize pessoas com idade acima de 60 anos.',gab:'E',res:'Errado: o Brasil possui legislação específica de proteção ao idoso (como o Estatuto do Idoso) — é falso dizer que "inexiste legislação".'},
+ {id:'p23_88',assuntoId:'geo_urbanizacao',tipo:'CE',dif:'dificil',diag:false,pas:true,oficial:true,ano:2023,itemOriginal:88,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'As revoluções industriais melhoraram condições sanitárias e o acesso à educação e à saúde, porém esse conjunto de políticas não foi suficiente para eliminar as desigualdades socioespaciais, principalmente nos países do Sul global, dada a forma como isso interferiu na dinâmica populacional urbana.',gab:'C',res:'Correto: a industrialização trouxe avanços, mas a urbanização acelerada nos países do Sul global (inclusive o Brasil) ocorreu de forma desigual, gerando periferias precárias.'},
+ {id:'p23_95',assuntoId:'port_coesao',tipo:'CE',dif:'dificil',diag:false,pas:true,oficial:true,ano:2023,itemOriginal:95,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'Em um texto sobre acessibilidade: "Idosos, aqueles que enfrentam problemas de saúde e pessoas com deficiência estão entre os mais prejudicados." O segmento "aqueles que enfrentam problemas de saúde" restringe o sentido do termo "Idosos".',gab:'E',res:'Errado: são três grupos coordenados e distintos (idosos / pessoas com problemas de saúde / pessoas com deficiência), não uma restrição do primeiro pelo segundo.'},
+ {id:'p23_99',assuntoId:'socio_desigualdades',tipo:'CE',dif:'facil',diag:false,oficial:true,ano:2023,itemOriginal:99,fonte:'PAS 1 — Subprograma 2023, Cebraspe/UnB',enun:'A falta de acessibilidade a espaços públicos e privados nas cidades brasileiras pode ser considerada uma forma de exclusão e segregação, pois restringe a mobilidade e o direito de todos os cidadãos aos espaços urbanos.',gab:'C',res:'Correto: acessibilidade é condição para o exercício pleno da cidadania urbana; sua ausência exclui pessoas com deficiência e mobilidade reduzida.'},
+];
+function getQuestao(id){return QUESTOES.find(q=>q.id===id);}
+function questoesPorAssunto(assuntoId){return QUESTOES.filter(q=>q.assuntoId===assuntoId);}
+
+/* ---- Obras oficiais PAS 1 2026-2028 (fonte: cebraspe.org.br, lista divulgada 21/01/2026) ---- */
+const OBRAS = [
+ {id:'m1',cat:'musica',titulo:'O Rubor Sanguinis',autor:'Hildegard Von Bingen'},
+ {id:'m2',cat:'musica',titulo:'Concerto Grosso op.6 HWV 324',autor:'Corelli'},
+ {id:'m3',cat:'musica',titulo:"Dido and Aeneas – Dido's Lament",autor:'Purcell'},
+ {id:'m4',cat:'musica',titulo:'Obrigado Darcy',autor:'Emicida'},
+ {id:'m5',cat:'musica',titulo:'Tiro ao Álvaro (versão Demônios da Garoa)',autor:'Adoniran Barbosa'},
+ {id:'m6',cat:'musica',titulo:'Canto dos Escravos - Canto I',autor:'Clementina de Jesus'},
+ {id:'m7',cat:'musica',titulo:'Libras',autor:'Banda Surdodum'},
+ {id:'m8',cat:'musica',titulo:'Sinfonia das Florestas',autor:'Ricardo Tacuchian'},
+ {id:'m9',cat:'musica',titulo:'Saga da Amazônia (versão Socorro Lira)',autor:'Vital Farias'},
+ {id:'m10',cat:'musica',titulo:'Quatro Contas',autor:'Dona Onete'},
+ {id:'m11',cat:'musica',titulo:'Sinfonia 2 "Brasília" - 3º mov.',autor:'César Guerra Peixe'},
+ {id:'m12',cat:'musica',titulo:'Ondas do mar de Vigo',autor:'Martin Codax'},
+ {id:'m13',cat:'musica',titulo:'Palmares 1999',autor:'Natiruts'},
+ {id:'a1',cat:'arte',titulo:'Manto tupinambá',autor:''},
+ {id:'a2',cat:'arte',titulo:'Universidade de Sankoré',autor:'Mali'},
+ {id:'a3',cat:'arte',titulo:'Forró Pé de Serra',autor:'J. Borges'},
+ {id:'a4',cat:'arte',titulo:'Toca da Entrada do Baixão da Vaca',autor:'Serra da Capivara'},
+ {id:'a5',cat:'arte',titulo:'Ourives trabalhando (Tumba 181)',autor:'Egito antigo'},
+ {id:'a6',cat:'arte',titulo:'Laocoonte e seus filhos',autor:''},
+ {id:'a7',cat:'arte',titulo:'Coliseu',autor:'Roma'},
+ {id:'a8',cat:'arte',titulo:'Mosaico de Teodora',autor:'Ravena'},
+ {id:'a9',cat:'arte',titulo:'Juízo Final',autor:'Vasari/Zuccari'},
+ {id:'a10',cat:'arte',titulo:'Igreja de São Jorge',autor:'Lalibela, Etiópia'},
+ {id:'v1',cat:'audiovisual',titulo:'Guerras do Brasil, ep. 1',autor:'Luiz Bolognesi'},
+ {id:'v2',cat:'audiovisual',titulo:'Abuela Grillo',autor:''},
+ {id:'v3',cat:'audiovisual',titulo:'América Latina',autor:'Fábio Brazz'},
+ {id:'v4',cat:'audiovisual',titulo:'Nego Bispo',autor:'série Trajetórias'},
+ {id:'v5',cat:'audiovisual',titulo:'Clima de Risco',autor:'TV Cultura'},
+ {id:'v6',cat:'audiovisual',titulo:'GPS, como funciona',autor:''},
+ {id:'v7',cat:'audiovisual',titulo:'A física da corrida',autor:'Nerdologia'},
+ {id:'v8',cat:'audiovisual',titulo:'Nobel Prize Chemistry 2025 (MOFs)',autor:'animação'},
+ {id:'v9',cat:'audiovisual',titulo:'Falas da Terra',autor:''},
+ {id:'v10',cat:'audiovisual',titulo:'Terraplanismo, pós-verdade...',autor:'Mariana Alvim, TEDx Goiânia'},
+ {id:'v11',cat:'audiovisual',titulo:"Xondaró Ka'aguy Reguá",autor:''},
+ {id:'t1',cat:'texto',titulo:'Apologia de Sócrates',autor:'Platão'},
+ {id:'t2',cat:'texto',titulo:'Linguagem humana existe há 135 mil anos',autor:'texto de divulgação científica'},
+ {id:'t3',cat:'texto',titulo:'Garimpo de ouro na Amazônia (crise Yanomami)',autor:''},
+ {id:'t4',cat:'texto',titulo:'Artigo científico sobre ciclo de vida de insetos em HQ',autor:''},
+ {id:'t5',cat:'texto',titulo:'A Divina Comédia (versão HQ)',autor:'Dante Alighieri'},
+ {id:'t6',cat:'texto',titulo:'O que tem debaixo da Terra (HQ)',autor:''},
+ {id:'t7',cat:'texto',titulo:'As redes sociais são uma armadilha',autor:'Zygmunt Bauman'},
+ {id:'t8',cat:'texto',titulo:'Discurso no Concílio de Clermont',autor:'Papa Urbano II'},
+ {id:'t9',cat:'texto',titulo:'Ideias para adiar o fim do mundo',autor:'Ailton Krenak'},
+ {id:'t10',cat:'texto',titulo:'A categoria político-cultural de amefricanidade',autor:'Lélia Gonzalez'},
+ {id:'t11',cat:'texto',titulo:'Chuvas, erosão e represas (rio São Francisco)',autor:''},
+ {id:'t12',cat:'texto',titulo:'Programa BiomasBR (monitoramento por satélite)',autor:''},
+ {id:'t13',cat:'texto',titulo:'Atividade antioxidante de frutas do cerrado',autor:'artigo científico'},
+ {id:'t14',cat:'texto',titulo:'Art. 5º, incisos I-XII',autor:'Constituição Federal'},
+ {id:'t15',cat:'texto',titulo:'O Cerrado está morrendo',autor:'Revista Darcy'},
+ {id:'l1',cat:'literatura',titulo:'Cantiga (trovadorismo galego-português)',autor:'Juião Bolseiro',qtd:1},
+ {id:'l2',cat:'literatura',titulo:'Soneto',autor:'Petrarca',qtd:1},
+ {id:'l3',cat:'literatura',titulo:'Poemas selecionados',autor:'Gregório de Matos',qtd:4},
+ {id:'l4',cat:'literatura',titulo:'Sermão do Bom Ladrão',autor:'Padre Antônio Vieira',qtd:1},
+ {id:'l5',cat:'literatura',titulo:'Poemas selecionados',autor:'Cláudio Manuel da Costa',qtd:2},
+ {id:'l6',cat:'literatura',titulo:'Poema(s) selecionado(s)',autor:'Graça Graúna',qtd:1},
+ {id:'l7',cat:'literatura',titulo:'Trecho de romance',autor:'Jeferson Tenório',qtd:1},
+ {id:'l8',cat:'literatura',titulo:'Soneto XVIII',autor:'Shakespeare',qtd:1},
+ {id:'l9',cat:'literatura',titulo:'Epopeia de Gilgamesh',autor:'',qtd:1},
+ {id:'l10',cat:'literatura',titulo:'Cantigas selecionadas',autor:'trovadorismo medieval (4 autores)',qtd:4},
+ {id:'l11',cat:'literatura',titulo:'Poemas selecionados',autor:'Camões',qtd:2},
+ {id:'l12',cat:'literatura',titulo:'Carta a El-Rei D. Manuel',autor:'Pero Vaz de Caminha',qtd:1},
+ {id:'p1',cat:'teatro',titulo:'Medeia',autor:'Eurípides'},
+ {id:'p2',cat:'teatro',titulo:'A Pena e a Lei',autor:'Ariano Suassuna'},
+];
+const CAT_INFO = {musica:{nome:'Música',emoji:'🎵'},arte:{nome:'Artes Visuais',emoji:'🖼️'},audiovisual:{nome:'Audiovisual',emoji:'🎬'},texto:{nome:'Textos',emoji:'📄'},literatura:{nome:'Literatura/Poesia',emoji:'✒️'},teatro:{nome:'Teatro',emoji:'🎭'}};
+
+/* ============================= STATE ============================= */
+function todayISO(){const d=new Date();d.setHours(0,0,0,0);return d.toISOString().slice(0,10);}
+function daysBetween(a,b){return Math.round((b-a)/86400000);}
+function defaultState(){
+  const start = todayISO();
+  return {
+    v:1, startDate:start,
+    profile:{xp:0,streak:0,lastStudyDate:null,timeToday:null,tiredToday:false},
+    diagnostic:{done:false, materiaScore:{}},
+    content:{}, // assuntoId -> {attempts,correct,status,lastSeen,srDue,srInterval}
+    errors:[], // {id,questionId,assuntoId,minhaResposta,correta,motivo,data,tempo,vezes,nextReview,srInterval}
+    qStats:{}, // questionId -> {seen,correct}
+    dailyPlan:null, // {date,tasks:[...]}
+    achievements:[],
+    obrasStatus:{}, // obraId -> 'novo'|'estudando'|'dominado'
+    history:[], // {date, accuracy, dominio}
+  };
+}
+let STATE = load();
+function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    return Object.assign(defaultState(), parsed);
+  }catch(e){return defaultState();}
+}
+function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); }
+
+function contentFor(assuntoId){
+  if(!STATE.content[assuntoId]) STATE.content[assuntoId] = {attempts:0,correct:0,status:'red',lastSeen:null,srDue:null,srInterval:0,firstDate:null};
+  return STATE.content[assuntoId];
+}
+
+/* ============================= PHASE & PRIORITY ============================= */
+function daysLeft(){ return Math.max(0, daysBetween(new Date(), EXAM_DATE)); }
+function totalPlanDays(){ return Math.max(1, daysBetween(new Date(STATE.startDate+'T00:00:00'), EXAM_DATE)); }
+function phaseInfo(){
+  const total = totalPlanDays(), left = daysLeft();
+  const elapsedPct = 1 - (left/total);
+  if(elapsedPct < .25) return {n:1,nome:'Base',foco:'Fundamentos e interpretação',contPrat:[70,30]};
+  if(elapsedPct < .55) return {n:2,nome:'Aprendizado + Exercícios',foco:'Conteúdo + prática crescente',contPrat:[40,60]};
+  if(elapsedPct < .80) return {n:3,nome:'Modo PAS',foco:'Questões estilo PAS e interdisciplinaridade',contPrat:[20,80]};
+  if(elapsedPct < .95) return {n:4,nome:'Simulados',foco:'Simulados e correção de rota',contPrat:[10,90]};
+  return {n:5,nome:'Reta Final',foco:'Revisão, erros recorrentes e estratégia',contPrat:[5,95]};
+}
+function accuracyOf(assuntoId){
+  const c = STATE.content[assuntoId];
+  if(!c || c.attempts===0) return null;
+  return c.correct/c.attempts;
+}
+function statusFromAccuracy(acc, attempts, firstDate){
+  if(attempts===0 || acc===null) return 'red';
+  if(acc<0.40) return 'red';
+  if(acc<0.70) return 'orange';
+  if(acc<0.85) return 'yellow';
+  // green requires retention: at least one attempt logged 2+ days after first attempt
+  if(firstDate){
+    const days = daysBetween(new Date(firstDate+'T00:00:00'), new Date());
+    if(days>=2) return 'green';
+  }
+  return 'yellow';
+}
+function refreshAllStatuses(){
+  ASSUNTOS.forEach(a=>{
+    const c = contentFor(a.id);
+    const acc = c.attempts? c.correct/c.attempts : null;
+    c.status = statusFromAccuracy(acc, c.attempts, c.firstDate);
+  });
+}
+function priorityScore(assunto){
+  const c = contentFor(assunto.id);
+  const acc = c.attempts? c.correct/c.attempts : 0.3; // unseen assumed weak
+  const dificuldade = 1-acc;
+  const erros = STATE.errors.filter(e=>e.assuntoId===assunto.id).length;
+  const dueBoost = (c.srDue && c.srDue<=todayISO()) ? 6 : 0;
+  const masteryPenalty = c.status==='green' ? 8 : 0;
+  return (assunto.peso*2) + (dificuldade*4) + Math.min(erros,5) + dueBoost - masteryPenalty;
+}
+function rankedAssuntos(){
+  return [...ASSUNTOS].sort((a,b)=>priorityScore(b)-priorityScore(a));
+}
+
+/* ============================= SPACED REPETITION ============================= */
+const SR_STEPS = [1,7,15,30];
+function scheduleSR(assuntoId, wasCorrect){
+  const c = contentFor(assuntoId);
+  if(!wasCorrect){ c.srInterval = 0; }
+  else { c.srInterval = Math.min(c.srInterval+1, SR_STEPS.length-1); }
+  const days = SR_STEPS[c.srInterval] || 1;
+  const due = new Date(); due.setDate(due.getDate()+days);
+  c.srDue = due.toISOString().slice(0,10);
+}
+function dueReviewsToday(){
+  const today = todayISO();
+  const contentDue = ASSUNTOS.filter(a=>{const c=contentFor(a.id); return c.srDue && c.srDue<=today;});
+  const errorsDue = STATE.errors.filter(e=>e.nextReview && e.nextReview<=today);
+  return {contentDue, errorsDue};
+}
+
+/* ============================= ERROR NOTEBOOK ============================= */
+const MOTIVOS = ['não sabia o conteúdo','esqueci','interpretação','cálculo','distração','confundiu conceitos','pressa','estratégia inadequada'];
+function registrarErro(q, minhaResposta, tempoSeg, motivo){
+  const existing = STATE.errors.find(e=>e.questionId===q.id && !e.resolvido);
+  if(existing){
+    existing.vezes++; existing.data=todayISO(); existing.minhaResposta=minhaResposta; existing.motivo=motivo;
+    existing.nextReview = addDays(todayISO(),1);
+  } else {
+    STATE.errors.unshift({id:'err_'+Date.now(), questionId:q.id, assuntoId:q.assuntoId, minhaResposta, correta:q.tipo==='MC'?q.opts[q.gab]:q.gab, data:todayISO(), tempo:tempoSeg, vezes:1, motivo, nextReview:addDays(todayISO(),1)});
+  }
+}
+function addDays(iso,n){const d=new Date(iso+'T00:00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);}
+function registrarAcertoErroReview(errId){
+  const e = STATE.errors.find(x=>x.id===errId);
+  if(!e) return;
+  const idx = SR_STEPS.indexOf(e._step||1);
+  e._step = SR_STEPS[Math.min((idx<0?0:idx)+1, SR_STEPS.length-1)];
+  e.nextReview = addDays(todayISO(), e._step);
+  if(e._step>=30) e.resolvido = true;
+}
+
+/* ============================= ANSWER / XP ============================= */
+function answerQuestion(q, correct){
+  if(q.assuntoId){
+    const c = contentFor(q.assuntoId);
+    c.attempts++; if(correct) c.correct++;
+    if(!c.firstDate) c.firstDate = todayISO();
+    c.lastSeen = todayISO();
+    c.status = statusFromAccuracy(c.correct/c.attempts, c.attempts, c.firstDate);
+    scheduleSR(q.assuntoId, correct);
+  }
+  if(!STATE.qStats[q.id]) STATE.qStats[q.id] = {seen:0,correct:0};
+  STATE.qStats[q.id].seen++; if(correct) STATE.qStats[q.id].correct++;
+  STATE.profile.xp += correct? 10 : 3;
+  bumpStreak();
+  save();
+}
+function bumpStreak(){
+  const today = todayISO();
+  if(STATE.profile.lastStudyDate===today) return;
+  const yesterday = addDays(today,-1);
+  STATE.profile.streak = (STATE.profile.lastStudyDate===yesterday) ? STATE.profile.streak+1 : 1;
+  STATE.profile.lastStudyDate = today;
+}
+
+/* ============================= DAILY PLAN ============================= */
+function taskDuration(type){
+  return {aprender:18, questoes:22, revisao:12, obra:12, erros:10}[type] || 15;
+}
+function buildDailyPlan(minutes){
+  const phase = phaseInfo();
+  const {contentDue, errorsDue} = dueReviewsToday();
+  const tasks = [];
+  let budget = minutes;
+  // 1) spaced errors due (highest ROI: known content, fixable fast)
+  if(errorsDue.length && budget>=taskDuration('erros')){
+    tasks.push({id:'t_err',type:'erros',titulo:'Caderno de erros',sub:`Refazer ${Math.min(errorsDue.length,6)} questões que você já errou`,dur:taskDuration('erros'),status:'pendente'});
+    budget -= taskDuration('erros');
+  }
+  // 2) spaced content review due
+  if(contentDue.length && budget>=taskDuration('revisao')){
+    const a = contentDue[0];
+    tasks.push({id:'t_rev',type:'revisao',titulo:`Revisão — ${a.nome}`,sub:`${a.materiaNome} · revisão espaçada`,dur:taskDuration('revisao'),assuntoId:a.id,status:'pendente'});
+    budget -= taskDuration('revisao');
+  }
+  // 3) fill with priority ranked assuntos, respecting phase content/practice ratio
+  const ranked = rankedAssuntos().filter(a=>!tasks.find(t=>t.assuntoId===a.id));
+  const [pctContent] = phase.contPrat;
+  let i=0;
+  while(budget >= 10 && i < ranked.length){
+    const a = ranked[i]; i++;
+    const c = contentFor(a.id);
+    const isNew = c.attempts===0;
+    const useContent = isNew && (Math.random()*100 < pctContent || c.status==='red');
+    if(useContent && budget>=taskDuration('aprender')){
+      tasks.push({id:'t_learn_'+a.id,type:'aprender',titulo:`Aprender — ${a.nome}`,sub:`${a.materiaNome} · nível 1-4`,dur:taskDuration('aprender'),assuntoId:a.id,status:'pendente'});
+      budget -= taskDuration('aprender');
+    } else if(budget>=taskDuration('questoes') && questoesPorAssunto(a.id).length){
+      tasks.push({id:'t_q_'+a.id,type:'questoes',titulo:`Questões — ${a.nome}`,sub:`${a.materiaNome} · treino`,dur:taskDuration('questoes'),assuntoId:a.id,status:'pendente'});
+      budget -= taskDuration('questoes');
+    }
+    if(tasks.length>=6) break;
+  }
+  // 4) obra review if room and phase not too advanced-practice-only
+  const obraPending = OBRAS.find(o=>(STATE.obrasStatus[o.id]||'novo')!=='dominado');
+  if(obraPending && budget>=taskDuration('obra')){
+    tasks.push({id:'t_obra',type:'obra',titulo:'Obra PAS',sub:`${obraPending.titulo}${obraPending.autor? ' — '+obraPending.autor:''}`,dur:taskDuration('obra'),obraId:obraPending.id,status:'pendente'});
+    budget -= taskDuration('obra');
+  }
+  if(!tasks.length){
+    tasks.push({id:'t_fallback',type:'questoes',titulo:'Treino rápido geral',sub:'5 questões variadas',dur:Math.min(minutes,15),status:'pendente'});
+  }
+  return {date:todayISO(), minutes, tasks};
+}
+function ensureTodayPlan(){
+  if(STATE.dailyPlan && STATE.dailyPlan.date===todayISO()) return STATE.dailyPlan;
+  return null;
+}
+
+/* ============================= ICONS ============================= */
+const TASK_ICON = {aprender:'📖',questoes:'✏️',revisao:'🔄',obra:'📚',erros:'🧠'};
+function statusBadge(status){
+  const map = {red:['b-red','🔴 Não iniciado'],orange:['b-orange','🟠 Aprendendo'],yellow:['b-yellow','🟡 Precisa revisar'],green:['b-green','🟢 Dominado']};
+  const [cls,label] = map[status]||map.red;
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+function difBadge(dif,pas){
+  if(pas) return `<span class="badge b-neutral" style="background:var(--accent-2);color:var(--accent-2-ink);border:none;">🔥 Nível PAS</span>`;
+  const map = {facil:['b-green','🟢 Fácil'],medio:['b-yellow','🟡 Médio'],dificil:['b-red','🔴 Difícil']};
+  const [cls,label] = map[dif]||map.medio;
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+/* ============================= ROUTER / RENDER ============================= */
+let ROUTE = 'home';
+let QUIZ_SESSION = null; // {questions:[], idx, correctCount, mode, results:[]}
+let ACTIVE_TASK = null;
+let MODAL = null;
+let MAPA_VIEW = 'lista';
+let MINDMAP_AREA = AREAS[0].id;
+let ASSUNTO_DETAIL_ID = null;
+let FILTERS = {tipo:'all', dif:'all'};
+function applyFilters(list){
+  return list.filter(q=>{
+    if(FILTERS.tipo!=='all' && q.tipo!==FILTERS.tipo) return false;
+    if(FILTERS.dif==='pas' && !q.pas) return false;
+    if(FILTERS.dif!=='all' && FILTERS.dif!=='pas' && q.dif!==FILTERS.dif) return false;
+    return true;
+  });
+}
+function videoSearchUrl(a){ return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(a.nome+' '+a.materiaNome+' aula explicação'); }
+function googleSearchUrl(a){ return 'https://www.google.com/search?q=' + encodeURIComponent(a.nome+' '+a.materiaNome+' resumo explicação'); }
+function truncateLabel(s,n){ return s.length>n? s.slice(0,n-1)+'…' : s; }
+function escapeXML(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function fmtDate(d){return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});}
+function fmtMinutes(m){
+  if(m<60) return m+' min';
+  const h = Math.floor(m/60), rest = m%60;
+  return h+'h'+(rest? String(rest).padStart(2,'0') : '');
+}
+
+function render(){
+  refreshAllStatuses();
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    ${topbarHTML()}
+    <main><div class="view">${viewHTML()}</div></main>
+    ${MODAL? modalHTML(): ''}
+  `;
+  attachEvents();
+  window.scrollTo(0,0);
+}
+
+function topbarHTML(){
+  const left = daysLeft();
+  const tabs = [['home','🏠','Hoje'],['mapa','🗺️','Mapa'],['diagnostico','🧭','Diagnóstico'],['questoes','✏️','Questões'],['erros','🧠','Erros'],['obras','📚','Obras'],['estrategia','🎯','Estratégia'],['progresso','📈','Progresso']];
+  return `
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand"><div class="brand-mark">🌳</div> Ipê <span style="color:var(--muted);font-weight:600;font-size:.8em;">PAS1</span></div>
+      <div class="stat-pills">
+        <div class="pill">🔥 <b>${STATE.profile.streak}</b></div>
+        <div class="pill">⭐ <b>${STATE.profile.xp}</b></div>
+        <div class="pill days">Faltam <b>${left}</b> dias</div>
+      </div>
+    </div>
+    <div class="tabs">
+      ${tabs.map(([id,icon,label])=>`<button class="tab ${ROUTE===id?'active':''}" data-route="${id}">${icon} ${label}</button>`).join('')}
+    </div>
+  </div>`;
+}
+
+function viewHTML(){
+  switch(ROUTE){
+    case 'home': return homeView();
+    case 'mapa': return mapaView();
+    case 'diagnostico': return diagnosticoView();
+    case 'questoes': return questoesView();
+    case 'erros': return errosView();
+    case 'obras': return obrasView();
+    case 'estrategia': return estrategiaView();
+    case 'progresso': return progressoView();
+    default: return homeView();
+  }
+}
+
+/* ---------- HOME ---------- */
+function homeView(){
+  if(ACTIVE_TASK) return taskRunnerHTML();
+  const total = ASSUNTOS.length;
+  const green = ASSUNTOS.filter(a=>contentFor(a.id).status==='green').length;
+  const domPct = Math.round(green/total*100);
+  const phase = phaseInfo();
+  const plan = ensureTodayPlan();
+  const {contentDue, errorsDue} = dueReviewsToday();
+  const weakest = weakestAssunto(); const strongest = strongestAssunto();
+
+  return `
+  <div class="card">
+    <div class="row-between">
+      <div>
+        <div class="label-eyebrow">Fase ${phase.n} de 5 · ${phase.nome}</div>
+        <h1 style="font-size:1.3rem;margin-top:2px;">${domPct}% do conteúdo do PAS 1 dominado</h1>
+      </div>
+      <div style="text-align:right;">
+        <div class="mono" style="font-size:1.6rem;font-weight:700;color:var(--accent);">${daysLeft()}</div>
+        <div class="label-eyebrow">dias até a prova</div>
+      </div>
+    </div>
+    <div class="bar" style="margin-top:10px;"><div style="width:${domPct}%"></div></div>
+  </div>
+
+  ${alertsHTML()}
+
+  ${!plan ? `
+  <div class="card">
+    <div class="section-title"><h2>Quanto tempo você tem hoje?</h2></div>
+    <div class="time-choice" style="margin-top:8px;">
+      ${[30,60,90,120,180].map(m=>`<button data-time="${m}">${fmtMinutes(m)}</button>`).join('')}
+      <button data-time="custom">Outro</button>
+    </div>
+    <button class="btn btn-ghost btn-block" style="margin-top:10px;" data-action="tired">😮‍💨 Hoje estou cansado — sessão curta</button>
+  </div>` : `
+  <div class="card">
+    <div class="section-title row-between"><h2>O que estudar hoje?</h2><button class="btn btn-ghost btn-sm" data-action="replan">Refazer plano</button></div>
+    <div style="margin-top:4px;">
+      ${plan.tasks.map(t=>taskRowHTML(t)).join('')}
+    </div>
+    <hr style="margin:10px 0;">
+    <div class="row-between">
+      <span class="label-eyebrow">Total: ${plan.tasks.reduce((s,t)=>s+t.dur,0)} min</span>
+      <span class="label-eyebrow">${plan.tasks.filter(t=>t.status==='concluida').length}/${plan.tasks.length} concluídas</span>
+    </div>
+  </div>`}
+
+  <div class="grid2">
+    <div class="card-flat">
+      <div class="label-eyebrow">Maior ponto fraco</div>
+      <div style="font-weight:700;margin-top:4px;">${weakest? weakest.nome : '—'}</div>
+      <div style="font-size:.8rem;color:var(--muted);">${weakest? weakest.materiaNome : 'Continue praticando'}</div>
+    </div>
+    <div class="card-flat">
+      <div class="label-eyebrow">Maior ponto forte</div>
+      <div style="font-weight:700;margin-top:4px;">${strongest? strongest.nome : '—'}</div>
+      <div style="font-size:.8rem;color:var(--muted);">${strongest? strongest.materiaNome : 'Ainda sem dados'}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title"><h2>Revisões de hoje</h2></div>
+    ${(contentDue.length+errorsDue.length)===0 ? `<div class="empty">Nenhuma revisão pendente hoje. 🎉</div>` : `
+      <div style="font-size:.85rem;color:var(--ink-soft);">
+        ${contentDue.length? `<div>🔄 ${contentDue.length} assunto(s) com revisão espaçada vencida</div>`:''}
+        ${errorsDue.length? `<div>🧠 ${errorsDue.length} questão(ões) do caderno de erros para refazer</div>`:''}
+      </div>`}
+  </div>`;
+}
+
+function taskRowHTML(t){
+  const done = t.status==='concluida';
+  const skipped = t.status==='pulada';
+  return `<div class="task ${done?'done':''}" data-task="${t.id}">
+    <div class="task-icon" style="${skipped?'opacity:.5;':''}">${TASK_ICON[t.type]||'📘'}</div>
+    <div class="task-body" style="${skipped?'opacity:.5;':''}">
+      <div class="task-title">${t.titulo}</div>
+      <div class="task-sub">${t.sub} · ${t.dur} min${skipped? ' · adiada para depois':''}</div>
+    </div>
+    ${done ? `<span class="badge b-green">✓</span>` : skipped ? `<button class="btn btn-ghost btn-sm" data-action="start-task" data-task="${t.id}">Retomar</button>` : `
+      <div class="row" style="gap:6px;">
+        <button class="btn btn-ghost btn-sm" data-action="skip-task" data-task="${t.id}">Pular</button>
+        <button class="btn btn-primary btn-sm" data-action="start-task" data-task="${t.id}">Iniciar</button>
+      </div>`}
+  </div>`;
+}
+
+function weakestAssunto(){
+  const seen = ASSUNTOS.filter(a=>contentFor(a.id).attempts>0);
+  if(!seen.length) return null;
+  return seen.sort((a,b)=>(accuracyOf(a.id)) - (accuracyOf(b.id)))[0];
+}
+function strongestAssunto(){
+  const seen = ASSUNTOS.filter(a=>contentFor(a.id).attempts>=2);
+  if(!seen.length) return null;
+  return seen.sort((a,b)=>(accuracyOf(b.id)) - (accuracyOf(a.id)))[0];
+}
+
+function alertsHTML(){
+  const alerts = [];
+  // no diagnostic
+  if(!STATE.diagnostic.done){
+    alerts.push({icon:'🧭',text:'Você ainda não fez o diagnóstico inicial. Ele define seu plano — faça antes de continuar.',action:'diagnostico'});
+  }
+  // materia sem revisão há muitos dias
+  AREAS.forEach(area=>area.materias.forEach(mat=>{
+    const seenDates = mat.assuntos.map(a=>contentFor(a.id).lastSeen).filter(Boolean);
+    if(seenDates.length){
+      const mostRecent = seenDates.sort().reverse()[0];
+      const dias = daysBetween(new Date(mostRecent+'T00:00:00'), new Date());
+      if(dias>=10) alerts.push({icon:'⚠️',text:`Você não revisa ${mat.nome} há ${dias} dias.`});
+    }
+  }));
+  const left = daysLeft();
+  if(left<=20 && left>0) alerts.push({icon:'🎯',text:`Faltam ${left} dias. É hora de intensificar simulados e revisão.`});
+  if(!alerts.length) return '';
+  return alerts.slice(0,3).map(a=>`<div class="card-flat row" style="border-left:3px solid var(--accent-2);">${a.icon} <span style="font-size:.86rem;">${a.text}</span></div>`).join('');
+}
+
+/* ---------- TASK RUNNER ---------- */
+function taskRunnerHTML(){
+  const t = ACTIVE_TASK;
+  if(QUIZ_SESSION) return quizRunnerHTML();
+  if(t.type==='aprender') return aprenderHTML(t);
+  if(t.type==='obra') return obraStudyHTML(t);
+  return `<div class="empty">Tarefa desconhecida</div>`;
+}
+
+function aprenderHTML(t){
+  const a = getAssunto(t.assuntoId);
+  const nivel = t._nivel || 1;
+  const niveis = [
+    {t:'Nível 1 · Explicação simples', c:`Imagine explicar "${a.nome}" para alguém de 10 anos: pense na ideia central em uma frase bem simples, sem termos técnicos. Anote essa frase no caderno antes de avançar.`},
+    {t:'Nível 2 · Exemplo do cotidiano', c:`Pense em uma situação do dia a dia relacionada a "${a.nome}" (${a.materiaNome}). Um exemplo real ajuda a fixar o conceito antes da definição formal.`},
+    {t:'Nível 3 · Conceito correto', c:`Agora estude o conceito formal de "${a.nome}" no seu material (livro, apostila ou aula). Habilidades relacionadas: ${a.hab}.`},
+    {t:'Nível 4 · Exemplo resolvido', c:`Busque no seu material um exemplo já resolvido sobre "${a.nome}" e refaça a resolução passo a passo, sem olhar a resposta.`},
+    {t:'Nível 5 · Questão guiada', c:`Vá para o banco de questões e responda 1 questão de "${a.nome}" com calma, pensando em voz alta o motivo de cada passo.`},
+    {t:'Nível 6 · Sozinho', c:`Responda mais 2 questões de "${a.nome}" sem ajuda, cronometrando o tempo.`},
+    {t:'Nível 7 · Estilo PAS', c:`Para fechar, tente uma questão marcada como 🔥 Nível PAS neste assunto, se houver — é o nível de exigência da prova.`},
+  ];
+  const n = niveis[nivel-1];
+  return `
+  <div class="card qcard">
+    <div class="row-between">
+      <span class="badge b-neutral">${a.materiaNome} · ${a.areaNome}</span>
+      <button class="btn btn-ghost btn-sm" data-action="cancel-task">Sair</button>
+    </div>
+    <h2>${a.nome}</h2>
+    <div class="bar"><div style="width:${nivel/7*100}%"></div></div>
+    <div class="label-eyebrow">${n.t}</div>
+    <p class="qstatement" style="font-size:.95rem;">${n.c}</p>
+    <div class="row" style="justify-content:flex-end;">
+      ${nivel<7 ? `<button class="btn btn-primary" data-action="nivel-next">Entendi, avançar</button>` : `
+      ${questoesPorAssunto(a.id).length ? `<button class="btn btn-primary" data-action="go-quiz" data-assunto="${a.id}">Ir para questões</button>` : `<button class="btn btn-primary" data-action="complete-task">Concluir</button>`}`}
+    </div>
+  </div>`;
+}
+
+function obraStudyHTML(t){
+  const o = OBRAS.find(x=>x.id===t.obraId);
+  const cat = CAT_INFO[o.cat];
+  return `
+  <div class="card qcard">
+    <div class="row-between"><span class="badge b-neutral">${cat.emoji} ${cat.nome}</span><button class="btn btn-ghost btn-sm" data-action="cancel-task">Sair</button></div>
+    <h2>${o.titulo}</h2>
+    <p style="color:var(--ink-soft);">${o.autor||'Autoria/origem a confirmar no material oficial'}${o.qtd? ' · '+o.qtd+' peça(s) selecionada(s)':''}</p>
+    <div class="card-flat" style="font-size:.85rem;">
+      Estude esta obra no material oficial (Cebraspe/UnB) e registre aqui suas próprias anotações: contexto, tema central e uma possível forma de cobrança na prova. A análise aprofundada de cada obra é a próxima etapa da plataforma — por enquanto, use esta tela para orientar sua leitura e marcar o status.
+    </div>
+    <div class="row" style="gap:8px;">
+      <button class="btn btn-secondary" data-action="obra-status" data-obra="${o.id}" data-status="estudando">🟠 Estudando</button>
+      <button class="btn btn-primary" data-action="obra-status" data-obra="${o.id}" data-status="dominado">🟢 Dominado</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- QUIZ RUNNER ---------- */
+function startQuiz(list, mode){
+  if(!list.length){ alert('Nenhuma questão disponível — tente afrouxar os filtros de tipo/dificuldade ou escolher outro assunto.'); ACTIVE_TASK=null; ROUTE='questoes'; render(); return; }
+  QUIZ_SESSION = {questions:list, idx:0, correctCount:0, mode, startTs:Date.now(), qStartTs:Date.now(), answered:false, results:[]};
+  render();
+}
+function quizRunnerHTML(){
+  if(!QUIZ_SESSION) return `<div class="empty">Sessão não iniciada.</div>`;
+  const s = QUIZ_SESSION;
+  if(s.idx>=s.questions.length) return quizResultHTML();
+  const q = s.questions[s.idx];
+  const a = q.assuntoId ? getAssunto(q.assuntoId) : null;
+  return `
+  <div class="card qcard">
+    <div class="row-between">
+      <span class="label-eyebrow">Questão ${s.idx+1}/${s.questions.length}</span>
+      <button class="btn btn-ghost btn-sm" data-action="cancel-task">Sair</button>
+    </div>
+    <div class="qmeta">
+      <span class="badge b-neutral">${a ? a.materiaNome : 'Obras PAS'}</span>
+      ${difBadge(q.dif,q.pas)}
+      <span class="badge b-neutral">${q.tipo==='CE'?'Certo/Errado':q.tipo==='NUM'?'Resposta numérica':'Múltipla escolha'}</span>
+      ${q.oficial? `<span class="badge" style="background:var(--accent);color:var(--accent-ink);">🏛️ Oficial PAS ${q.ano}</span>` : `<span class="badge b-neutral" style="opacity:.65;">✍️ Treino</span>`}
+    </div>
+    <p class="qstatement">${q.enun}</p>
+    ${quizOptionsHTML(q,s)}
+    ${s.answered ? quizFeedbackHTML(q,s) : ''}
+  </div>`;
+}
+function quizOptionsHTML(q,s){
+  if(q.tipo==='CE'){
+    const chosen = s.answered ? s.results[s.idx].resposta : null;
+    return `<div class="opt-row">
+      <button class="opt ${s.answered? (q.gab==='C'?'correct':(chosen==='C'?'wrong':'')):''}" data-action="answer" data-val="C" ${s.answered?'disabled':''}>CERTO</button>
+      <button class="opt ${s.answered? (q.gab==='E'?'correct':(chosen==='E'?'wrong':'')):''}" data-action="answer" data-val="E" ${s.answered?'disabled':''}>ERRADO</button>
+    </div>`;
+  }
+  if(q.tipo==='NUM'){
+    const answered = s.answered;
+    const val = answered ? s.results[s.idx].resposta : '';
+    return `<div class="row" style="gap:8px;">
+      <input type="number" id="numAnswer" class="chip-input" style="flex:1;" placeholder="Sua resposta (número)" value="${val}" ${answered?'disabled':''}>
+      ${!answered? `<button class="btn btn-primary" data-action="answer-num">Confirmar</button>` : ''}
+    </div>
+    ${answered? `<p style="font-size:.82rem;color:var(--muted);">Resposta oficial: <b class="mono">${q.gab}</b></p>` : ''}`;
+  }
+  const chosen = s.answered ? s.results[s.idx].resposta : null;
+  return q.opts.map((op,i)=>`<button class="opt ${s.answered? (i===q.gab?'correct':(i===chosen?'wrong':'')):''}" style="display:block;width:100%;margin-bottom:8px;" data-action="answer" data-val="${i}" ${s.answered?'disabled':''}>${op}</button>`).join('');
+}
+function quizFeedbackHTML(q,s){
+  const r = s.results[s.idx];
+  return `
+  <div class="card-flat" style="border-left:3px solid ${r.correct?'var(--green)':'var(--red)'};">
+    <div style="font-weight:700;color:${r.correct?'var(--green)':'var(--red)'};">${r.correct?'✓ Você acertou':'✗ Você errou'}</div>
+    <p style="font-size:.88rem;margin:6px 0 0;">${q.res}</p>
+    ${q.oficial? `<p style="font-size:.74rem;color:var(--muted);margin-top:6px;">Fonte: ${q.fonte} — item ${q.itemOriginal}.</p>` : ''}
+  </div>
+  ${(!r.correct && q.assuntoId) ? `
+  <div>
+    <div class="label-eyebrow" style="margin-bottom:6px;">Por que você acha que errou?</div>
+    <select class="chip-input" data-field="motivo">
+      ${MOTIVOS.map(m=>`<option value="${m}">${m}</option>`).join('')}
+    </select>
+  </div>` : ''}
+  <button class="btn btn-primary btn-block" data-action="next-question">${s.idx+1<s.questions.length? 'Próxima questão':'Ver resultado'}</button>`;
+}
+function quizResultHTML(){
+  const s = QUIZ_SESSION;
+  const acc = Math.round(s.correctCount/s.questions.length*100);
+  const totalTime = Math.round((Date.now()-s.startTs)/1000);
+  return `
+  <div class="card" style="text-align:center;">
+    <div class="label-eyebrow">Resultado</div>
+    <div style="font-size:2.2rem;font-weight:800;font-family:var(--font-display);color:var(--accent);">${acc}%</div>
+    <div style="color:var(--muted);font-size:.85rem;">${s.correctCount} de ${s.questions.length} corretas · ${totalTime}s</div>
+    <div class="row" style="justify-content:center;gap:10px;margin-top:14px;">
+      <button class="btn btn-secondary" data-action="cancel-task">Voltar</button>
+      <button class="btn btn-primary" data-action="finish-task">Concluir tarefa</button>
+    </div>
+  </div>`;
+}
+function submitAnswer(val){
+  const s = QUIZ_SESSION; const q = s.questions[s.idx];
+  const correct = q.tipo==='CE' ? (val===q.gab) : (Number(val)===q.gab);
+  const tempo = Math.round((Date.now()-s.qStartTs)/1000);
+  s.results[s.idx] = {resposta: q.tipo==='CE'? val : Number(val), correct, tempo};
+  if(correct) s.correctCount++;
+  answerQuestion(q, correct);
+  s.answered = true;
+  render();
+}
+function finalizeCurrentAnswer(){
+  const s = QUIZ_SESSION; const q = s.questions[s.idx]; const r = s.results[s.idx];
+  if(!r.correct && q.assuntoId){
+    const sel = document.querySelector('[data-field="motivo"]');
+    const motivo = sel? sel.value : MOTIVOS[0];
+    registrarErro(q, r.resposta, r.tempo, motivo);
+  }
+  s.idx++; s.answered=false; s.qStartTs=Date.now();
+  save(); render();
+}
+
+/* ---------- MAPA ---------- */
+function mapaView(){
+  const total = ASSUNTOS.length;
+  const green = ASSUNTOS.filter(a=>contentFor(a.id).status==='green').length;
+  return `
+  <div class="card">
+    <div class="section-title row-between"><h2>Mapa do PAS 1</h2><span class="mono" style="font-weight:700;color:var(--accent);">${Math.round(green/total*100)}%</span></div>
+    <div class="bar"><div style="width:${Math.round(green/total*100)}%"></div></div>
+  </div>
+  <div class="row" style="gap:6px;">
+    <button class="btn ${MAPA_VIEW==='lista'?'btn-primary':'btn-secondary'} btn-sm" data-action="mapa-view" data-view="lista">📋 Lista</button>
+    <button class="btn ${MAPA_VIEW==='arvore'?'btn-primary':'btn-secondary'} btn-sm" data-action="mapa-view" data-view="arvore">🌳 Árvore</button>
+    <button class="btn ${MAPA_VIEW==='status'?'btn-primary':'btn-secondary'} btn-sm" data-action="mapa-view" data-view="status">📊 Por status</button>
+  </div>
+  ${MAPA_VIEW==='arvore' ? treeView() : MAPA_VIEW==='status' ? statusView() : mapaListaView()}
+  `;
+}
+
+function mapaListaView(){
+  return `
+  ${AREAS.map(area=>`
+    <div class="card">
+      <div class="section-title"><h2>${area.emoji} ${area.nome}</h2></div>
+      ${area.interdisciplinar ? `<p style="font-size:.8rem;color:var(--muted);margin:-6px 0 4px;">No PAS 1, ${area.nome} é cobrada de forma interdisciplinar — as questões costumam misturar as 4 matérias. A divisão abaixo é só organizacional, para facilitar seu estudo.</p>` : ''}
+      ${area.materias.map(mat=>`
+        <details class="tree-materia">
+          <summary>${mat.nome} <span class="label-eyebrow">${mat.assuntos.filter(a=>contentFor(a.id).status==='green').length}/${mat.assuntos.length}</span></summary>
+          ${mat.assuntos.map(a=>{
+            const c = contentFor(a.id);
+            return `<div class="assunto-row">
+              <span class="status-dot dot-${c.status}"></span>
+              <span class="name" style="cursor:pointer;" data-action="assunto-detail" data-assunto="${a.id}">${a.nome}</span>
+              <span class="hab">${a.hab}</span>
+              <button class="btn btn-ghost btn-sm" data-action="practice-assunto" data-assunto="${a.id}">Praticar</button>
+            </div>`;
+          }).join('')}
+        </details>
+      `).join('')}
+    </div>
+  `).join('')}
+  <div class="footer-note">Status: 🔴 não iniciado · 🟠 aprendendo (40-69% de acerto) · 🟡 precisa revisar (70-84%) · 🟢 dominado (85%+ com retenção após alguns dias). Toque no nome de um assunto para ver detalhes, estudar ou buscar uma explicação.</div>
+  `;
+}
+
+function statusView(){
+  const groups = {red:[], orange:[], yellow:[], green:[]};
+  ASSUNTOS.forEach(a=>{ groups[contentFor(a.id).status].push(a); });
+  const labels = {
+    red:['🔴 Não iniciado','Ainda não começou — são os que mais pesam na prioridade.'],
+    orange:['🟠 Aprendendo','Já viu o conteúdo, mas o acerto ainda está baixo (40–69%).'],
+    yellow:['🟡 Precisa revisar','Está indo bem (70–84%) — reforce com revisão espaçada.'],
+    green:['🟢 Dominado','85%+ de acerto com retenção após alguns dias. Foco em manutenção.'],
+  };
+  return ['red','orange','yellow','green'].map(status=>{
+    const list = groups[status];
+    return `<div class="card">
+      <div class="section-title row-between"><h2>${labels[status][0]}</h2><span class="mono" style="color:var(--muted);">${list.length}</span></div>
+      <p style="font-size:.8rem;color:var(--muted);margin:-4px 0 8px;">${labels[status][1]}</p>
+      ${list.length? list.map(a=>`
+        <div class="assunto-row" style="cursor:pointer;" data-action="assunto-detail" data-assunto="${a.id}">
+          <span class="status-dot dot-${status}"></span>
+          <span class="name">${a.nome}</span>
+          <span class="hab" style="font-family:var(--font-body);">${a.materiaNome}</span>
+        </div>`).join('') : `<div class="empty" style="padding:12px;">Nenhum assunto aqui ainda.</div>`}
+    </div>`;
+  }).join('');
+}
+
+function computeMindMap(area){
+  const multi = area.materias.length>1;
+  const rMateria = multi? 95: 0;
+  const rAssunto = multi? 185: 150;
+  const size = Math.round((rAssunto+95)*2);
+  const cx = size/2, cy = size/2;
+  const totalAssuntos = area.materias.reduce((s,m)=>s+m.assuntos.length,0);
+  const gap = multi? (Math.PI*2*0.025) : 0;
+  let angleCursor = -Math.PI/2;
+  const nodes = [], links = [];
+  area.materias.forEach(mat=>{
+    const sectorAngle = (mat.assuntos.length/totalAssuntos) * (Math.PI*2 - gap*area.materias.length);
+    const matMid = angleCursor + sectorAngle/2;
+    let matX=cx, matY=cy;
+    if(multi){
+      matX = cx + rMateria*Math.cos(matMid);
+      matY = cy + rMateria*Math.sin(matMid);
+      nodes.push({type:'materia', nome:mat.nome, x:matX, y:matY});
+      links.push({x1:cx,y1:cy,x2:matX,y2:matY});
+    }
+    const n = mat.assuntos.length;
+    mat.assuntos.forEach((a,i)=>{
+      const ang = angleCursor + (sectorAngle*(i+0.5)/n);
+      const ax = cx + rAssunto*Math.cos(ang);
+      const ay = cy + rAssunto*Math.sin(ang);
+      nodes.push({type:'assunto', id:a.id, nome:a.nome, status:contentFor(a.id).status, x:ax, y:ay, angle:ang});
+      links.push({x1:matX,y1:matY,x2:ax,y2:ay});
+    });
+    angleCursor += sectorAngle + gap;
+  });
+  return {nodes, links, cx, cy, size};
+}
+
+function nodeSVG(n){
+  if(n.type==='materia'){
+    return `<g>
+      <circle cx="${n.x}" cy="${n.y}" r="5" style="fill:var(--accent-2);"/>
+      <text x="${n.x}" y="${n.y-10}" text-anchor="middle" font-size="10.5" font-weight="800" style="fill:var(--ink);font-family:var(--font-body);">${escapeXML(truncateLabel(n.nome,20))}</text>
+    </g>`;
+  }
+  const colorMap = {red:'var(--red)',orange:'var(--orange)',yellow:'var(--yellow)',green:'var(--green)'};
+  const dx = Math.cos(n.angle), dy = Math.sin(n.angle);
+  const labelX = n.x + dx*12, labelY = n.y + dy*12 + 3;
+  const anchor = dx > 0.2 ? 'start' : dx < -0.2 ? 'end' : 'middle';
+  return `<g style="cursor:pointer;" data-action="assunto-detail" data-assunto="${n.id}">
+    <title>${escapeXML(n.nome)}</title>
+    <circle cx="${n.x}" cy="${n.y}" r="6" style="fill:${colorMap[n.status]||'var(--muted)'};stroke:var(--surface);stroke-width:1.5;"/>
+    <text x="${labelX}" y="${labelY}" text-anchor="${anchor}" font-size="8.5" style="fill:var(--ink-soft);font-family:var(--font-body);">${escapeXML(truncateLabel(n.nome,22))}</text>
+  </g>`;
+}
+
+function treeView(){
+  const area = AREAS.find(a=>a.id===MINDMAP_AREA) || AREAS[0];
+  const mm = computeMindMap(area);
+  return `
+  <div class="card">
+    <div class="section-title"><h2>Árvore de conteúdo</h2></div>
+    <div class="tabs" style="padding:0 0 10px;">
+      ${AREAS.map(ar=>`<button class="tab ${MINDMAP_AREA===ar.id?'active':''}" data-action="mindmap-area" data-area="${ar.id}">${ar.emoji} ${ar.nome}</button>`).join('')}
+    </div>
+    <div style="overflow:auto;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface-2);">
+      <svg width="${mm.size}" height="${mm.size}" viewBox="0 0 ${mm.size} ${mm.size}" style="display:block;margin:0 auto;">
+        ${mm.links.map(l=>`<line x1="${l.x1}" y1="${l.y1}" x2="${l.x2}" y2="${l.y2}" style="stroke:var(--border);stroke-width:1.5;"/>`).join('')}
+        <circle cx="${mm.cx}" cy="${mm.cy}" r="26" style="fill:var(--accent);"/>
+        <text x="${mm.cx}" y="${mm.cy+4}" text-anchor="middle" font-size="18" style="font-family:var(--font-body);">${area.emoji}</text>
+        ${mm.nodes.map(n=>nodeSVG(n)).join('')}
+      </svg>
+    </div>
+    <div class="footer-note">Toque em um assunto para ver detalhes, estudar ou praticar. As cores mostram seu domínio atual. Em assuntos com muitos itens (como Matemática) os rótulos ficam apertados — use a Lista para ler os nomes completos.</div>
+  </div>`;
+}
+
+function assuntoDetailModalHTML(id){
+  const a = getAssunto(id);
+  if(!a) return '';
+  const c = contentFor(id);
+  const acc = c.attempts? Math.round(c.correct/c.attempts*100) : null;
+  const nQ = applyFilters(questoesPorAssunto(id)).length;
+  return `<div class="modal-bg" data-action="close-modal"><div class="modal" onclick="event.stopPropagation()">
+    <div class="row-between">
+      <span class="badge b-neutral">${a.areaNome} · ${a.materiaNome}</span>
+      <button class="btn btn-ghost btn-sm" data-action="close-modal">✕</button>
+    </div>
+    <h3 style="margin-top:10px;">${a.nome}</h3>
+    <div class="row" style="gap:8px;margin:6px 0 10px;flex-wrap:wrap;">
+      ${statusBadge(c.status)}
+      <span class="badge b-neutral mono">${a.hab}</span>
+    </div>
+    ${acc!==null ? `
+    <div class="card-flat" style="margin-bottom:12px;">
+      <div class="row-between"><span style="font-size:.82rem;">Seu desempenho</span><span class="mono" style="font-weight:700;">${acc}%</span></div>
+      <div class="bar" style="margin-top:6px;"><div style="width:${acc}%"></div></div>
+      <div style="font-size:.75rem;color:var(--muted);margin-top:4px;">${c.correct}/${c.attempts} corretas</div>
+    </div>` : `<p style="font-size:.85rem;color:var(--muted);margin-bottom:12px;">Você ainda não praticou este assunto.</p>`}
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button class="btn btn-primary btn-block" data-action="detail-aprender" data-assunto="${id}">📖 Estudar passo a passo</button>
+      <button class="btn btn-secondary btn-block" data-action="detail-praticar" data-assunto="${id}" ${!nQ?'disabled':''}>✏️ Praticar questões (${nQ})</button>
+      <a class="btn btn-ghost btn-block" href="${videoSearchUrl(a)}" target="_blank" rel="noopener">🎥 Buscar explicação em vídeo</a>
+      <a class="btn btn-ghost btn-block" href="${googleSearchUrl(a)}" target="_blank" rel="noopener">🔍 Buscar explicação escrita</a>
+    </div>
+    <p class="footer-note" style="padding:10px 0 0;">Os botões de busca abrem o YouTube/Google já com o termo do assunto — a plataforma ainda não tem vídeos próprios selecionados manualmente, então confira a fonte antes de confiar 100%.</p>
+  </div></div>`;
+}
+
+/* ---------- DIAGNÓSTICO ---------- */
+function diagnosticoView(){
+  if(ACTIVE_TASK && ACTIVE_TASK.type==='diagnostico') return quizRunnerHTML();
+  if(STATE.diagnostic.done){
+    const scores = STATE.diagnostic.materiaScore;
+    return `
+    <div class="card">
+      <h2>Diagnóstico concluído</h2>
+      <p style="color:var(--muted);font-size:.85rem;">Resultado usado para montar seu plano. Você pode refazer quando quiser.</p>
+      ${Object.entries(scores).map(([materiaId,s])=>{
+        const mat = AREAS.flatMap(a=>a.materias).find(m=>m.id===materiaId);
+        return `<div class="row-between" style="padding:8px 0;border-top:1px solid var(--border);">
+          <span style="font-weight:600;">${mat?mat.nome:materiaId}</span>
+          <span class="badge ${s.prioridade==='MUITO ALTA'?'b-red':s.prioridade==='ALTA'?'b-orange':'b-yellow'}">${s.nivel} · prioridade ${s.prioridade}</span>
+        </div>`;
+      }).join('')}
+      <button class="btn btn-secondary btn-block" style="margin-top:12px;" data-action="start-diagnostic">Refazer diagnóstico</button>
+    </div>`;
+  }
+  return `
+  <div class="card" style="text-align:center;">
+    <div style="font-size:2rem;">🧭</div>
+    <h2>Diagnóstico inicial</h2>
+    <p style="color:var(--muted);font-size:.9rem;">${QUESTOES.filter(q=>q.diag).length} questões cobrindo as 4 áreas do PAS 1. Sem pressão — é para descobrir seu ponto de partida real, não para tirar nota.</p>
+    <button class="btn btn-primary btn-block" data-action="start-diagnostic">Começar diagnóstico</button>
+  </div>`;
+}
+function startDiagnostic(){
+  ACTIVE_TASK = {type:'diagnostico'};
+  const diagQs = QUESTOES.filter(q=>q.diag);
+  startQuiz(shuffle(diagQs), 'diagnostico');
+}
+function finishDiagnostic(){
+  const byMateria = {};
+  QUIZ_SESSION.questions.forEach((q,i)=>{
+    const a = getAssunto(q.assuntoId);
+    if(!byMateria[a.materiaId]) byMateria[a.materiaId] = {total:0,correct:0};
+    byMateria[a.materiaId].total++;
+    if(QUIZ_SESSION.results[i] && QUIZ_SESSION.results[i].correct) byMateria[a.materiaId].correct++;
+  });
+  const materiaScore = {};
+  Object.entries(byMateria).forEach(([mid,d])=>{
+    const acc = d.correct/d.total;
+    const nivel = acc<0.4?'baixo':acc<0.7?'médio':'alto';
+    const prioridade = acc<0.4?'MUITO ALTA':acc<0.7?'ALTA':'MÉDIA';
+    materiaScore[mid] = {nivel,prioridade,acc};
+  });
+  STATE.diagnostic = {done:true, materiaScore};
+  save();
+}
+
+/* ---------- QUESTÕES (banco) ---------- */
+function questoesView(){
+  if(ACTIVE_TASK && ACTIVE_TASK.type==='banco') return quizRunnerHTML();
+  const errCount = STATE.errors.filter(e=>!e.resolvido).length;
+  const weak = weakestAssunto();
+  return `
+  <div class="card">
+    <div class="section-title"><h2>Modo Questões</h2></div>
+    <div class="row" style="gap:8px;flex-wrap:wrap;margin:10px 0 12px;">
+      <select class="chip-input" style="width:auto;" data-filter="tipo">
+        <option value="all" ${FILTERS.tipo==='all'?'selected':''}>Todos os tipos</option>
+        <option value="CE" ${FILTERS.tipo==='CE'?'selected':''}>Certo/Errado</option>
+        <option value="MC" ${FILTERS.tipo==='MC'?'selected':''}>Múltipla escolha</option>
+        <option value="NUM" ${FILTERS.tipo==='NUM'?'selected':''}>Resposta numérica</option>
+      </select>
+      <select class="chip-input" style="width:auto;" data-filter="dif">
+        <option value="all" ${FILTERS.dif==='all'?'selected':''}>Todas as dificuldades</option>
+        <option value="facil" ${FILTERS.dif==='facil'?'selected':''}>🟢 Fácil</option>
+        <option value="medio" ${FILTERS.dif==='medio'?'selected':''}>🟡 Médio</option>
+        <option value="dificil" ${FILTERS.dif==='dificil'?'selected':''}>🔴 Difícil</option>
+        <option value="pas" ${FILTERS.dif==='pas'?'selected':''}>🔥 Nível PAS</option>
+      </select>
+    </div>
+    <div class="grid2">
+      <button class="btn btn-secondary" data-action="mode" data-mode="rapido">⚡ Treino rápido — 5</button>
+      <button class="btn btn-secondary" data-action="mode" data-mode="padrao">✏️ Treino padrão — 10</button>
+      <button class="btn btn-secondary" data-action="mode" data-mode="intensivo">🔥 Treino intensivo — 20</button>
+      <button class="btn btn-secondary" data-action="mode" data-mode="erros" ${!errCount?'disabled':''}>🧠 Só meus erros (${errCount})</button>
+      <button class="btn btn-secondary" data-action="mode" data-mode="fraco" ${!weak?'disabled':''}>🎯 Ponto fraco</button>
+      <button class="btn btn-secondary" data-action="mode" data-mode="pas">🔥 Modo PAS</button>
+      <button class="btn btn-secondary" data-action="mode" data-mode="oficiais" style="grid-column:1/-1;background:var(--accent);color:var(--accent-ink);border:none;">🏛️ Provas oficiais anteriores (${QUESTOES.filter(q=>q.oficial).length})</button>
+    </div>
+    <div class="footer-note" style="padding-top:6px;">Os filtros acima valem para todos os modos, exceto "Só meus erros" (que sempre mostra todos os seus erros pendentes).</div>
+  </div>
+  <div class="card">
+    <div class="section-title"><h2>Por assunto</h2></div>
+    ${AREAS.map(area=>`
+      <details class="tree-materia">
+        <summary>${area.emoji} ${area.nome}</summary>
+        ${area.materias.flatMap(m=>m.assuntos).map(a=>{
+          const n = applyFilters(questoesPorAssunto(a.id)).length;
+          return `<div class="assunto-row"><span class="name" style="cursor:pointer;" data-action="assunto-detail" data-assunto="${a.id}">${a.nome}</span><span class="hab">${n} questões</span>
+            <button class="btn btn-ghost btn-sm" data-action="practice-assunto" data-assunto="${a.id}" ${!n?'disabled':''}>Treinar</button></div>`;
+        }).join('')}
+      </details>
+    `).join('')}
+  </div>
+  <div class="footer-note">O banco mistura dois tipos de questão, sempre identificados por selo: ✍️ Treino (autorais, criadas para praticar o estilo do PAS) e 🏛️ Oficial PAS (questões reais, extraídas do caderno de provas do PAS 1 — Subprograma 2023, Cebraspe/UnB — com gabarito oficial conferido item a item, incluindo as de resposta numérica).</div>
+  `;
+}
+function shuffle(arr){return [...arr].sort(()=>Math.random()-0.5);}
+function startModeQuiz(mode){
+  ACTIVE_TASK = {type:'banco', mode};
+  const base = mode==='erros' ? QUESTOES : applyFilters(QUESTOES);
+  let list = [];
+  if(mode==='rapido') list = shuffle(base).slice(0,5);
+  else if(mode==='padrao') list = shuffle(base).slice(0,10);
+  else if(mode==='intensivo') list = shuffle(base).slice(0,20);
+  else if(mode==='erros'){
+    const ids = STATE.errors.filter(e=>!e.resolvido).map(e=>e.questionId);
+    list = QUESTOES.filter(q=>ids.includes(q.id));
+  } else if(mode==='fraco'){
+    const w = weakestAssunto();
+    list = w? applyFilters(questoesPorAssunto(w.id)) : [];
+  } else if(mode==='pas'){
+    list = shuffle(base.filter(q=>q.pas || q.dif==='dificil'));
+  } else if(mode==='oficiais'){
+    list = shuffle(applyFilters(QUESTOES.filter(q=>q.oficial)));
+  }
+  startQuiz(list, mode);
+}
+
+/* ---------- ERROS ---------- */
+function errosView(){
+  const errs = STATE.errors.filter(e=>!e.resolvido);
+  const byMotivo = {};
+  errs.forEach(e=>{byMotivo[e.motivo] = (byMotivo[e.motivo]||0)+1;});
+  const topMotivo = Object.entries(byMotivo).sort((a,b)=>b[1]-a[1])[0];
+  return `
+  <div class="card">
+    <div class="section-title"><h2>Caderno de erros</h2></div>
+    ${errs.length===0? `<div class="empty">Nenhum erro pendente. Continue treinando! 🎉</div>` : `
+    <p style="font-size:.85rem;color:var(--muted);">${errs.length} questão(ões) para refazer, com repetição espaçada (1 → 7 → 15 → 30 dias).</p>
+    ${topMotivo && topMotivo[1]>=3 ? `<div class="card-flat" style="border-left:3px solid var(--accent-2);margin-bottom:10px;">📊 Padrão identificado: você errou ${topMotivo[1]} questões recentes por "${topMotivo[0]}".</div>` : ''}
+    <button class="btn btn-primary btn-block" data-action="mode" data-mode="erros">Refazer todos agora</button>
+    <hr style="margin:14px 0;">
+    ${errs.slice(0,20).map(e=>{
+      const q = getQuestao(e.questionId); const a = getAssunto(e.assuntoId);
+      return `<div class="task">
+        <div class="task-icon">🧠</div>
+        <div class="task-body">
+          <div class="task-title">${a.nome}</div>
+          <div class="task-sub">${e.motivo} · errou ${e.vezes}x · próxima revisão ${e.nextReview}</div>
+        </div>
+      </div>`;
+    }).join('')}`}
+  </div>`;
+}
+
+/* ---------- OBRAS ---------- */
+function obrasView(){
+  const cats = Object.keys(CAT_INFO);
+  const total = OBRAS.length;
+  const dominadas = OBRAS.filter(o=>STATE.obrasStatus[o.id]==='dominado').length;
+  return `
+  <div class="card">
+    <div class="section-title row-between"><h2>Obras oficiais PAS 1</h2><span class="mono" style="color:var(--accent);font-weight:700;">${dominadas}/${total}</span></div>
+    <div class="bar"><div style="width:${Math.round(dominadas/total*100)}%"></div></div>
+    <div class="row" style="gap:8px;margin-top:12px;">
+      <button class="btn btn-secondary" data-action="obras-quiz">🧠 Quiz das obras</button>
+      <button class="btn btn-secondary" data-action="obras-review">⏱️ Revisão em 5 min</button>
+    </div>
+  </div>
+  ${cats.map(cat=>{
+    const list = OBRAS.filter(o=>o.cat===cat);
+    const info = CAT_INFO[cat];
+    return `<div class="card">
+      <div class="section-title"><h2>${info.emoji} ${info.nome}</h2></div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+      ${list.map(o=>{
+        const st = STATE.obrasStatus[o.id]||'novo';
+        return `<div class="obra-card row-between">
+          <div>
+            <div style="font-weight:700;font-size:.88rem;">${o.titulo}${o.qtd?` <span style="color:var(--muted);font-weight:500;">(${o.qtd})</span>`:''}</div>
+            <div style="font-size:.78rem;color:var(--muted);">${o.autor||'—'}</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" data-action="study-obra" data-obra="${o.id}">${st==='dominado'?'🟢':st==='estudando'?'🟠':'Estudar'}</button>
+        </div>`;
+      }).join('')}
+      </div>
+    </div>`;
+  }).join('')}
+  <div class="footer-note">Lista oficial divulgada pela Cebraspe/UnB em 21/01/2026 para o subprograma PAS 2026-2028. A análise interpretativa aprofundada de cada obra (contexto, temas, possíveis cobranças) é a próxima etapa da plataforma — confirme sempre com o material oficial.</div>
+  `;
+}
+function startObraStudy(obraId){ ACTIVE_TASK = {type:'obra', obraId}; ROUTE='home'; render(); }
+function startObrasQuiz(){
+  const withAuthor = OBRAS.filter(o=>o.autor);
+  const qs = shuffle(withAuthor).slice(0,8);
+  const questions = qs.map((o,i)=>{
+    const wrongOpts = shuffle(withAuthor.filter(x=>x.id!==o.id)).slice(0,3).map(x=>x.autor);
+    const opts = shuffle([o.autor, ...wrongOpts]);
+    return {id:'obraq_'+o.id, assuntoId: null, tipo:'MC', dif:'medio', enun:`Quem é o(a) autor(a)/origem de "${o.titulo}"?`, opts, gab:opts.indexOf(o.autor), res:`"${o.titulo}" é de ${o.autor}. Categoria: ${CAT_INFO[o.cat].nome}.`, isObraQuiz:true};
+  });
+  ACTIVE_TASK = {type:'banco', mode:'obras'};
+  startQuiz(questions, 'obras');
+}
+
+/* ---------- ESTRATÉGIA ---------- */
+function estrategiaView(){
+  return `
+  <div class="card">
+    <h2>🎯 Estratégia PAS 1</h2>
+    <p style="color:var(--muted);font-size:.85rem;">Baseado nas regras de correção vigentes do PAS/Cebraspe (a confirmar em detalhe no edital 2026-2028, previsto para 25/08/2026).</p>
+  </div>
+  <div class="card">
+    <h3>Como funciona a pontuação</h3>
+    <ul style="font-size:.9rem;line-height:1.7;padding-left:20px;">
+      <li><b>Tipo Certo/Errado</b>: acerto soma, <b>erro desconta</b> pontos. Se não tiver nenhuma segurança, avalie deixar em branco (branco = 0, não é punido).</li>
+      <li><b>Tipo múltipla escolha (1 correta)</b>: acerto vale mais, mas errar também desconta (menos que o C/E). Elimine alternativas erradas antes de marcar.</li>
+      <li><b>Tipo resposta numérica</b>: não tem penalidade por erro — vale a pena sempre tentar, mesmo com dúvida.</li>
+      <li><b>Redação obrigatória</b> com tema único no PAS 1. <b>Zerar a redação elimina o candidato</b> — nunca deixe em branco, mesmo faltando tempo.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Ordem de resolução sugerida</h3>
+    <ol style="font-size:.9rem;line-height:1.7;padding-left:20px;">
+      <li>Uma primeira passada rápida: responda o que você tem certeza absoluta.</li>
+      <li>Segunda passada: questões tipo B (resposta numérica) — sem risco, sempre tente.</li>
+      <li>Terceira passada: Certo/Errado e múltipla escolha em que você consegue eliminar alternativas ou tem razoável segurança.</li>
+      <li>Deixe por último as questões em que você não faz ideia — e aí avalie: eliminou alguma opção? Vale o risco. Não eliminou nada em C/E? Considere deixar em branco.</li>
+      <li>Reserve tempo fixo para a redação — não deixe para os últimos 10 minutos.</li>
+    </ol>
+  </div>
+  <div class="card">
+    <h3>Evitar erros de distração</h3>
+    <ul style="font-size:.9rem;line-height:1.7;padding-left:20px;">
+      <li>Releia o comando da questão procurando negativas ("não", "exceto", "incorreto").</li>
+      <li>Em Certo/Errado, cuidado com afirmações que misturam um trecho verdadeiro com um trecho falso — a questão toda vira Errado.</li>
+      <li>Cronometre seu treino: se uma questão está tomando muito mais tempo que a média, marque e volte depois.</li>
+    </ul>
+  </div>
+  <div class="footer-note">Regras específicas de tempo de prova, número exato de questões por tipo e cronograma de inscrição ainda dependem do edital 2026-2028 (previsto 25/08/2026) — revise esta seção quando ele sair.</div>
+  `;
+}
+
+/* ---------- PROGRESSO ---------- */
+function progressoView(){
+  const totalQ = Object.values(STATE.qStats).reduce((s,q)=>s+q.seen,0);
+  const totalCorrect = Object.values(STATE.qStats).reduce((s,q)=>s+q.correct,0);
+  const acc = totalQ? Math.round(totalCorrect/totalQ*100) : 0;
+  const green = ASSUNTOS.filter(a=>contentFor(a.id).status==='green').length;
+  const hist = STATE.history.slice(-8);
+  return `
+  <div class="grid3">
+    <div class="card-flat"><div class="label-eyebrow">Questões</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${totalQ}</div></div>
+    <div class="card-flat"><div class="label-eyebrow">Acerto</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${acc}%</div></div>
+    <div class="card-flat"><div class="label-eyebrow">Dominados</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${green}/${ASSUNTOS.length}</div></div>
+    <div class="card-flat"><div class="label-eyebrow">Sequência</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${STATE.profile.streak} 🔥</div></div>
+    <div class="card-flat"><div class="label-eyebrow">XP</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${STATE.profile.xp} ⭐</div></div>
+    <div class="card-flat"><div class="label-eyebrow">Erros pendentes</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${STATE.errors.filter(e=>!e.resolvido).length}</div></div>
+  </div>
+  <div class="card">
+    <h3>Desempenho por área</h3>
+    ${AREAS.map(area=>{
+      const as = area.materias.flatMap(m=>m.assuntos);
+      const seen = as.filter(a=>contentFor(a.id).attempts>0);
+      const avgAcc = seen.length? Math.round(seen.reduce((s,a)=>s+accuracyOf(a.id),0)/seen.length*100) : null;
+      return `<div style="margin-bottom:10px;">
+        <div class="row-between"><span style="font-size:.85rem;font-weight:600;">${area.emoji} ${area.nome}</span><span class="mono" style="font-size:.8rem;">${avgAcc===null?'—':avgAcc+'%'}</span></div>
+        <div class="bar"><div style="width:${avgAcc||0}%"></div></div>
+      </div>`;
+    }).join('')}
+  </div>
+  <div class="card">
+    <h3>Backup dos seus dados</h3>
+    <p style="font-size:.85rem;color:var(--muted);">Seus dados ficam salvos neste navegador. Ainda não há conta/nuvem — exporte um backup de vez em quando para não perder o progresso.</p>
+    <div class="row" style="gap:8px;">
+      <button class="btn btn-secondary" data-action="export">⬇️ Exportar backup</button>
+      <label class="btn btn-secondary" style="position:relative;overflow:hidden;">⬆️ Importar backup
+        <input type="file" id="importFile" accept="application/json" style="position:absolute;inset:0;opacity:0;cursor:pointer;">
+      </label>
+    </div>
+  </div>
+  `;
+}
+
+/* ============================= MODAL ============================= */
+function modalHTML(){
+  if(MODAL==='customTime'){
+    return `<div class="modal-bg" data-action="close-modal"><div class="modal" onclick="event.stopPropagation()">
+      <h3>Quantos minutos você tem hoje?</h3>
+      <input type="number" id="customMinutes" class="chip-input" placeholder="ex: 45" min="10" max="300">
+      <button class="btn btn-primary btn-block" style="margin-top:12px;" data-action="confirm-custom-time">Confirmar</button>
+    </div></div>`;
+  }
+  if(MODAL==='assuntoDetail'){
+    return assuntoDetailModalHTML(ASSUNTO_DETAIL_ID);
+  }
+  return '';
+}
+
+/* ============================= EVENTS ============================= */
+function attachEvents(){
+  document.querySelectorAll('[data-route]').forEach(el=>el.addEventListener('click',()=>{ROUTE=el.dataset.route; ACTIVE_TASK=null; QUIZ_SESSION=null; render();}));
+  document.querySelectorAll('[data-time]').forEach(el=>el.addEventListener('click',()=>{
+    const v = el.dataset.time;
+    if(v==='custom'){ MODAL='customTime'; render(); return; }
+    STATE.dailyPlan = buildDailyPlan(Number(v)); save(); render();
+  }));
+  const tiredBtn = document.querySelector('[data-action="tired"]');
+  if(tiredBtn) tiredBtn.addEventListener('click',()=>{
+    STATE.profile.tiredToday = true;
+    STATE.dailyPlan = buildDailyPlan(30);
+    save(); render();
+  });
+  const replanBtn = document.querySelector('[data-action="replan"]');
+  if(replanBtn) replanBtn.addEventListener('click',()=>{ STATE.dailyPlan=null; save(); render(); });
+  document.querySelectorAll('[data-action="skip-task"]').forEach(el=>el.addEventListener('click',()=>{
+    const t = STATE.dailyPlan.tasks.find(x=>x.id===el.dataset.task);
+    if(t) t.status='pulada';
+    save(); render();
+  }));
+
+  document.querySelectorAll('[data-action="start-task"]').forEach(el=>el.addEventListener('click',()=>{
+    const task = STATE.dailyPlan.tasks.find(t=>t.id===el.dataset.task);
+    ACTIVE_TASK = {...task, _nivel:1};
+    if(task.type==='questoes'||task.type==='revisao'){
+      const list = task.assuntoId? questoesPorAssunto(task.assuntoId) : shuffle(QUESTOES).slice(0,5);
+      startQuiz(shuffle(list), task.type);
+    } else if(task.type==='erros'){
+      const ids = STATE.errors.filter(e=>!e.resolvido && e.nextReview<=todayISO()).slice(0,6).map(e=>e.questionId);
+      startQuiz(QUESTOES.filter(q=>ids.includes(q.id)), 'erros');
+    } else { render(); }
+  }));
+
+  document.querySelectorAll('[data-action="practice-assunto"]').forEach(el=>el.addEventListener('click',()=>{
+    ACTIVE_TASK = {type:'banco'};
+    ROUTE='questoes';
+    startQuiz(shuffle(applyFilters(questoesPorAssunto(el.dataset.assunto))), 'assunto');
+  }));
+
+  document.querySelectorAll('[data-filter]').forEach(el=>el.addEventListener('change',()=>{
+    FILTERS[el.dataset.filter] = el.value; render();
+  }));
+  document.querySelectorAll('[data-action="mapa-view"]').forEach(el=>el.addEventListener('click',()=>{
+    MAPA_VIEW = el.dataset.view; render();
+  }));
+  document.querySelectorAll('[data-action="mindmap-area"]').forEach(el=>el.addEventListener('click',()=>{
+    MINDMAP_AREA = el.dataset.area; render();
+  }));
+  document.querySelectorAll('[data-action="assunto-detail"]').forEach(el=>el.addEventListener('click',()=>{
+    MODAL = 'assuntoDetail'; ASSUNTO_DETAIL_ID = el.dataset.assunto; render();
+  }));
+  document.querySelectorAll('[data-action="detail-aprender"]').forEach(el=>el.addEventListener('click',()=>{
+    ACTIVE_TASK = {type:'aprender', assuntoId:el.dataset.assunto, _nivel:1};
+    MODAL=null; QUIZ_SESSION=null; ROUTE='home'; render();
+  }));
+  document.querySelectorAll('[data-action="detail-praticar"]').forEach(el=>el.addEventListener('click',()=>{
+    const assuntoId = el.dataset.assunto;
+    MODAL=null; ACTIVE_TASK={type:'banco'}; ROUTE='questoes';
+    startQuiz(shuffle(applyFilters(questoesPorAssunto(assuntoId))), 'assunto');
+  }));
+
+  const cancelBtn = document.querySelector('[data-action="cancel-task"]');
+  if(cancelBtn) cancelBtn.addEventListener('click',()=>{ ACTIVE_TASK=null; QUIZ_SESSION=null; render(); });
+
+  const finishBtn = document.querySelector('[data-action="finish-task"]');
+  if(finishBtn) finishBtn.addEventListener('click',()=>{
+    if(ACTIVE_TASK && ACTIVE_TASK.type==='diagnostico') finishDiagnostic();
+    if(STATE.dailyPlan && ACTIVE_TASK && ACTIVE_TASK.id){
+      const t = STATE.dailyPlan.tasks.find(x=>x.id===ACTIVE_TASK.id);
+      if(t) t.status='concluida';
+    }
+    ACTIVE_TASK=null; QUIZ_SESSION=null; save(); render();
+  });
+
+  document.querySelectorAll('[data-action="answer"]').forEach(el=>el.addEventListener('click',()=>{
+    submitAnswer(el.dataset.val);
+  }));
+  document.querySelectorAll('[data-action="answer-num"]').forEach(el=>el.addEventListener('click',()=>{
+    const input = document.getElementById('numAnswer');
+    const val = input ? input.value : '';
+    if(val===''){ alert('Digite um número antes de confirmar.'); return; }
+    submitAnswer(val);
+  }));
+  const nextQ = document.querySelector('[data-action="next-question"]');
+  if(nextQ) nextQ.addEventListener('click', finalizeCurrentAnswer);
+
+  const startDiag = document.querySelector('[data-action="start-diagnostic"]');
+  if(startDiag) startDiag.addEventListener('click', startDiagnostic);
+
+  document.querySelectorAll('[data-action="mode"]').forEach(el=>el.addEventListener('click',()=>{
+    ROUTE='questoes'; startModeQuiz(el.dataset.mode);
+  }));
+
+  document.querySelectorAll('[data-action="nivel-next"]').forEach(el=>el.addEventListener('click',()=>{
+    ACTIVE_TASK._nivel = (ACTIVE_TASK._nivel||1)+1; render();
+  }));
+  document.querySelectorAll('[data-action="go-quiz"]').forEach(el=>el.addEventListener('click',()=>{
+    startQuiz(shuffle(questoesPorAssunto(el.dataset.assunto)), 'aprender-quiz');
+  }));
+  document.querySelectorAll('[data-action="complete-task"]').forEach(el=>el.addEventListener('click',()=>{
+    if(STATE.dailyPlan && ACTIVE_TASK.id){ const t=STATE.dailyPlan.tasks.find(x=>x.id===ACTIVE_TASK.id); if(t) t.status='concluida'; }
+    ACTIVE_TASK=null; save(); render();
+  }));
+
+  document.querySelectorAll('[data-action="study-obra"]').forEach(el=>el.addEventListener('click',()=>startObraStudy(el.dataset.obra)));
+  document.querySelectorAll('[data-action="obra-status"]').forEach(el=>el.addEventListener('click',()=>{
+    STATE.obrasStatus[el.dataset.obra] = el.dataset.status;
+    if(STATE.dailyPlan && ACTIVE_TASK.id){ const t=STATE.dailyPlan.tasks.find(x=>x.id===ACTIVE_TASK.id); if(t) t.status='concluida'; }
+    ACTIVE_TASK=null; save(); render();
+  }));
+  const obrasQuizBtn = document.querySelector('[data-action="obras-quiz"]');
+  if(obrasQuizBtn) obrasQuizBtn.addEventListener('click', startObrasQuiz);
+  const obrasReviewBtn = document.querySelector('[data-action="obras-review"]');
+  if(obrasReviewBtn) obrasReviewBtn.addEventListener('click',()=>{
+    const pending = OBRAS.filter(o=>(STATE.obrasStatus[o.id]||'novo')!=='dominado');
+    if(pending.length) startObraStudy(shuffle(pending)[0].id);
+  });
+
+  document.querySelectorAll('[data-action="close-modal"]').forEach(el=>el.addEventListener('click',()=>{MODAL=null; render();}));
+  const confirmCustom = document.querySelector('[data-action="confirm-custom-time"]');
+  if(confirmCustom) confirmCustom.addEventListener('click',()=>{
+    const v = Number(document.getElementById('customMinutes').value)||30;
+    STATE.dailyPlan = buildDailyPlan(v); MODAL=null; save(); render();
+  });
+
+  const exportBtn = document.querySelector('[data-action="export"]');
+  if(exportBtn) exportBtn.addEventListener('click', doExport);
+  const importFile = document.getElementById('importFile');
+  if(importFile) importFile.addEventListener('change', doImport);
+}
+
+async function doExport(){
+  const data = JSON.stringify(STATE, null, 2);
+  const downloads = await (window.claude && window.claude.use ? window.claude.use('downloads') : Promise.resolve(null));
+  if(downloads){
+    await downloads.save({filename:`ipe-pas1-backup-${todayISO()}.json`, data});
+  } else {
+    alert('Exportação de arquivo não disponível neste ambiente.');
+  }
+}
+function doImport(ev){
+  const file = ev.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const parsed = JSON.parse(e.target.result);
+      STATE = Object.assign(defaultState(), parsed);
+      save(); render();
+    }catch(err){ alert('Arquivo inválido.'); }
+  };
+  reader.readAsText(file);
+}
+
+/* ============================= INIT ============================= */
+render();
+</script>
+</body>
+</html>
