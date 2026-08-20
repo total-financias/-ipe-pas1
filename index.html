@@ -144,7 +144,7 @@ textarea.chip-input{resize:vertical;min-height:64px;}
 .timer{font-family:var(--font-mono);font-weight:700;font-size:1.4rem;}
 
 .sparkline{display:flex;align-items:flex-end;gap:5px;height:70px;}
-.spark-bar{flex:1;background:var(--surface-2);border-radius:4px 4px 0 0;position:relative;min-height:4px;}
+.spark-bar{flex:1;height:100%;background:var(--surface-2);border-radius:4px 4px 0 0;position:relative;min-height:4px;}
 .spark-bar > div{position:absolute;bottom:0;left:0;right:0;background:var(--accent);border-radius:4px 4px 0 0;}
 
 .obra-card{border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;background:var(--surface);}
@@ -190,6 +190,21 @@ textarea.chip-input{resize:vertical;min-height:64px;}
 .mission-cta{display:flex;align-items:center;justify-content:center;gap:8px;font-size:1rem;padding:14px 18px;}
 .banner-info{border-left:3px solid var(--accent);background:var(--surface-2);border-radius:var(--radius-sm);padding:10px 12px;font-size:.85rem;}
 .priority-flag{font-size:.85rem;line-height:1;flex-shrink:0;}
+
+/* ---- Fase 2: trilha, simulados, semana ---- */
+.trail{display:flex;flex-direction:column;}
+.trail-node{display:flex;align-items:flex-start;gap:12px;position:relative;padding-bottom:18px;cursor:pointer;}
+.trail-node:last-child{padding-bottom:0;}
+.trail-dot{width:34px;height:34px;border-radius:50%;background:var(--surface-2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;z-index:1;}
+.trail-line{position:absolute;left:16px;top:34px;bottom:0;width:2px;background:var(--border);}
+.trail-body{flex:1;padding-top:5px;}
+.trail-name{font-weight:700;font-size:.9rem;}
+.trail-sub{font-size:.76rem;color:var(--muted);}
+.trail-node.locked{opacity:.55;}
+.trail-node:hover .trail-name{color:var(--accent);}
+.sim-type-card{cursor:pointer;transition:border-color .15s;}
+.sim-type-card:hover{border-color:var(--accent);}
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center;margin-top:10px;}
 
 hr{border:none;border-top:1px solid var(--border);margin:2px 0;}
 </style>
@@ -487,6 +502,9 @@ function defaultState(){
     achievements:[],
     obrasStatus:{}, // obraId -> 'novo'|'estudando'|'dominado'
     history:[], // {date, accuracy, dominio}
+    simulados:[], // {id,date,tipo,areaId,total,acertos,erros,brancos,tempoTotal,tempoMedio,fracos:[assuntoId]}
+    activity:{}, // dateISO -> {questoes,minutos,revisoes,obras,simulados} — base da Visão Semanal
+    timeStats:{totalSeg:0,count:0},
   };
 }
 let STATE = load();
@@ -503,7 +521,27 @@ function load(){
     return merged;
   }catch(e){return defaultState();}
 }
-function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); }
+function timeStats(){ if(!STATE.timeStats) STATE.timeStats = {totalSeg:0,count:0}; return STATE.timeStats; }
+function logActivity(patch){
+  const d = todayISO();
+  if(!STATE.activity) STATE.activity = {};
+  if(!STATE.activity[d]) STATE.activity[d] = {questoes:0,minutos:0,revisoes:0,obras:0,simulados:0};
+  const a = STATE.activity[d];
+  Object.keys(patch).forEach(k=>{ a[k] = (a[k]||0) + patch[k]; });
+}
+function snapshotHistory(){
+  const totalQ = Object.values(STATE.qStats).reduce((s,q)=>s+q.seen,0);
+  if(!totalQ) return; // nada praticado ainda — não fabrica ponto de histórico
+  const totalCorrect = Object.values(STATE.qStats).reduce((s,q)=>s+q.correct,0);
+  const acc = Math.round(totalCorrect/totalQ*100);
+  const green = ASSUNTOS.filter(a=>contentFor(a.id).status==='green').length;
+  const dominio = Math.round(green/ASSUNTOS.length*100);
+  const today = todayISO();
+  const last = STATE.history[STATE.history.length-1];
+  if(last && last.date===today){ last.accuracy=acc; last.dominio=dominio; }
+  else { STATE.history.push({date:today, accuracy:acc, dominio}); }
+}
+function save(){ snapshotHistory(); localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); }
 
 function contentFor(assuntoId){
   if(!STATE.content[assuntoId]) STATE.content[assuntoId] = {attempts:0,correct:0,status:'red',lastSeen:null,srDue:null,srInterval:0,firstDate:null};
@@ -563,6 +601,13 @@ function recentDeclineBoost(c){
   const recentAcc = c.recent.filter(Boolean).length/c.recent.length;
   return recentAcc < overall-0.15 ? 3 : 0; // desempenho recente pior que a média histórica: sobe prioridade
 }
+function simuladoWeaknessBoost(assuntoId){
+  // últimos 3 simulados: se o assunto apareceu entre os 5 mais fracos, isso também pressiona a prioridade
+  const recentes = STATE.simulados.slice(-3);
+  let boost = 0;
+  recentes.forEach(sm=>{ if(sm.fracos && sm.fracos.includes(assuntoId)) boost += 2; });
+  return Math.min(boost, 4);
+}
 function priorityScore(assunto){
   const c = contentFor(assunto.id);
   const diagAcc = diagnosticAccFor(assunto.materiaId);
@@ -572,10 +617,15 @@ function priorityScore(assunto){
   const dueBoost = (c.srDue && c.srDue<=todayISO()) ? 6 : 0;
   const masteryPenalty = c.status==='green' ? 8 : 0;
   const recente = recentDeclineBoost(c);
+  const simBoost = simuladoWeaknessBoost(assunto.id);
   const left = daysLeft();
   const urgencyMult = left<=20 ? 1.35 : left<=45 ? 1.15 : 1; // tempo restante: aperta prioridade dos pesados perto da prova
-  return ((assunto.peso*2) + (dificuldade*4) + Math.min(erros,5) + dueBoost + recente - masteryPenalty) * urgencyMult;
+  return ((assunto.peso*2) + (dificuldade*4) + Math.min(erros,5) + dueBoost + recente + simBoost - masteryPenalty) * urgencyMult;
 }
+/* Pré-requisitos sugeridos (ordem de currículo, não é regra oficial da matriz) — usados só pra dar contexto na trilha visual. */
+const PREREQ = {
+  mat_quadratica:'mat_afim', mat_exponencial:'mat_funcoes', mat_log:'mat_exponencial', mat_financeira:'mat_pa_pg',
+};
 function rankedAssuntos(){
   return [...ASSUNTOS].sort((a,b)=>priorityScore(b)-priorityScore(a));
 }
@@ -636,10 +686,11 @@ function registrarAcertoErroReview(errId){
   e._step = SR_STEPS[Math.min((idx<0?0:idx)+1, SR_STEPS.length-1)];
   e.nextReview = addDays(todayISO(), e._step);
   if(e._step>=30) e.resolvido = true;
+  logActivity({revisoes:1});
 }
 
 /* ============================= ANSWER / XP ============================= */
-function answerQuestion(q, correct){
+function answerQuestion(q, correct, tempo){
   if(q.assuntoId){
     const c = contentFor(q.assuntoId);
     c.attempts++; if(correct) c.correct++;
@@ -652,6 +703,8 @@ function answerQuestion(q, correct){
   if(!STATE.qStats[q.id]) STATE.qStats[q.id] = {seen:0,correct:0};
   STATE.qStats[q.id].seen++; if(correct) STATE.qStats[q.id].correct++;
   STATE.profile.xp += correct? 10 : 3;
+  if(tempo!=null){ const ts=timeStats(); ts.totalSeg+=tempo; ts.count++; }
+  logActivity({questoes:1});
   bumpStreak();
   save();
 }
@@ -760,6 +813,13 @@ let MAPA_VIEW = 'lista';
 let MINDMAP_AREA = AREAS[0].id;
 let ASSUNTO_DETAIL_ID = null;
 let FILTERS = {tipo:'all', dif:'all'};
+let SIMULADO_AREA_PICK = false;
+const SIMULADO_TYPES = [
+  {key:'mini', nome:'Mini PAS', emoji:'⚡', n:10, desc:'10 questões variadas, ritmo rápido.'},
+  {key:'30', nome:'Simulado 30', emoji:'🎯', n:30, desc:'30 questões variadas — o clássico.'},
+  {key:'area', nome:'Simulado por área', emoji:'🧠', n:20, desc:'Escolha uma área e treine só nela.', pickArea:true},
+  {key:'completo', nome:'Simulado PAS 1 completo', emoji:'🏆', n:60, desc:'O máximo de questões do banco, todas as áreas — o mais perto do dia da prova.'},
+];
 function applyFilters(list){
   return list.filter(q=>{
     if(FILTERS.tipo!=='all' && q.tipo!==FILTERS.tipo) return false;
@@ -770,8 +830,6 @@ function applyFilters(list){
 }
 function videoSearchUrl(a){ return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(a.nome+' '+a.materiaNome+' aula explicação'); }
 function googleSearchUrl(a){ return 'https://www.google.com/search?q=' + encodeURIComponent(a.nome+' '+a.materiaNome+' resumo explicação'); }
-function truncateLabel(s,n){ return s.length>n? s.slice(0,n-1)+'…' : s; }
-function escapeXML(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function fmtDate(d){return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});}
 function fmtMinutes(m){
@@ -794,7 +852,7 @@ function render(){
 
 function topbarHTML(){
   const left = daysLeft();
-  const tabs = [['home','🏠','Hoje'],['mapa','🗺️','Mapa'],['diagnostico','🧭','Diagnóstico'],['questoes','✏️','Questões'],['erros','🧠','Erros'],['obras','📚','Obras'],['estrategia','🎯','Estratégia'],['progresso','📈','Progresso']];
+  const tabs = [['home','🏠','Hoje'],['semana','📅','Semana'],['mapa','🗺️','Mapa'],['diagnostico','🧭','Diagnóstico'],['questoes','✏️','Questões'],['simulados','🏁','Simulados'],['erros','🧠','Erros'],['obras','📚','Obras'],['estrategia','🎯','Estratégia'],['progresso','📈','Progresso']];
   return `
   <div class="topbar">
     <div class="topbar-inner">
@@ -814,9 +872,11 @@ function topbarHTML(){
 function viewHTML(){
   switch(ROUTE){
     case 'home': return homeView();
+    case 'semana': return semanaView();
     case 'mapa': return mapaView();
     case 'diagnostico': return diagnosticoView();
     case 'questoes': return questoesView();
+    case 'simulados': return simuladosView();
     case 'erros': return errosView();
     case 'obras': return obrasView();
     case 'estrategia': return estrategiaView();
@@ -983,6 +1043,7 @@ function taskRunnerHTML(){
   if(QUIZ_SESSION) return quizRunnerHTML();
   if(t.type==='aprender') return aprenderHTML(t);
   if(t.type==='obra') return obraStudyHTML(t);
+  if(t.type==='obraExpress') return obraExpressHTML(t);
   return `<div class="empty">Tarefa desconhecida</div>`;
 }
 
@@ -1035,23 +1096,30 @@ function obraStudyHTML(t){
 }
 
 /* ---------- QUIZ RUNNER ---------- */
-function startQuiz(list, mode){
+function startQuiz(list, mode, extra){
   if(!list.length){ alert('Nenhuma questão disponível — tente afrouxar os filtros de tipo/dificuldade ou escolher outro assunto.'); ACTIVE_TASK=null; ROUTE='questoes'; render(); return; }
-  QUIZ_SESSION = {questions:list, idx:0, correctCount:0, mode, startTs:Date.now(), qStartTs:Date.now(), answered:false, results:[]};
+  QUIZ_SESSION = Object.assign({questions:list, idx:0, correctCount:0, mode, startTs:Date.now(), qStartTs:Date.now(), answered:false, results:[]}, extra||{});
   render();
+}
+function fmtElapsed(ms){
+  const s = Math.floor(ms/1000);
+  const m = Math.floor(s/60), r = s%60;
+  return String(m).padStart(2,'0')+':'+String(r).padStart(2,'0');
 }
 function quizRunnerHTML(){
   if(!QUIZ_SESSION) return `<div class="empty">Sessão não iniciada.</div>`;
   const s = QUIZ_SESSION;
-  if(s.idx>=s.questions.length) return quizResultHTML();
+  if(s.idx>=s.questions.length) return s.simulado ? simuladoResultHTML(s) : quizResultHTML();
   const q = s.questions[s.idx];
   const a = q.assuntoId ? getAssunto(q.assuntoId) : null;
+  const r = s.answered ? s.results[s.idx] : null;
   return `
   <div class="card qcard">
     <div class="row-between">
-      <span class="label-eyebrow">Questão ${s.idx+1}/${s.questions.length}</span>
+      <span class="label-eyebrow">${s.simulado? (SIMULADO_TYPES.find(t=>t.key===s.tipo)||{}).nome+' · ' : ''}Questão ${s.idx+1}/${s.questions.length}</span>
       <button class="btn btn-ghost btn-sm" data-action="cancel-task">Sair</button>
     </div>
+    ${s.simulado? `<div class="timer" style="text-align:center;">⏱ ${fmtElapsed(Date.now()-s.startTs)}</div>` : ''}
     <div class="qmeta">
       <span class="badge b-neutral">${a ? a.materiaNome : 'Obras PAS'}</span>
       ${difBadge(q.dif,q.pas)}
@@ -1060,8 +1128,8 @@ function quizRunnerHTML(){
     </div>
     <p class="qstatement">${q.enun}</p>
     ${quizOptionsHTML(q,s)}
-    ${s.answered && !s.results[s.idx].confidence ? confidenceHTML() : ''}
-    ${s.answered && s.results[s.idx].confidence ? quizFeedbackHTML(q,s) : ''}
+    ${s.answered && !r.branco && !r.confidence ? confidenceHTML() : ''}
+    ${s.answered && (r.branco || r.confidence) ? quizFeedbackHTML(q,s) : ''}
   </div>`;
 }
 function confidenceHTML(){
@@ -1079,7 +1147,8 @@ function quizOptionsHTML(q,s){
     return `<div class="opt-row">
       <button class="opt ${s.answered? (q.gab==='C'?'correct':(chosen==='C'?'wrong':'')):''}" data-action="answer" data-val="C" ${s.answered?'disabled':''}>CERTO</button>
       <button class="opt ${s.answered? (q.gab==='E'?'correct':(chosen==='E'?'wrong':'')):''}" data-action="answer" data-val="E" ${s.answered?'disabled':''}>ERRADO</button>
-    </div>`;
+    </div>
+    ${s.simulado && !s.answered ? `<button class="btn btn-ghost btn-block" data-action="answer" data-val="BRANCO">◻ Deixar em branco</button>` : ''}`;
   }
   if(q.tipo==='NUM'){
     const answered = s.answered;
@@ -1095,6 +1164,15 @@ function quizOptionsHTML(q,s){
 }
 function quizFeedbackHTML(q,s){
   const r = s.results[s.idx];
+  if(r.branco){
+    return `
+    <div class="card-flat" style="border-left:3px solid var(--muted);">
+      <div style="font-weight:700;color:var(--ink-soft);">◻ Você deixou em branco</div>
+      <p style="font-size:.88rem;margin:6px 0 0;">${q.res}</p>
+      <p style="font-size:.76rem;color:var(--muted);margin-top:6px;">Em branco não conta como erro nem acerto no seu domínio — e, no tipo Certo/Errado oficial, não é penalizado.</p>
+    </div>
+    <button class="btn btn-primary btn-block" data-action="next-question">${s.idx+1<s.questions.length? 'Próxima questão':'Ver resultado'}</button>`;
+  }
   const confInfo = CONFIDENCE.find(c=>c.key===r.confidence);
   return `
   <div class="card-flat" style="border-left:3px solid ${r.correct?'var(--green)':'var(--red)'};">
@@ -1129,26 +1207,170 @@ function quizResultHTML(){
     </div>
   </div>`;
 }
+
+/* ---------- SIMULADOS ---------- */
+function startSimulado(typeKey, areaId){
+  const type = SIMULADO_TYPES.find(t=>t.key===typeKey);
+  let pool = QUESTOES;
+  if(typeKey==='area' && areaId){
+    const ids = ASSUNTOS.filter(a=>a.areaId===areaId).map(a=>a.id);
+    pool = pool.filter(q=>ids.includes(q.assuntoId));
+  }
+  if(!pool.length){ alert('Ainda não há questões suficientes para esse simulado.'); return; }
+  const n = Math.min(type.n, pool.length);
+  const list = shuffle(pool).slice(0,n);
+  ACTIVE_TASK = {type:'simulado', simTipo:typeKey};
+  ROUTE='simulados';
+  startQuiz(list, 'simulado', {simulado:true, tipo:typeKey, areaId:areaId||null});
+}
+function simuladoTrendHTML(hist){
+  if(hist.length<2) return '';
+  const pcts = hist.map(sm=>Math.round(sm.acertos/((sm.total-sm.brancos)||1)*100));
+  const max = Math.max(...pcts,1);
+  const first = pcts[0], last = pcts[pcts.length-1];
+  const trend = last>first+3? '📈 Evoluindo' : last<first-3? '📉 Caindo' : '➡️ Estável';
+  return `<div class="sparkline" style="margin-bottom:6px;">
+    ${pcts.map(p=>`<div class="spark-bar"><div style="height:${Math.max(6,Math.round(p/max*100))}%;"></div></div>`).join('')}
+  </div>
+  <div class="label-eyebrow">${trend}</div>`;
+}
+function simuladosView(){
+  if(ACTIVE_TASK && ACTIVE_TASK.type==='simulado') return quizRunnerHTML();
+  const hist = STATE.simulados.slice(-8);
+  return `
+  <div class="card">
+    <h2 class="title-md">🏁 Simulados</h2>
+    <p class="subtitle">Usam o mesmo banco de questões (🏛️ oficiais + ✍️ treino, sempre identificadas). Uma vez respondida, não dá pra voltar — como na prova real. Em Certo/Errado você também pode deixar em branco.</p>
+  </div>
+  <div class="grid2">
+    ${SIMULADO_TYPES.map(t=>`
+      <div class="card-flat sim-type-card" data-action="${t.pickArea?'sim-pick-area':'start-simulado'}" data-sim="${t.key}">
+        <div style="font-size:1.3rem;">${t.emoji}</div>
+        <div style="font-weight:700;margin-top:4px;">${t.nome}</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:2px;">${t.desc}</div>
+      </div>`).join('')}
+  </div>
+  ${SIMULADO_AREA_PICK ? `
+  <div class="card">
+    <div class="section-title"><h2>Escolha a área</h2></div>
+    <div class="row" style="gap:8px;flex-wrap:wrap;">
+      ${AREAS.map(a=>`<button class="btn btn-secondary" data-action="start-simulado" data-sim="area" data-area="${a.id}">${a.emoji} ${a.nome}</button>`).join('')}
+    </div>
+  </div>` : ''}
+  ${hist.length ? `
+  <div class="card">
+    <div class="section-title"><h2>Histórico</h2></div>
+    ${simuladoTrendHTML(hist)}
+    ${hist.slice().reverse().map(sm=>{
+      const pct = Math.round(sm.acertos/((sm.total-sm.brancos)||1)*100);
+      const tipoNome = (SIMULADO_TYPES.find(t=>t.key===sm.tipo)||{}).nome || sm.tipo;
+      return `<div class="row-between" style="padding:8px 0;border-top:1px solid var(--border);">
+        <div>
+          <div style="font-weight:600;font-size:.85rem;">${tipoNome}</div>
+          <div style="font-size:.75rem;color:var(--muted);">${fmtDate(new Date(sm.date+'T00:00:00'))} · ${sm.acertos}/${sm.total-sm.brancos} respondidas · ${sm.brancos} em branco</div>
+        </div>
+        <span class="mono" style="font-weight:700;">${pct}%</span>
+      </div>`;
+    }).join('')}
+  </div>` : `<div class="empty">Nenhum simulado feito ainda. Comece pelo Mini PAS pra pegar o ritmo.</div>`}
+  `;
+}
+function simuladoResultHTML(s){
+  const total = s.questions.length;
+  const acertos = s.results.filter(r=>r.correct).length;
+  const brancos = s.results.filter(r=>r.branco).length;
+  const erros = total - acertos - brancos;
+  const respondidas = total - brancos;
+  const pct = respondidas? Math.round(acertos/respondidas*100) : 0;
+  const totalTime = Math.round((Date.now()-s.startTs)/1000);
+  const tempoMedio = Math.round(totalTime/total);
+  const porAssunto = {};
+  s.questions.forEach((q,i)=>{
+    if(!q.assuntoId) return;
+    if(!porAssunto[q.assuntoId]) porAssunto[q.assuntoId] = {acertos:0,total:0};
+    porAssunto[q.assuntoId].total++;
+    if(s.results[i].correct) porAssunto[q.assuntoId].acertos++;
+  });
+  const ranked = Object.entries(porAssunto).map(([id,d])=>({a:getAssunto(id), acc:d.acertos/d.total, d}));
+  const fracos = [...ranked].sort((x,y)=>x.acc-y.acc).slice(0,5);
+  const fortes = [...ranked].sort((x,y)=>y.acc-x.acc).slice(0,3).filter(x=>x.acc>=0.7);
+  return `
+  <div class="card" style="text-align:center;">
+    <div class="label-eyebrow">Resultado do simulado</div>
+    <div style="font-size:2.2rem;font-weight:800;font-family:var(--font-display);color:var(--accent);">${pct}%</div>
+    <div style="color:var(--muted);font-size:.85rem;">aproveitamento nas respondidas — não é a fórmula oficial de pontuação do Cebraspe</div>
+  </div>
+  <div class="grid3">
+    <div class="card-flat"><div class="label-eyebrow">Acertos</div><div class="mono" style="font-size:1.2rem;font-weight:700;color:var(--green);">${acertos}</div></div>
+    <div class="card-flat"><div class="label-eyebrow">Erros</div><div class="mono" style="font-size:1.2rem;font-weight:700;color:var(--red);">${erros}</div></div>
+    <div class="card-flat"><div class="label-eyebrow">Brancos</div><div class="mono" style="font-size:1.2rem;font-weight:700;">${brancos}</div></div>
+    <div class="card-flat"><div class="label-eyebrow">Tempo total</div><div class="mono" style="font-size:1.05rem;font-weight:700;">${fmtElapsed(totalTime*1000)}</div></div>
+    <div class="card-flat"><div class="label-eyebrow">Tempo médio</div><div class="mono" style="font-size:1.05rem;font-weight:700;">${tempoMedio}s</div></div>
+    <div class="card-flat"><div class="label-eyebrow">Questões</div><div class="mono" style="font-size:1.2rem;font-weight:700;">${total}</div></div>
+  </div>
+  ${fracos.length? `
+  <div class="card">
+    <h3>Os assuntos que mais precisam da sua atenção</h3>
+    ${fracos.map(f=>`<div class="row-between" style="padding:6px 0;"><span style="font-size:.86rem;">${f.a?f.a.nome:'—'}</span><span class="mono" style="font-size:.8rem;color:var(--muted);">${f.d.acertos}/${f.d.total}</span></div>`).join('')}
+  </div>` : ''}
+  ${fortes.length? `
+  <div class="card">
+    <h3>Pontos fortes deste simulado</h3>
+    ${fortes.map(f=>`<div class="row-between" style="padding:6px 0;"><span style="font-size:.86rem;">${f.a?f.a.nome:'—'}</span><span class="mono" style="font-size:.8rem;color:var(--green);">${f.d.acertos}/${f.d.total}</span></div>`).join('')}
+  </div>` : ''}
+  <div class="row" style="justify-content:center;gap:10px;">
+    <button class="btn btn-primary" data-action="finish-task">Concluir</button>
+  </div>`;
+}
 function submitAnswer(val){
   const s = QUIZ_SESSION; const q = s.questions[s.idx];
-  const correct = q.tipo==='CE' ? (val===q.gab) : (Number(val)===q.gab);
   const tempo = Math.round((Date.now()-s.qStartTs)/1000);
+  if(val==='BRANCO'){
+    s.results[s.idx] = {resposta:null, correct:false, branco:true, tempo};
+    if(!STATE.qStats[q.id]) STATE.qStats[q.id] = {seen:0,correct:0};
+    STATE.qStats[q.id].seen++;
+    s.answered = true;
+    save(); render();
+    return;
+  }
+  const correct = q.tipo==='CE' ? (val===q.gab) : (Number(val)===q.gab);
   s.results[s.idx] = {resposta: q.tipo==='CE'? val : Number(val), correct, tempo};
   if(correct) s.correctCount++;
-  answerQuestion(q, correct);
+  answerQuestion(q, correct, tempo);
   s.answered = true;
   render();
 }
+function saveSimuladoResult(s){
+  const total = s.questions.length;
+  const acertos = s.results.filter(r=>r.correct).length;
+  const brancos = s.results.filter(r=>r.branco).length;
+  const erros = total - acertos - brancos;
+  const tempoTotal = Math.round((Date.now()-s.startTs)/1000);
+  const porAssunto = {};
+  s.questions.forEach((q,i)=>{
+    if(!q.assuntoId) return;
+    if(!porAssunto[q.assuntoId]) porAssunto[q.assuntoId] = {acertos:0,total:0};
+    porAssunto[q.assuntoId].total++;
+    if(s.results[i].correct) porAssunto[q.assuntoId].acertos++;
+  });
+  const fracos = Object.entries(porAssunto).sort((a,b)=>(a[1].acertos/a[1].total)-(b[1].acertos/b[1].total)).slice(0,5).map(([id])=>id);
+  STATE.simulados.push({id:'sim_'+Date.now(), date:todayISO(), tipo:s.tipo, areaId:s.areaId||null, total, acertos, erros, brancos, tempoTotal, tempoMedio:Math.round(tempoTotal/total), fracos});
+  logActivity({simulados:1, minutos:Math.round(tempoTotal/60)});
+}
 function finalizeCurrentAnswer(){
   const s = QUIZ_SESSION; const q = s.questions[s.idx]; const r = s.results[s.idx];
-  if(!r.correct && q.assuntoId){
+  if(r.branco){
+    // em branco não é erro de conteúdo — só avança, sem mexer no caderno de erros
+  } else if(!r.correct && q.assuntoId){
     registrarErro(q, r.resposta, r.tempo, r.motivo || MOTIVOS[0]);
   } else if(r.correct && q.assuntoId){
     const err = STATE.errors.find(e=>e.questionId===q.id && !e.resolvido);
     if(err) registrarAcertoErroReview(err.id); // acerto confiante empurra a revisão espaçada pra frente (1→7→15→30)
   }
   if(ACTIVE_TASK && ACTIVE_TASK.type==='diagnostico'){ STATE.diagnostic.inProgress = JSON.parse(JSON.stringify(s)); }
+  if(['erros','revisao','revisao-assunto'].includes(s.mode)) logActivity({revisoes:1});
   s.idx++; s.answered=false; s.qStartTs=Date.now();
+  if(s.simulado && s.idx>=s.questions.length && !s.saved){ saveSimuladoResult(s); s.saved=true; }
   save(); render();
 }
 
@@ -1222,75 +1444,41 @@ function statusView(){
   }).join('');
 }
 
-function computeMindMap(area){
-  const multi = area.materias.length>1;
-  const rMateria = multi? 95: 0;
-  const rAssunto = multi? 185: 150;
-  const size = Math.round((rAssunto+95)*2);
-  const cx = size/2, cy = size/2;
-  const totalAssuntos = area.materias.reduce((s,m)=>s+m.assuntos.length,0);
-  const gap = multi? (Math.PI*2*0.025) : 0;
-  let angleCursor = -Math.PI/2;
-  const nodes = [], links = [];
-  area.materias.forEach(mat=>{
-    const sectorAngle = (mat.assuntos.length/totalAssuntos) * (Math.PI*2 - gap*area.materias.length);
-    const matMid = angleCursor + sectorAngle/2;
-    let matX=cx, matY=cy;
-    if(multi){
-      matX = cx + rMateria*Math.cos(matMid);
-      matY = cy + rMateria*Math.sin(matMid);
-      nodes.push({type:'materia', nome:mat.nome, x:matX, y:matY});
-      links.push({x1:cx,y1:cy,x2:matX,y2:matY});
-    }
-    const n = mat.assuntos.length;
-    mat.assuntos.forEach((a,i)=>{
-      const ang = angleCursor + (sectorAngle*(i+0.5)/n);
-      const ax = cx + rAssunto*Math.cos(ang);
-      const ay = cy + rAssunto*Math.sin(ang);
-      nodes.push({type:'assunto', id:a.id, nome:a.nome, status:contentFor(a.id).status, x:ax, y:ay, angle:ang});
-      links.push({x1:matX,y1:matY,x2:ax,y2:ay});
-    });
-    angleCursor += sectorAngle + gap;
-  });
-  return {nodes, links, cx, cy, size};
+const STATUS_TRAIL_ICON = {red:'🌱', orange:'🟠', yellow:'🟡', green:'🟢'};
+const STATUS_TRAIL_LABEL = {red:'Não iniciado', orange:'Aprendendo', yellow:'Precisa revisar', green:'Dominado'};
+function trilhaHTML(area){
+  return area.materias.map((mat,mi)=>`
+    <div class="label-eyebrow" style="margin:${mi===0?'0':'16px'} 0 8px;">${mat.nome}</div>
+    <div class="trail">
+      ${mat.assuntos.map((a,i)=>{
+        const c = contentFor(a.id);
+        const prereqId = PREREQ[a.id];
+        const prereqAssunto = prereqId ? getAssunto(prereqId) : null;
+        const locked = prereqAssunto && c.status==='red' && contentFor(prereqId).status!=='green';
+        const icon = locked ? '🔒' : STATUS_TRAIL_ICON[c.status];
+        const sub = locked ? `Sugerido depois de "${prereqAssunto.nome}"` : STATUS_TRAIL_LABEL[c.status];
+        return `<div class="trail-node" data-action="assunto-detail" data-assunto="${a.id}">
+          ${i<mat.assuntos.length-1?'<div class="trail-line"></div>':''}
+          <div class="trail-dot" style="${locked?'opacity:.7;':''}">${icon}</div>
+          <div class="trail-body ${locked?'locked':''}">
+            <div class="trail-name">${a.nome}</div>
+            <div class="trail-sub">${sub}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  `).join('');
 }
-
-function nodeSVG(n){
-  if(n.type==='materia'){
-    return `<g>
-      <circle cx="${n.x}" cy="${n.y}" r="5" style="fill:var(--accent-2);"/>
-      <text x="${n.x}" y="${n.y-10}" text-anchor="middle" font-size="10.5" font-weight="800" style="fill:var(--ink);font-family:var(--font-body);">${escapeXML(truncateLabel(n.nome,20))}</text>
-    </g>`;
-  }
-  const colorMap = {red:'var(--red)',orange:'var(--orange)',yellow:'var(--yellow)',green:'var(--green)'};
-  const dx = Math.cos(n.angle), dy = Math.sin(n.angle);
-  const labelX = n.x + dx*12, labelY = n.y + dy*12 + 3;
-  const anchor = dx > 0.2 ? 'start' : dx < -0.2 ? 'end' : 'middle';
-  return `<g style="cursor:pointer;" data-action="assunto-detail" data-assunto="${n.id}">
-    <title>${escapeXML(n.nome)}</title>
-    <circle cx="${n.x}" cy="${n.y}" r="6" style="fill:${colorMap[n.status]||'var(--muted)'};stroke:var(--surface);stroke-width:1.5;"/>
-    <text x="${labelX}" y="${labelY}" text-anchor="${anchor}" font-size="8.5" style="fill:var(--ink-soft);font-family:var(--font-body);">${escapeXML(truncateLabel(n.nome,22))}</text>
-  </g>`;
-}
-
 function treeView(){
   const area = AREAS.find(a=>a.id===MINDMAP_AREA) || AREAS[0];
-  const mm = computeMindMap(area);
   return `
   <div class="card">
-    <div class="section-title"><h2>Árvore de conteúdo</h2></div>
+    <div class="section-title"><h2>Trilha — ${area.emoji} ${area.nome}</h2></div>
     <div class="tabs" style="padding:0 0 10px;">
       ${AREAS.map(ar=>`<button class="tab ${MINDMAP_AREA===ar.id?'active':''}" data-action="mindmap-area" data-area="${ar.id}">${ar.emoji} ${ar.nome}</button>`).join('')}
     </div>
-    <div style="overflow:auto;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface-2);">
-      <svg width="${mm.size}" height="${mm.size}" viewBox="0 0 ${mm.size} ${mm.size}" style="display:block;margin:0 auto;">
-        ${mm.links.map(l=>`<line x1="${l.x1}" y1="${l.y1}" x2="${l.x2}" y2="${l.y2}" style="stroke:var(--border);stroke-width:1.5;"/>`).join('')}
-        <circle cx="${mm.cx}" cy="${mm.cy}" r="26" style="fill:var(--accent);"/>
-        <text x="${mm.cx}" y="${mm.cy+4}" text-anchor="middle" font-size="18" style="font-family:var(--font-body);">${area.emoji}</text>
-        ${mm.nodes.map(n=>nodeSVG(n)).join('')}
-      </svg>
-    </div>
-    <div class="footer-note">Toque em um assunto para ver detalhes, estudar ou praticar. As cores mostram seu domínio atual. Em assuntos com muitos itens (como Matemática) os rótulos ficam apertados — use a Lista para ler os nomes completos.</div>
+    ${trilhaHTML(area)}
+    <div class="footer-note">🌱 não iniciado · 🟠 aprendendo · 🟡 precisa revisar · 🟢 dominado · 🔒 tem um pré-requisito sugerido ainda não dominado (é uma ordem de currículo nossa, não uma regra oficial da matriz — pode pular à vontade). Toque em qualquer assunto para ver detalhes, estudar, praticar ou revisar.</div>
   </div>`;
 }
 
@@ -1300,6 +1488,9 @@ function assuntoDetailModalHTML(id){
   const c = contentFor(id);
   const acc = c.attempts? Math.round(c.correct/c.attempts*100) : null;
   const nQ = applyFilters(questoesPorAssunto(id)).length;
+  const pb = priorityBadge(a);
+  const prereqId = PREREQ[id];
+  const prereqAssunto = prereqId ? getAssunto(prereqId) : null;
   return `<div class="modal-bg" data-action="close-modal"><div class="modal" onclick="event.stopPropagation()">
     <div class="row-between">
       <span class="badge b-neutral">${a.areaNome} · ${a.materiaNome}</span>
@@ -1308,17 +1499,24 @@ function assuntoDetailModalHTML(id){
     <h3 style="margin-top:10px;">${a.nome}</h3>
     <div class="row" style="gap:8px;margin:6px 0 10px;flex-wrap:wrap;">
       ${statusBadge(c.status)}
+      <span class="badge ${pb.cls}">${pb.emoji} ${pb.label}</span>
       <span class="badge b-neutral mono">${a.hab}</span>
     </div>
+    <div class="grid2" style="margin-bottom:10px;">
+      <div class="card-flat"><div class="label-eyebrow">Importância na matriz</div><div style="font-weight:700;margin-top:2px;">${'★'.repeat(a.peso)}${'☆'.repeat(3-a.peso)}</div></div>
+      <div class="card-flat"><div class="label-eyebrow">Tempo estimado</div><div style="font-weight:700;margin-top:2px;">${taskDuration('aprender')} min</div></div>
+    </div>
+    ${prereqAssunto ? `<p style="font-size:.78rem;color:var(--muted);margin:0 0 10px;">Pré-requisito sugerido (ordem de currículo, não oficial): <b>${prereqAssunto.nome}</b> (${STATUS_TRAIL_LABEL[contentFor(prereqId).status]}).</p>` : ''}
     ${acc!==null ? `
     <div class="card-flat" style="margin-bottom:12px;">
       <div class="row-between"><span style="font-size:.82rem;">Seu desempenho</span><span class="mono" style="font-weight:700;">${acc}%</span></div>
       <div class="bar" style="margin-top:6px;"><div style="width:${acc}%"></div></div>
-      <div style="font-size:.75rem;color:var(--muted);margin-top:4px;">${c.correct}/${c.attempts} corretas</div>
+      <div style="font-size:.75rem;color:var(--muted);margin-top:4px;">${c.correct}/${c.attempts} corretas · ${nQ} questão(ões) disponível(is)</div>
     </div>` : `<p style="font-size:.85rem;color:var(--muted);margin-bottom:12px;">Você ainda não praticou este assunto.</p>`}
     <div style="display:flex;flex-direction:column;gap:8px;">
-      <button class="btn btn-primary btn-block" data-action="detail-aprender" data-assunto="${id}">📖 Estudar passo a passo</button>
+      <button class="btn btn-primary btn-block" data-action="detail-aprender" data-assunto="${id}">📖 Aprender</button>
       <button class="btn btn-secondary btn-block" data-action="detail-praticar" data-assunto="${id}" ${!nQ?'disabled':''}>✏️ Praticar questões (${nQ})</button>
+      <button class="btn btn-secondary btn-block" data-action="detail-revisar" data-assunto="${id}" ${!c.attempts?'disabled':''}>🔄 Revisar</button>
       <a class="btn btn-ghost btn-block" href="${videoSearchUrl(a)}" target="_blank" rel="noopener">🎥 Buscar explicação em vídeo</a>
       <a class="btn btn-ghost btn-block" href="${googleSearchUrl(a)}" target="_blank" rel="noopener">🔍 Buscar explicação escrita</a>
     </div>
@@ -1515,6 +1713,7 @@ function errosView(){
 
 /* ---------- OBRAS ---------- */
 function obrasView(){
+  if(ACTIVE_TASK && ACTIVE_TASK.type==='obraExpress') return taskRunnerHTML();
   const cats = Object.keys(CAT_INFO);
   const total = OBRAS.length;
   const dominadas = OBRAS.filter(o=>STATE.obrasStatus[o.id]==='dominado').length;
@@ -1522,16 +1721,19 @@ function obrasView(){
   <div class="card">
     <div class="section-title row-between"><h2>Obras oficiais PAS 1</h2><span class="mono" style="color:var(--accent);font-weight:700;">${dominadas}/${total}</span></div>
     <div class="bar"><div style="width:${Math.round(dominadas/total*100)}%"></div></div>
-    <div class="row" style="gap:8px;margin-top:12px;">
+    <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap;">
       <button class="btn btn-secondary" data-action="obras-quiz">🧠 Quiz das obras</button>
       <button class="btn btn-secondary" data-action="obras-review">⏱️ Revisão em 5 min</button>
+      <button class="btn btn-secondary" data-action="obras-express">⚡ Obra Express</button>
     </div>
   </div>
   ${cats.map(cat=>{
     const list = OBRAS.filter(o=>o.cat===cat);
     const info = CAT_INFO[cat];
+    const dom = list.filter(o=>STATE.obrasStatus[o.id]==='dominado').length;
     return `<div class="card">
-      <div class="section-title"><h2>${info.emoji} ${info.nome}</h2></div>
+      <div class="section-title row-between"><h2>${info.emoji} ${info.nome}</h2><span class="mono" style="color:var(--muted);font-size:.85rem;">${dom}/${list.length}</span></div>
+      <div class="bar" style="margin-bottom:10px;"><div style="width:${Math.round(dom/list.length*100)}%"></div></div>
       <div style="display:flex;flex-direction:column;gap:8px;">
       ${list.map(o=>{
         const st = STATE.obrasStatus[o.id]||'novo';
@@ -1550,6 +1752,30 @@ function obrasView(){
   `;
 }
 function startObraStudy(obraId){ ACTIVE_TASK = {type:'obra', obraId}; ROUTE='home'; render(); }
+function startObraExpress(obraId){ ACTIVE_TASK = {type:'obraExpress', obraId, _nivel:1}; QUIZ_SESSION=null; ROUTE='obras'; render(); }
+function obraExpressHTML(t){
+  const o = OBRAS.find(x=>x.id===t.obraId);
+  const cat = CAT_INFO[o.cat];
+  const nivel = t._nivel||1;
+  const steps = [
+    {t:'1 min · Contexto', c:'Veja no material oficial (Cebraspe/UnB) quando e onde esta obra foi produzida — a plataforma ainda não tem esse resumo pronto, use este passo pra guiar sua leitura.'},
+    {t:'2 min · Ideia principal', c:'Qual é o tema/ideia central desta obra? É o que mais costuma ser cobrado na prova.'},
+    {t:'1 min · Relações', c:'Essa obra se conecta com algum outro assunto do PAS (história, sociedade, outra obra do mesmo período)? Pense em 1 conexão.'},
+  ];
+  const st = steps[Math.min(nivel,3)-1];
+  return `
+  <div class="card qcard">
+    <div class="row-between"><span class="badge b-neutral">${cat.emoji} ${cat.nome} · Express</span><button class="btn btn-ghost btn-sm" data-action="cancel-task">Sair</button></div>
+    <h2>${o.titulo}</h2>
+    <p style="color:var(--ink-soft);margin-top:-8px;">${o.autor||'Autoria/origem a confirmar no material oficial'}</p>
+    <div class="bar"><div style="width:${Math.min(nivel,3)/3*100}%"></div></div>
+    <div class="label-eyebrow">${st.t}</div>
+    <p class="qstatement" style="font-size:.95rem;">${st.c}</p>
+    ${nivel<3
+      ? `<button class="btn btn-primary" data-action="express-next">Avançar</button>`
+      : `<button class="btn btn-primary" data-action="express-quiz" data-obra="${o.id}">⚡ Fazer quiz rápido</button>`}
+  </div>`;
+}
 function startObrasQuiz(){
   const withAuthor = OBRAS.filter(o=>o.autor);
   const qs = shuffle(withAuthor).slice(0,8);
@@ -1605,21 +1831,48 @@ function estrategiaView(){
 }
 
 /* ---------- PROGRESSO ---------- */
+function evolutionInsightHTML(){
+  const hist = STATE.history;
+  if(hist.length<2) return `<p class="subtitle">Continue praticando — em alguns dias você vai começar a ver aqui sua evolução ao longo do tempo.</p>`;
+  const target = addDays(todayISO(), -14);
+  const past = [...hist].reverse().find(h=>h.date<=target);
+  const now = hist[hist.length-1];
+  if(!past || past.date===now.date) return `<p class="subtitle">Continue praticando — em alguns dias você vai começar a ver aqui sua evolução ao longo do tempo.</p>`;
+  const delta = now.accuracy - past.accuracy;
+  const arrow = delta>3?'📈':delta<-3?'📉':'➡️';
+  return `<p class="subtitle">${arrow} Sua taxa de acerto foi de ${past.accuracy}% (em ${fmtDate(new Date(past.date+'T00:00:00'))}) para ${now.accuracy}% agora — ${delta>=0?'+':''}${delta} pontos.</p>`;
+}
 function progressoView(){
   const totalQ = Object.values(STATE.qStats).reduce((s,q)=>s+q.seen,0);
   const totalCorrect = Object.values(STATE.qStats).reduce((s,q)=>s+q.correct,0);
   const acc = totalQ? Math.round(totalCorrect/totalQ*100) : 0;
   const green = ASSUNTOS.filter(a=>contentFor(a.id).status==='green').length;
   const hist = STATE.history.slice(-8);
+  const ts = timeStats();
+  const tempoMedio = ts.count? Math.round(ts.totalSeg/ts.count) : null;
+  const totalRevisoes = Object.values(STATE.activity||{}).reduce((s,d)=>s+(d.revisoes||0),0);
+  const simCount = STATE.simulados.length;
+  const ultimoSim = simCount? STATE.simulados[simCount-1] : null;
   return `
+  <div class="card">
+    <h3>Evolução recente</h3>
+    ${evolutionInsightHTML()}
+    ${hist.length>=2 ? `<div class="sparkline" style="margin-top:8px;">
+      ${hist.map(h=>`<div class="spark-bar"><div style="height:${Math.max(6,h.accuracy)}%;"></div></div>`).join('')}
+    </div>` : ''}
+  </div>
   <div class="grid3">
     <div class="card-flat"><div class="label-eyebrow">Questões</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${totalQ}</div></div>
     <div class="card-flat"><div class="label-eyebrow">Acerto</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${acc}%</div></div>
     <div class="card-flat"><div class="label-eyebrow">Dominados</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${green}/${ASSUNTOS.length}</div></div>
     <div class="card-flat"><div class="label-eyebrow">Sequência</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${STATE.profile.streak} 🔥</div></div>
     <div class="card-flat"><div class="label-eyebrow">XP</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${STATE.profile.xp} ⭐</div></div>
+    <div class="card-flat"><div class="label-eyebrow">Tempo médio/questão</div><div class="mono" style="font-size:1.1rem;font-weight:700;">${tempoMedio===null?'—':tempoMedio+'s'}</div></div>
     <div class="card-flat"><div class="label-eyebrow">Erros pendentes</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${STATE.errors.filter(e=>!e.resolvido).length}</div></div>
+    <div class="card-flat"><div class="label-eyebrow">Revisões feitas</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${totalRevisoes}</div></div>
+    <div class="card-flat"><div class="label-eyebrow">Simulados</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${simCount}</div></div>
   </div>
+  ${ultimoSim ? `<div class="card-flat row-between"><span style="font-size:.85rem;">Último simulado</span><span class="mono" style="font-weight:700;">${Math.round(ultimoSim.acertos/((ultimoSim.total-ultimoSim.brancos)||1)*100)}% · ${fmtDate(new Date(ultimoSim.date+'T00:00:00'))}</span></div>` : ''}
   <div class="card">
     <h3>Desempenho por área</h3>
     ${AREAS.map(area=>{
@@ -1642,6 +1895,66 @@ function progressoView(){
       </label>
     </div>
   </div>
+  `;
+}
+
+/* ---------- VISÃO SEMANAL ---------- */
+const WEEKLY_GOAL = {questoes:150, minutos:600, revisoes:12, obras:2, simulados:1};
+function weekDates(){
+  const d = new Date(); const dow = (d.getDay()+6)%7; // 0=segunda
+  const monday = new Date(d); monday.setDate(d.getDate()-dow); monday.setHours(0,0,0,0);
+  const arr = [];
+  for(let i=0;i<7;i++){ const x = new Date(monday); x.setDate(monday.getDate()+i); arr.push(x.toISOString().slice(0,10)); }
+  return arr;
+}
+function weekTotals(dates){
+  const t = {questoes:0,minutos:0,revisoes:0,obras:0,simulados:0};
+  dates.forEach(d=>{ const a = STATE.activity[d]; if(a){ t.questoes+=a.questoes||0; t.minutos+=a.minutos||0; t.revisoes+=a.revisoes||0; t.obras+=a.obras||0; t.simulados+=a.simulados||0; } });
+  return t;
+}
+function dayState(dateISO, todayIso){
+  if(dateISO===todayIso) return 'hoje';
+  const a = STATE.activity[dateISO];
+  if(dateISO>todayIso) return 'futuro';
+  if(!a) return 'falhou';
+  const score = (a.questoes||0) + (a.revisoes||0)*2 + (a.obras||0)*2 + (a.simulados||0)*5;
+  if(score>=8) return 'completo';
+  if(score>0) return 'parcial';
+  return 'falhou';
+}
+function weeklyGoalRowHTML(label, val, goal){
+  const pct = Math.min(100, Math.round(val/goal*100));
+  return `<div style="margin-bottom:10px;">
+    <div class="row-between"><span style="font-size:.85rem;font-weight:600;">${label}</span><span class="mono" style="font-size:.8rem;">${val}/${goal}</span></div>
+    <div class="bar"><div style="width:${pct}%"></div></div>
+  </div>`;
+}
+function semanaView(){
+  const dates = weekDates();
+  const today = todayISO();
+  const totals = weekTotals(dates);
+  const dayNames = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+  const stateIcon = {hoje:'🎯', completo:'✅', parcial:'🟡', falhou:'❌', futuro:'·'};
+  return `
+  <div class="card">
+    <h2 class="title-md">📅 Minha semana</h2>
+    <div class="week-grid">
+      ${dates.map((d,i)=>`
+        <div>
+          <div class="label-eyebrow" style="margin-bottom:4px;">${dayNames[i]}</div>
+          <div style="font-size:1.2rem;">${stateIcon[dayState(d,today)]}</div>
+        </div>`).join('')}
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-title"><h2>Meta semanal</h2></div>
+    ${weeklyGoalRowHTML('Questões', totals.questoes, WEEKLY_GOAL.questoes)}
+    ${weeklyGoalRowHTML('Horas', Math.round(totals.minutos/60*10)/10, Math.round(WEEKLY_GOAL.minutos/60))}
+    ${weeklyGoalRowHTML('Revisões', totals.revisoes, WEEKLY_GOAL.revisoes)}
+    ${weeklyGoalRowHTML('Obras', totals.obras, WEEKLY_GOAL.obras)}
+    ${weeklyGoalRowHTML('Simulados', totals.simulados, WEEKLY_GOAL.simulados)}
+  </div>
+  <div class="footer-note">✅ dia completo · 🟡 dia parcial · ❌ sem atividade registrada · 🎯 hoje. A meta semanal é uma referência geral fixa — ajuste seu ritmo conforme sua fase de estudo, não é uma regra oficial do PAS.</div>
   `;
 }
 
@@ -1720,6 +2033,11 @@ function attachEvents(){
     MODAL=null; ACTIVE_TASK={type:'banco'}; ROUTE='questoes';
     startQuiz(shuffle(applyFilters(questoesPorAssunto(assuntoId))), 'assunto');
   }));
+  document.querySelectorAll('[data-action="detail-revisar"]').forEach(el=>el.addEventListener('click',()=>{
+    const assuntoId = el.dataset.assunto;
+    MODAL=null; ACTIVE_TASK={type:'banco', mode:'revisao-assunto'}; ROUTE='questoes';
+    startQuiz(shuffle(applyFilters(questoesPorAssunto(assuntoId))), 'revisao-assunto');
+  }));
 
   const cancelBtn = document.querySelector('[data-action="cancel-task"]');
   if(cancelBtn) cancelBtn.addEventListener('click',()=>{ ACTIVE_TASK=null; QUIZ_SESSION=null; render(); });
@@ -1727,9 +2045,10 @@ function attachEvents(){
   const finishBtn = document.querySelector('[data-action="finish-task"]');
   if(finishBtn) finishBtn.addEventListener('click',()=>{
     if(ACTIVE_TASK && ACTIVE_TASK.type==='diagnostico') finishDiagnostic();
+    if(ACTIVE_TASK && ACTIVE_TASK.type==='obraExpress'){ STATE.obrasStatus[ACTIVE_TASK.obraId]='dominado'; logActivity({obras:1, minutos:5}); }
     if(STATE.dailyPlan && ACTIVE_TASK && ACTIVE_TASK.id){
       const t = STATE.dailyPlan.tasks.find(x=>x.id===ACTIVE_TASK.id);
-      if(t) t.status='concluida';
+      if(t){ t.status='concluida'; logActivity({minutos:t.dur}); }
     }
     ACTIVE_TASK=null; QUIZ_SESSION=null; save(); render();
   });
@@ -1783,6 +2102,7 @@ function attachEvents(){
   document.querySelectorAll('[data-action="study-obra"]').forEach(el=>el.addEventListener('click',()=>startObraStudy(el.dataset.obra)));
   document.querySelectorAll('[data-action="obra-status"]').forEach(el=>el.addEventListener('click',()=>{
     STATE.obrasStatus[el.dataset.obra] = el.dataset.status;
+    logActivity({obras:1, minutos:8});
     if(STATE.dailyPlan && ACTIVE_TASK.id){ const t=STATE.dailyPlan.tasks.find(x=>x.id===ACTIVE_TASK.id); if(t) t.status='concluida'; }
     ACTIVE_TASK=null; save(); render();
   }));
@@ -1793,6 +2113,35 @@ function attachEvents(){
     const pending = OBRAS.filter(o=>(STATE.obrasStatus[o.id]||'novo')!=='dominado');
     if(pending.length) startObraStudy(shuffle(pending)[0].id);
   });
+  const obrasExpressBtn = document.querySelector('[data-action="obras-express"]');
+  if(obrasExpressBtn) obrasExpressBtn.addEventListener('click',()=>{
+    const pending = OBRAS.filter(o=>(STATE.obrasStatus[o.id]||'novo')!=='dominado');
+    if(pending.length) startObraExpress(shuffle(pending)[0].id);
+  });
+  document.querySelectorAll('[data-action="express-next"]').forEach(el=>el.addEventListener('click',()=>{
+    ACTIVE_TASK._nivel = (ACTIVE_TASK._nivel||1)+1; render();
+  }));
+  document.querySelectorAll('[data-action="express-quiz"]').forEach(el=>el.addEventListener('click',()=>{
+    const o = OBRAS.find(x=>x.id===el.dataset.obra);
+    if(o.autor){
+      const wrongOpts = shuffle(OBRAS.filter(x=>x.id!==o.id && x.autor)).slice(0,3).map(x=>x.autor);
+      const opts = shuffle([o.autor, ...wrongOpts]);
+      const q = {id:'expq_'+o.id+'_'+Date.now(), assuntoId:null, tipo:'MC', dif:'facil', enun:`Quem é o(a) autor(a)/origem de "${o.titulo}"?`, opts, gab:opts.indexOf(o.autor), res:`"${o.titulo}" é de ${o.autor}.`, isObraQuiz:true};
+      startQuiz([q], 'obraExpress');
+    } else {
+      STATE.obrasStatus[o.id]='dominado';
+      logActivity({obras:1, minutos:5});
+      ACTIVE_TASK=null; save(); render();
+    }
+  }));
+
+  document.querySelectorAll('[data-action="sim-pick-area"]').forEach(el=>el.addEventListener('click',()=>{
+    SIMULADO_AREA_PICK=true; render();
+  }));
+  document.querySelectorAll('[data-action="start-simulado"]').forEach(el=>el.addEventListener('click',()=>{
+    SIMULADO_AREA_PICK=false;
+    startSimulado(el.dataset.sim, el.dataset.area);
+  }));
 
   document.querySelectorAll('[data-action="close-modal"]').forEach(el=>el.addEventListener('click',()=>{MODAL=null; render();}));
   const confirmCustom = document.querySelector('[data-action="confirm-custom-time"]');
