@@ -206,6 +206,29 @@ textarea.chip-input{resize:vertical;min-height:64px;}
 .sim-type-card:hover{border-color:var(--accent);}
 .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center;margin-top:10px;}
 
+/* ---- Fase 3: temas de cor, níveis, conquistas, professor, personalização ---- */
+:root[data-color-theme="azul"]{--accent:#2464EB;--accent-strong:#1B4FC4;--accent-ink:#F3F7FF;}
+:root[data-color-theme="roxo"]{--accent:#7C3AED;--accent-strong:#6425C7;--accent-ink:#F8F5FF;}
+:root[data-color-theme="laranja"]{--accent:#DD6A20;--accent-strong:#B8541A;--accent-ink:#FFF6EF;}
+:root[data-color-theme="rosa"]{--accent:#DB2E72;--accent-strong:#B71F5C;--accent-ink:#FFF3F8;}
+:root[data-color-theme="mono"]{--accent:#2B2B2B;--accent-strong:#000000;--accent-ink:#FFFFFF;--accent-2:#5A5A5A;--accent-2-ink:#FFFFFF;}
+@media (prefers-color-scheme: dark){
+  :root[data-color-theme="azul"]:not([data-theme="light"]){--accent:#6AA5FF;--accent-strong:#9CC4FF;--accent-ink:#0B1526;}
+  :root[data-color-theme="roxo"]:not([data-theme="light"]){--accent:#B08AFB;--accent-strong:#C9AEFC;--accent-ink:#180F2E;}
+  :root[data-color-theme="laranja"]:not([data-theme="light"]){--accent:#F0925B;--accent-strong:#F5AC80;--accent-ink:#2A1408;}
+  :root[data-color-theme="rosa"]:not([data-theme="light"]){--accent:#F472A8;--accent-strong:#F79FC3;--accent-ink:#2E0F1D;}
+  :root[data-color-theme="mono"]:not([data-theme="light"]){--accent:#E5E5E5;--accent-strong:#FFFFFF;--accent-ink:#141414;--accent-2:#B5B5B5;--accent-2-ink:#141414;}
+}
+:root[data-color-theme="azul"][data-theme="dark"]{--accent:#6AA5FF;--accent-strong:#9CC4FF;--accent-ink:#0B1526;}
+:root[data-color-theme="roxo"][data-theme="dark"]{--accent:#B08AFB;--accent-strong:#C9AEFC;--accent-ink:#180F2E;}
+:root[data-color-theme="laranja"][data-theme="dark"]{--accent:#F0925B;--accent-strong:#F5AC80;--accent-ink:#2A1408;}
+:root[data-color-theme="rosa"][data-theme="dark"]{--accent:#F472A8;--accent-strong:#F79FC3;--accent-ink:#2E0F1D;}
+:root[data-color-theme="mono"][data-theme="dark"]{--accent:#E5E5E5;--accent-strong:#FFFFFF;--accent-ink:#141414;--accent-2:#B5B5B5;--accent-2-ink:#141414;}
+input[type=color]{width:44px;height:34px;border:1px solid var(--border);border-radius:8px;padding:2px;background:var(--surface);cursor:pointer;}
+.level-up-toast{animation:levelPop .5s ease;}
+@keyframes levelPop{from{opacity:0;transform:scale(.92);}to{opacity:1;transform:none;}}
+.chat-bubble{border-radius:var(--radius-sm);}
+
 hr{border:none;border-top:1px solid var(--border);margin:2px 0;}
 </style>
 </head>
@@ -219,7 +242,7 @@ const EXAM_DATE = new Date('2026-12-06T13:00:00');
 const STORAGE_KEY = 'ipe_pas1_mvp_v1';
 
 const AREAS = [
- {id:'hum', nome:'Humanidades', emoji:'🏛️', interdisciplinar:true, materias:[
+ {id:'hum', nome:'Humanidades', emoji:'🏛️', cor:'#7C3AED', interdisciplinar:true, materias:[
    {id:'filo', nome:'Filosofia', assuntos:[
      {id:'filo_mitos', nome:'Mitologias e saberes ancestrais', hab:'CH2', peso:2},
      {id:'filo_existencia', nome:'A existência humana como questão filosófica', hab:'CH2', peso:2},
@@ -255,7 +278,7 @@ const AREAS = [
      {id:'socio_praticas', nome:'Práticas sociais e produção de discursos', hab:'CH25', peso:1},
    ]},
  ]},
- {id:'ling', nome:'Linguagens', emoji:'📖', materias:[
+ {id:'ling', nome:'Linguagens', emoji:'📖', cor:'#D9642A', materias:[
    {id:'port', nome:'Língua Portuguesa', assuntos:[
      {id:'port_morfo', nome:'Morfossintaxe (classes e funções)', hab:'LING5-LING8', peso:3},
      {id:'port_coesao', nome:'Coesão e coerência textual', hab:'LING9-LING10', peso:3},
@@ -277,7 +300,7 @@ const AREAS = [
      {id:'artes_elementos', nome:'Elementos da linguagem artística e musical', hab:'LING1-LING3', peso:1},
    ]},
  ]},
- {id:'mat', nome:'Matemática', emoji:'📐', materias:[
+ {id:'mat', nome:'Matemática', emoji:'📐', cor:'#2464EB', materias:[
    {id:'mat_base', nome:'Matemática', assuntos:[
      {id:'mat_conjuntos', nome:'Conjuntos numéricos e números reais', hab:'MAT1-MAT2', peso:2},
      {id:'mat_geometria', nome:'Geometria plana', hab:'MAT3-MAT4', peso:2},
@@ -292,7 +315,7 @@ const AREAS = [
      {id:'mat_financeira', nome:'Matemática financeira', hab:'MAT16', peso:2},
    ]},
  ]},
- {id:'nat', nome:'Ciências da Natureza', emoji:'🧪', materias:[
+ {id:'nat', nome:'Ciências da Natureza', emoji:'🧪', cor:'#2F8F5B', materias:[
    {id:'bio', nome:'Biologia', assuntos:[
      {id:'bio_metodo', nome:'Métodos de investigação científica', hab:'CN1', peso:1},
      {id:'bio_bioquimica', nome:'Bioquímica (moléculas da vida)', hab:'CN10-CN11', peso:2},
@@ -505,6 +528,8 @@ function defaultState(){
     simulados:[], // {id,date,tipo,areaId,total,acertos,erros,brancos,tempoTotal,tempoMedio,fracos:[assuntoId]}
     activity:{}, // dateISO -> {questoes,minutos,revisoes,obras,simulados} — base da Visão Semanal
     timeStats:{totalSeg:0,count:0},
+    appearance:{colorTheme:'original', mode:'system'}, // colorTheme: original|azul|roxo|laranja|rosa|mono|custom (+customHex); mode: system|light|dark
+    desafio:{date:null, questionId:null, answered:false}, // desafio do dia — seleção determinística por data
   };
 }
 let STATE = load();
@@ -514,10 +539,11 @@ function load(){
     if(!raw) return defaultState();
     const parsed = JSON.parse(raw);
     const def = defaultState();
-    const defDiagnostic = def.diagnostic, defProfile = def.profile; // guarda os defaults antes do Object.assign raso sobrescrever
+    const defDiagnostic = def.diagnostic, defProfile = def.profile, defAppearance = def.appearance; // guarda os defaults antes do Object.assign raso sobrescrever
     const merged = Object.assign(def, parsed);
     merged.diagnostic = Object.assign(defDiagnostic, parsed.diagnostic||{});
     merged.profile = Object.assign(defProfile, parsed.profile||{});
+    merged.appearance = Object.assign(defAppearance, parsed.appearance||{});
     return merged;
   }catch(e){return defaultState();}
 }
@@ -541,7 +567,7 @@ function snapshotHistory(){
   if(last && last.date===today){ last.accuracy=acc; last.dominio=dominio; }
   else { STATE.history.push({date:today, accuracy:acc, dominio}); }
 }
-function save(){ snapshotHistory(); localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); }
+function save(){ snapshotHistory(); refreshAchievements(); localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); }
 
 function contentFor(assuntoId){
   if(!STATE.content[assuntoId]) STATE.content[assuntoId] = {attempts:0,correct:0,status:'red',lastSeen:null,srDue:null,srInterval:0,firstDate:null};
@@ -554,6 +580,48 @@ function weightedAcc(c){
   if(!c.attempts) return null;
   const cw = c.correctWeighted!=null ? c.correctWeighted : c.correct;
   return cw/c.attempts;
+}
+
+/* ============================= APARÊNCIA ============================= */
+function hexToHsl(hex){
+  const r=parseInt(hex.slice(1,3),16)/255, g=parseInt(hex.slice(3,5),16)/255, b=parseInt(hex.slice(5,7),16)/255;
+  const max=Math.max(r,g,b), min=Math.min(r,g,b); let h,s; const l=(max+min)/2;
+  if(max===min){h=s=0;} else {
+    const d=max-min; s=l>0.5? d/(2-max-min) : d/(max+min);
+    if(max===r) h=(g-b)/d+(g<b?6:0); else if(max===g) h=(b-r)/d+2; else h=(r-g)/d+4;
+    h/=6;
+  }
+  return [h*360,s*100,l*100];
+}
+function hslToHex(h,s,l){
+  s/=100; l/=100;
+  const k=n=>(n+h/30)%12;
+  const a=s*Math.min(l,1-l);
+  const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
+  const toHex=x=>Math.round(255*x).toString(16).padStart(2,'0');
+  return '#'+toHex(f(0))+toHex(f(8))+toHex(f(4));
+}
+function applyAppearance(){
+  const ap = STATE.appearance || {colorTheme:'original', mode:'system'};
+  const root = document.documentElement;
+  if(ap.mode==='light') root.setAttribute('data-theme','light');
+  else if(ap.mode==='dark') root.setAttribute('data-theme','dark');
+  else root.removeAttribute('data-theme');
+  root.removeAttribute('data-color-theme');
+  root.style.removeProperty('--accent'); root.style.removeProperty('--accent-strong'); root.style.removeProperty('--accent-ink');
+  if(ap.colorTheme==='custom' && ap.customHex){
+    const [h,s,l] = hexToHsl(ap.customHex);
+    const lClamped = Math.min(Math.max(l,22),62); // clamp de luminosidade pra manter contraste legível em claro e escuro
+    const sBoost = Math.max(s,35);
+    const accent = hslToHex(h,sBoost,lClamped);
+    const strong = hslToHex(h,sBoost,Math.max(lClamped-14,8));
+    const ink = lClamped>55 ? '#20281F' : '#FFFFFF';
+    root.style.setProperty('--accent', accent);
+    root.style.setProperty('--accent-strong', strong);
+    root.style.setProperty('--accent-ink', ink);
+  } else if(ap.colorTheme && ap.colorTheme!=='original'){
+    root.setAttribute('data-color-theme', ap.colorTheme);
+  }
 }
 
 /* ============================= PHASE & PRIORITY ============================= */
@@ -654,6 +722,44 @@ function dueReviewsToday(){
   return {contentDue, errorsDue};
 }
 
+/* ============================= GAMIFICAÇÃO ============================= */
+const LEVELS = [
+  {key:'semente', emoji:'🌰', nome:'Semente', min:0},
+  {key:'broto', emoji:'🌱', nome:'Broto', min:150},
+  {key:'muda', emoji:'🌿', nome:'Muda', min:400},
+  {key:'jovem', emoji:'🌳', nome:'Ipê Jovem', min:800},
+  {key:'flor', emoji:'🌼', nome:'Florescendo', min:1400},
+  {key:'pas', emoji:'🏆', nome:'Ipê PAS', min:2200},
+];
+function levelInfo(xp){
+  let idx=0;
+  for(let i=0;i<LEVELS.length;i++){ if(xp>=LEVELS[i].min) idx=i; }
+  const cur = LEVELS[idx], next = LEVELS[idx+1]||null;
+  const span = next? next.min-cur.min : 1;
+  const into = xp-cur.min;
+  return {cur, next, into, span, pct: next? Math.min(100,Math.round(into/span*100)) : 100, idx};
+}
+let LEVEL_UP_TOAST = null;
+function checkLevelUp(prevXp, newXp){
+  const before = levelInfo(prevXp).idx, after = levelInfo(newXp).idx;
+  if(after>before) LEVEL_UP_TOAST = LEVELS[after];
+}
+function totalQuestoesRespondidas(){ return Object.values(STATE.qStats).reduce((s,q)=>s+q.seen,0); }
+function totalOficiaisRespondidas(){ return QUESTOES.filter(q=>q.oficial).reduce((s,q)=>{const st=STATE.qStats[q.id]; return s+(st?st.seen:0);},0); }
+const ACHIEVEMENTS = [
+  {id:'first100', emoji:'🏅', nome:'Primeiras 100 questões', desc:'Responda 100 questões no total.', check:()=>totalQuestoesRespondidas()>=100},
+  {id:'streak7', emoji:'🔥', nome:'7 dias seguidos', desc:'Estude 7 dias consecutivos.', check:()=>STATE.profile.streak>=7},
+  {id:'mestre1', emoji:'🎯', nome:'Domínio de verdade', desc:'85%+ de acerto em algum assunto, com pelo menos 15 questões respondidas nele.', check:()=>ASSUNTOS.some(a=>{const c=contentFor(a.id); return c.attempts>=15 && (c.correct/c.attempts)>=0.85;})},
+  {id:'obrasCat', emoji:'📚', nome:'Mestre das Obras', desc:'Domine todas as obras de pelo menos uma categoria.', check:()=>Object.keys(CAT_INFO).some(cat=>{const list=OBRAS.filter(o=>o.cat===cat); return list.length>0 && list.every(o=>STATE.obrasStatus[o.id]==='dominado');})},
+  {id:'sim1', emoji:'🏁', nome:'Primeiro simulado completo', desc:'Finalize um simulado.', check:()=>STATE.simulados.length>=1},
+  {id:'oficial100', emoji:'🏛️', nome:'100 questões oficiais', desc:'Responda (ou revise) 100 vezes questões oficiais do PAS.', check:()=>totalOficiaisRespondidas()>=100},
+];
+function refreshAchievements(){
+  ACHIEVEMENTS.forEach(ach=>{
+    if(!STATE.achievements.find(x=>x.id===ach.id) && ach.check()) STATE.achievements.push({id:ach.id, date:todayISO()});
+  });
+}
+
 /* ============================= ERROR NOTEBOOK ============================= */
 const MOTIVOS = ['não sabia o conteúdo','esqueci','interpretação','cálculo','distração','confundiu conceitos','pressa','estratégia inadequada'];
 const MOTIVO_CHIPS = [
@@ -702,7 +808,9 @@ function answerQuestion(q, correct, tempo){
   }
   if(!STATE.qStats[q.id]) STATE.qStats[q.id] = {seen:0,correct:0};
   STATE.qStats[q.id].seen++; if(correct) STATE.qStats[q.id].correct++;
+  const prevXp = STATE.profile.xp;
   STATE.profile.xp += correct? 10 : 3;
+  checkLevelUp(prevXp, STATE.profile.xp);
   if(tempo!=null){ const ts=timeStats(); ts.totalSeg+=tempo; ts.count++; }
   logActivity({questoes:1});
   bumpStreak();
@@ -841,18 +949,20 @@ function fmtMinutes(m){
 function render(){
   refreshAllStatuses();
   const app = document.getElementById('app');
+  const toast = levelUpToastHTML();
   app.innerHTML = `
     ${topbarHTML()}
-    <main><div class="view">${viewHTML()}</div></main>
+    <main><div class="view">${toast}${viewHTML()}</div></main>
     ${MODAL? modalHTML(): ''}
   `;
+  LEVEL_UP_TOAST = null;
   attachEvents();
   window.scrollTo(0,0);
 }
 
 function topbarHTML(){
   const left = daysLeft();
-  const tabs = [['home','🏠','Hoje'],['semana','📅','Semana'],['mapa','🗺️','Mapa'],['diagnostico','🧭','Diagnóstico'],['questoes','✏️','Questões'],['simulados','🏁','Simulados'],['erros','🧠','Erros'],['obras','📚','Obras'],['estrategia','🎯','Estratégia'],['progresso','📈','Progresso']];
+  const tabs = [['home','🏠','Hoje'],['semana','📅','Semana'],['mapa','🗺️','Mapa'],['diagnostico','🧭','Diagnóstico'],['questoes','✏️','Questões'],['simulados','🏁','Simulados'],['erros','🧠','Erros'],['obras','📚','Obras'],['desafio','⚔️','Desafio'],['conquistas','🏆','Conquistas'],['professor','🤖','Professor'],['estrategia','🎯','Estratégia'],['progresso','📈','Progresso'],['ajustes','🎨','Ajustes']];
   return `
   <div class="topbar">
     <div class="topbar-inner">
@@ -881,6 +991,10 @@ function viewHTML(){
     case 'obras': return obrasView();
     case 'estrategia': return estrategiaView();
     case 'progresso': return progressoView();
+    case 'desafio': return desafioView();
+    case 'conquistas': return conquistasView();
+    case 'professor': return professorView();
+    case 'ajustes': return ajustesView();
     default: return homeView();
   }
 }
@@ -889,6 +1003,25 @@ function viewHTML(){
 function greeting(){
   const h = new Date().getHours();
   return h<12 ? 'Bom dia' : h<18 ? 'Boa tarde' : 'Boa noite';
+}
+function levelUpToastHTML(){
+  if(!LEVEL_UP_TOAST) return '';
+  const lv = LEVEL_UP_TOAST;
+  return `<div class="card level-up-toast" style="text-align:center;border:1.5px solid var(--accent);">
+    <div style="font-size:1.8rem;">${lv.emoji}</div>
+    <div style="font-weight:800;">Você subiu de nível!</div>
+    <div class="subtitle">Agora você é <b>${lv.nome}</b></div>
+  </div>`;
+}
+function levelCardHTML(){
+  const li = levelInfo(STATE.profile.xp);
+  return `<div class="card-flat">
+    <div class="row-between">
+      <div class="row" style="gap:8px;"><span style="font-size:1.3rem;">${li.cur.emoji}</span><div><div style="font-weight:700;font-size:.9rem;">${li.cur.nome}</div><div class="label-eyebrow" style="margin-top:1px;">${li.next? li.into+' / '+li.span+' XP para '+li.next.nome : 'Nível máximo 🎉'}</div></div></div>
+      <span class="mono" style="font-weight:700;color:var(--accent);">${STATE.profile.xp} ⭐</span>
+    </div>
+    <div class="bar" style="margin-top:8px;"><div style="width:${li.pct}%"></div></div>
+  </div>`;
 }
 function diaPerdidoBanner(){
   const last = STATE.profile.lastStudyDate;
@@ -924,6 +1057,7 @@ function homeView(){
     <div class="bar" style="margin-top:10px;"><div style="width:${domPct}%"></div></div>
   </div>
 
+  ${levelCardHTML()}
   ${diaPerdidoBanner()}
   ${alertsHTML()}
 
@@ -1337,6 +1471,11 @@ function submitAnswer(val){
   s.results[s.idx] = {resposta: q.tipo==='CE'? val : Number(val), correct, tempo};
   if(correct) s.correctCount++;
   answerQuestion(q, correct, tempo);
+  if(s.mode==='desafio'){
+    STATE.desafio.answered = true;
+    if(correct){ const prevXp=STATE.profile.xp; STATE.profile.xp+=25; checkLevelUp(prevXp, STATE.profile.xp); }
+    save();
+  }
   s.answered = true;
   render();
 }
@@ -1395,7 +1534,7 @@ function mapaView(){
 function mapaListaView(){
   return `
   ${AREAS.map(area=>`
-    <div class="card">
+    <div class="card" style="border-left:3px solid ${area.cor};">
       <div class="section-title"><h2>${area.emoji} ${area.nome}</h2></div>
       ${area.interdisciplinar ? `<p style="font-size:.8rem;color:var(--muted);margin:-6px 0 4px;">No PAS 1, ${area.nome} é cobrada de forma interdisciplinar — as questões costumam misturar as 4 matérias. A divisão abaixo é só organizacional, para facilitar seu estudo.</p>` : ''}
       ${area.materias.map(mat=>`
@@ -1788,6 +1927,176 @@ function startObrasQuiz(){
   startQuiz(questions, 'obras');
 }
 
+/* ---------- DESAFIO DO DIA ---------- */
+function hashStr(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))|0; } return Math.abs(h); }
+function ensureDesafioDoDia(){
+  const today = todayISO();
+  if(STATE.desafio && STATE.desafio.date===today && STATE.desafio.questionId) return STATE.desafio;
+  const oficiais = QUESTOES.filter(q=>q.oficial);
+  const pool = oficiais.length? oficiais : QUESTOES;
+  const idx = hashStr(today) % pool.length;
+  STATE.desafio = {date:today, questionId:pool[idx].id, answered:false};
+  save();
+  return STATE.desafio;
+}
+function desafioView(){
+  if(ACTIVE_TASK && ACTIVE_TASK.type==='desafio') return quizRunnerHTML();
+  const d = ensureDesafioDoDia();
+  const q = getQuestao(d.questionId);
+  if(!q) return `<div class="empty">Desafio indisponível hoje.</div>`;
+  if(d.answered){
+    return `<div class="card" style="text-align:center;">
+      <div style="font-size:1.8rem;">⚔️</div>
+      <h2 class="title-md">Desafio de hoje concluído</h2>
+      <p class="subtitle">Volte amanhã para um novo desafio.</p>
+    </div>`;
+  }
+  return `<div class="card" style="text-align:center;">
+    <div style="font-size:1.8rem;">⚔️</div>
+    <h2 class="title-md">Desafio do dia</h2>
+    <p class="subtitle">Uma questão especial pra hoje. Acerte e ganhe +25 XP de bônus.</p>
+    <div class="qmeta" style="justify-content:center;">${q.oficial? `<span class="badge" style="background:var(--accent);color:var(--accent-ink);">🏛️ Oficial PAS ${q.ano}</span>` : `<span class="badge b-neutral">✍️ Treino</span>`}</div>
+    <button class="btn btn-primary btn-block" style="margin-top:10px;" data-action="start-desafio">Aceitar desafio</button>
+  </div>`;
+}
+
+/* ---------- PROFESSOR IPÊ ---------- */
+const PROFESSOR_PROMPTS = [
+  {key:'20min', label:'Tenho 20 minutos, o que estudo?'},
+  {key:'erro-assunto', label:'Por que continuo errando?'},
+  {key:'5q', label:'Me dê 5 questões'},
+  {key:'revisar-erros', label:'Revise meus maiores erros'},
+  {key:'ontem', label:'Faça um quiz do que estudei ontem'},
+];
+let PROFESSOR_LOG = [];
+function professorReply(intent){
+  const today = todayISO();
+  if(intent==='20min'){
+    const plan = buildDailyPlan(20);
+    const linhas = plan.tasks.map(t=>`• ${t.titulo} (${t.dur} min)`).join('<br>');
+    return {text:`Com 20 minutos, eu faria:<br>${linhas}`, action:{label:'Aplicar esse plano', act:'apply-plan-20'}};
+  }
+  if(intent==='erro-assunto'){
+    const counts = {};
+    STATE.errors.filter(e=>!e.resolvido).forEach(e=>{ counts[e.assuntoId] = (counts[e.assuntoId]||0)+1; });
+    const top = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+    if(!top) return {text:'Você não tem erros pendentes registrados agora — mandou bem! Continue praticando pra manter assim.'};
+    const a = getAssunto(top[0]);
+    const motivos = {};
+    STATE.errors.filter(e=>e.assuntoId===top[0]).forEach(e=>{ motivos[e.motivo] = (motivos[e.motivo]||0)+1; });
+    const motivoTxt = Object.entries(motivos).sort((x,y)=>y[1]-x[1]).map(([m,c])=>`${m} (${c}x)`).join(', ');
+    return {text:`Em <b>${a.nome}</b> você tem ${top[1]} erro(s) pendente(s). Motivo mais comum: ${motivoTxt}.`, action:{label:'Revisar esse assunto', act:'goto-assunto', assunto:top[0]}};
+  }
+  if(intent==='5q'){
+    const a = rankedAssuntos()[0];
+    return {text:`Sua prioridade agora é <b>${a.nome}</b>. Preparei 5 questões.`, action:{label:'Começar', act:'start-5q', assunto:a.id}};
+  }
+  if(intent==='revisar-erros'){
+    const n = STATE.errors.filter(e=>!e.resolvido).length;
+    if(!n) return {text:'Seu caderno de erros está vazio agora — nada pra revisar. 🎉'};
+    return {text:`Você tem ${n} questão(ões) pendente(s) no caderno de erros.`, action:{label:'Revisar agora', act:'start-erros'}};
+  }
+  if(intent==='ontem'){
+    const yesterday = addDays(today,-1);
+    const as = ASSUNTOS.filter(a=>contentFor(a.id).lastSeen===yesterday);
+    if(!as.length) return {text:'Não tenho registro de nada estudado ontem. Bora começar hoje?', action:{label:'Ver prioridade de hoje', act:'goto-priority'}};
+    return {text:`Ontem você praticou: ${as.map(a=>a.nome).join(', ')}. Preparei um quiz de revisão.`, action:{label:'Começar quiz', act:'start-ontem', assuntos:as.map(a=>a.id)}};
+  }
+  return {text:'Ainda não sei responder isso — mas aqui está sua prioridade atual.', action:{label:'Ver prioridade', act:'goto-priority'}};
+}
+function professorView(){
+  return `
+  <div class="card">
+    <div class="row" style="gap:10px;align-items:flex-start;">
+      <div style="font-size:1.6rem;">🤖</div>
+      <div><h2 class="title-md" style="margin-bottom:2px;">Professor Ipê</h2>
+      <p class="subtitle" style="margin:0;">Recomendações baseadas nos seus dados reais. Ainda não entendo perguntas livres — toque em uma opção abaixo.</p></div>
+    </div>
+  </div>
+  <div class="card">
+    ${PROFESSOR_LOG.length? `<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;">
+      ${PROFESSOR_LOG.map(m=>`<div class="card-flat chat-bubble" style="max-width:92%;${m.who==='user'?'background:var(--accent);color:var(--accent-ink);margin-left:auto;':''}">
+        <div style="font-size:.88rem;">${m.text}</div>
+        ${m.action? `<div style="margin-top:8px;"><button class="btn btn-primary btn-sm" data-action="professor-do" data-act="${m.action.act}" ${m.action.assunto?`data-assunto="${m.action.assunto}"`:''} ${m.action.assuntos?`data-assuntos="${m.action.assuntos.join(',')}"`:''}>${m.action.label}</button></div>` : ''}
+      </div>`).join('')}
+    </div>` : ''}
+    <div class="label-eyebrow" style="margin-bottom:8px;">Perguntas rápidas</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      ${PROFESSOR_PROMPTS.map(p=>`<button class="btn btn-secondary btn-block" style="justify-content:flex-start;" data-action="professor-ask" data-intent="${p.key}">${p.label}</button>`).join('')}
+    </div>
+  </div>`;
+}
+
+/* ---------- PERSONALIZAÇÃO ---------- */
+const COLOR_THEMES = [
+  {key:'original', emoji:'🌿', nome:'Ipê Original'},
+  {key:'azul', emoji:'🌊', nome:'Azul'},
+  {key:'roxo', emoji:'💜', nome:'Roxo'},
+  {key:'laranja', emoji:'🔥', nome:'Laranja'},
+  {key:'rosa', emoji:'🌸', nome:'Rosa'},
+  {key:'mono', emoji:'⚫', nome:'Monocromático'},
+];
+function ajustesView(){
+  const ap = STATE.appearance;
+  return `
+  <div class="card">
+    <h2 class="title-md">🎨 Personalizar meu Ipê</h2>
+    <p class="subtitle">Escolha as cores do seu jeito. As cores das áreas (Humanidades, Linguagens, Matemática, Natureza) continuam fixas, independente do tema, pra facilitar a leitura.</p>
+  </div>
+  <div class="card">
+    <div class="label-eyebrow" style="margin-bottom:8px;">Tema de cor</div>
+    <div class="grid3">
+      ${COLOR_THEMES.map(t=>`<button class="card-flat" style="text-align:center;cursor:pointer;${ap.colorTheme===t.key?'border-color:var(--accent);border-width:2px;':''}" data-action="set-color-theme" data-theme="${t.key}">
+        <div style="font-size:1.3rem;">${t.emoji}</div><div style="font-size:.76rem;font-weight:700;margin-top:2px;">${t.nome}</div>
+      </button>`).join('')}
+    </div>
+    <div class="row" style="margin-top:14px;gap:10px;align-items:center;flex-wrap:wrap;">
+      <span class="label-eyebrow">Cor personalizada</span>
+      <input type="color" id="customColorPick" value="${ap.customHex||'#2F6E4F'}">
+      <button class="btn btn-secondary btn-sm" data-action="apply-custom-color">Usar essa cor</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="label-eyebrow" style="margin-bottom:8px;">Modo de exibição</div>
+    <div class="time-choice">
+      <button class="${ap.mode==='light'?'sel':''}" data-action="set-mode" data-mode="light">☀️ Claro</button>
+      <button class="${ap.mode==='dark'?'sel':''}" data-action="set-mode" data-mode="dark">🌙 Escuro</button>
+      <button class="${ap.mode==='system'?'sel':''}" data-action="set-mode" data-mode="system">💻 Sistema</button>
+    </div>
+  </div>
+  <div class="card">
+    <button class="btn btn-ghost btn-block" data-action="restore-appearance">Restaurar aparência padrão</button>
+  </div>`;
+}
+
+/* ---------- CONQUISTAS ---------- */
+function conquistasView(){
+  const li = levelInfo(STATE.profile.xp);
+  const unlockedIds = new Set(STATE.achievements.map(a=>a.id));
+  const unlocked = ACHIEVEMENTS.filter(a=>unlockedIds.has(a.id));
+  const locked = ACHIEVEMENTS.filter(a=>!unlockedIds.has(a.id));
+  return `
+  <div class="card">
+    <div class="row" style="gap:14px;align-items:center;">
+      <div style="font-size:2.4rem;">${li.cur.emoji}</div>
+      <div style="flex:1;">
+        <div class="title-md" style="margin-bottom:2px;">${li.cur.nome}</div>
+        <div class="label-eyebrow">${li.next? li.into+' / '+li.span+' XP para '+li.next.emoji+' '+li.next.nome : 'Nível máximo atingido 🎉'}</div>
+        <div class="bar" style="margin-top:6px;"><div style="width:${li.pct}%"></div></div>
+      </div>
+    </div>
+    <div class="footer-note" style="padding-top:10px;">Trilha: ${LEVELS.map(l=>l.emoji).join(' → ')}. Sobe com XP ganho respondendo questões — dominar conteúdo e manter consistência rende mais do que só passar tempo no app.</div>
+  </div>
+  <div class="card">
+    <h3>Desbloqueadas (${unlocked.length}/${ACHIEVEMENTS.length})</h3>
+    ${unlocked.length? unlocked.map(a=>`<div class="row" style="padding:8px 0;border-top:1px solid var(--border);"><span style="font-size:1.3rem;">${a.emoji}</span><div style="flex:1;"><div style="font-weight:700;font-size:.88rem;">${a.nome}</div><div class="task-sub">${a.desc}</div></div></div>`).join('') : `<div class="empty">Ainda nenhuma — continue praticando.</div>`}
+  </div>
+  <div class="card" style="opacity:.85;">
+    <h3>Bloqueadas</h3>
+    ${locked.map(a=>`<div class="row" style="padding:8px 0;border-top:1px solid var(--border);opacity:.6;"><span style="font-size:1.3rem;">🔒</span><div style="flex:1;"><div style="font-weight:700;font-size:.88rem;">${a.nome}</div><div class="task-sub">${a.desc}</div></div></div>`).join('')}
+  </div>`;
+}
+
 /* ---------- ESTRATÉGIA ---------- */
 function estrategiaView(){
   return `
@@ -1881,7 +2190,7 @@ function progressoView(){
       const avgAcc = seen.length? Math.round(seen.reduce((s,a)=>s+accuracyOf(a.id),0)/seen.length*100) : null;
       return `<div style="margin-bottom:10px;">
         <div class="row-between"><span style="font-size:.85rem;font-weight:600;">${area.emoji} ${area.nome}</span><span class="mono" style="font-size:.8rem;">${avgAcc===null?'—':avgAcc+'%'}</span></div>
-        <div class="bar"><div style="width:${avgAcc||0}%"></div></div>
+        <div class="bar"><div style="width:${avgAcc||0}%;background:${area.cor};"></div></div>
       </div>`;
     }).join('')}
   </div>
@@ -2154,6 +2463,56 @@ function attachEvents(){
   if(exportBtn) exportBtn.addEventListener('click', doExport);
   const importFile = document.getElementById('importFile');
   if(importFile) importFile.addEventListener('change', doImport);
+
+  const desafioBtn = document.querySelector('[data-action="start-desafio"]');
+  if(desafioBtn) desafioBtn.addEventListener('click',()=>{
+    ACTIVE_TASK = {type:'desafio'}; ROUTE='desafio';
+    startQuiz([getQuestao(STATE.desafio.questionId)], 'desafio');
+  });
+
+  document.querySelectorAll('[data-action="professor-ask"]').forEach(el=>el.addEventListener('click',()=>{
+    const intent = el.dataset.intent;
+    const prompt = PROFESSOR_PROMPTS.find(p=>p.key===intent);
+    PROFESSOR_LOG.push({who:'user', text:prompt.label});
+    PROFESSOR_LOG.push(Object.assign({who:'bot'}, professorReply(intent)));
+    render();
+  }));
+  document.querySelectorAll('[data-action="professor-do"]').forEach(el=>el.addEventListener('click',()=>{
+    const act = el.dataset.act;
+    if(act==='apply-plan-20'){ STATE.dailyPlan = buildDailyPlan(20); save(); ROUTE='home'; render(); return; }
+    if(act==='goto-assunto'){ MODAL='assuntoDetail'; ASSUNTO_DETAIL_ID=el.dataset.assunto; render(); return; }
+    if(act==='start-5q'){ ACTIVE_TASK={type:'banco'}; ROUTE='questoes'; startQuiz(shuffle(applyFilters(questoesPorAssunto(el.dataset.assunto))).slice(0,5), 'professor'); return; }
+    if(act==='start-erros'){ ROUTE='questoes'; startModeQuiz('erros'); return; }
+    if(act==='start-ontem'){
+      const ids = el.dataset.assuntos.split(',');
+      const qs = ids.flatMap(id=>questoesPorAssunto(id));
+      ACTIVE_TASK={type:'banco'}; ROUTE='questoes'; startQuiz(shuffle(qs).slice(0,10), 'professor');
+      return;
+    }
+    if(act==='goto-priority'){ ROUTE='mapa'; MAPA_VIEW='lista'; render(); return; }
+  }));
+
+  document.querySelectorAll('[data-action="set-color-theme"]').forEach(el=>el.addEventListener('click',()=>{
+    STATE.appearance.colorTheme = el.dataset.theme; delete STATE.appearance.customHex;
+    save(); applyAppearance(); render();
+  }));
+  const applyCustomBtn = document.querySelector('[data-action="apply-custom-color"]');
+  if(applyCustomBtn) applyCustomBtn.addEventListener('click',()=>{
+    const hex = document.getElementById('customColorPick').value;
+    STATE.appearance.colorTheme = 'custom'; STATE.appearance.customHex = hex;
+    save(); applyAppearance(); render();
+  });
+  document.querySelectorAll('[data-action="set-mode"]').forEach(el=>el.addEventListener('click',()=>{
+    STATE.appearance.mode = el.dataset.mode;
+    save(); applyAppearance(); render();
+  }));
+  const restoreAppearanceBtn = document.querySelector('[data-action="restore-appearance"]');
+  if(restoreAppearanceBtn) restoreAppearanceBtn.addEventListener('click',()=>{
+    if(confirm('Restaurar aparência padrão (Ipê Original, modo sistema)?')){
+      STATE.appearance = {colorTheme:'original', mode:'system'};
+      save(); applyAppearance(); render();
+    }
+  });
 }
 
 async function doExport(){
@@ -2172,6 +2531,7 @@ function doImport(ev){
     try{
       const parsed = JSON.parse(e.target.result);
       STATE = Object.assign(defaultState(), parsed);
+      applyAppearance();
       save(); render();
     }catch(err){ alert('Arquivo inválido.'); }
   };
@@ -2179,6 +2539,8 @@ function doImport(ev){
 }
 
 /* ============================= INIT ============================= */
+applyAppearance();
+refreshAchievements();
 render();
 </script>
 </body>
