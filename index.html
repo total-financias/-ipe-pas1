@@ -163,6 +163,34 @@ textarea.chip-input{resize:vertical;min-height:64px;}
 .time-choice button{padding:12px 6px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface);font-weight:700;font-size:.85rem;}
 .time-choice button.sel{border-color:var(--accent);background:var(--green-bg);color:var(--accent-strong);}
 
+/* ---- Fase 1: design tokens, tipografia, hierarquia de botões, confiança/motivo, status oficial ---- */
+:root{ --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:24px; --space-6:32px; --radius-lg:22px; }
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;}
+}
+.title-lg{font-family:var(--font-display);font-weight:700;font-size:1.55rem;line-height:1.18;margin:0 0 4px;}
+.title-md{font-family:var(--font-display);font-weight:700;font-size:1.22rem;line-height:1.22;margin:0 0 4px;}
+.subtitle{font-size:.88rem;color:var(--ink-soft);line-height:1.5;}
+.btn-danger{background:var(--red-bg);color:var(--red);border:1px solid transparent;}
+.btn-danger:hover{background:var(--red);color:#fff;}
+.card{transition:border-color .15s,box-shadow .15s;}
+.card:hover{border-color:var(--muted);}
+.opt:focus-visible,.btn:focus-visible,.tab:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.confidence-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.confidence-row button{padding:12px 6px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface);font-weight:700;font-size:.8rem;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.confidence-row button:hover{border-color:var(--accent);}
+.confidence-row button span.emoji{font-size:1.3rem;}
+.motivo-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.motivo-chips button{padding:7px 12px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface);font-weight:600;font-size:.8rem;}
+.motivo-chips button.sel{border-color:var(--accent);background:var(--green-bg);color:var(--accent-strong);}
+.status-official{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:100px;margin:2px 4px 2px 0;}
+.status-official.ok{background:var(--green-bg);color:var(--green);}
+.status-official.pending{background:var(--yellow-bg);color:var(--yellow);}
+.status-official.historic{background:var(--surface-2);color:var(--muted);border:1px solid var(--border);}
+.mission-cta{display:flex;align-items:center;justify-content:center;gap:8px;font-size:1rem;padding:14px 18px;}
+.banner-info{border-left:3px solid var(--accent);background:var(--surface-2);border-radius:var(--radius-sm);padding:10px 12px;font-size:.85rem;}
+.priority-flag{font-size:.85rem;line-height:1;flex-shrink:0;}
+
 hr{border:none;border-top:1px solid var(--border);margin:2px 0;}
 </style>
 </head>
@@ -451,7 +479,7 @@ function defaultState(){
   return {
     v:1, startDate:start,
     profile:{xp:0,streak:0,lastStudyDate:null,timeToday:null,tiredToday:false},
-    diagnostic:{done:false, materiaScore:{}},
+    diagnostic:{done:false, materiaScore:{}, top3:[], inProgress:null},
     content:{}, // assuntoId -> {attempts,correct,status,lastSeen,srDue,srInterval}
     errors:[], // {id,questionId,assuntoId,minhaResposta,correta,motivo,data,tempo,vezes,nextReview,srInterval}
     qStats:{}, // questionId -> {seen,correct}
@@ -467,14 +495,27 @@ function load(){
     const raw = localStorage.getItem(STORAGE_KEY);
     if(!raw) return defaultState();
     const parsed = JSON.parse(raw);
-    return Object.assign(defaultState(), parsed);
+    const def = defaultState();
+    const defDiagnostic = def.diagnostic, defProfile = def.profile; // guarda os defaults antes do Object.assign raso sobrescrever
+    const merged = Object.assign(def, parsed);
+    merged.diagnostic = Object.assign(defDiagnostic, parsed.diagnostic||{});
+    merged.profile = Object.assign(defProfile, parsed.profile||{});
+    return merged;
   }catch(e){return defaultState();}
 }
 function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); }
 
 function contentFor(assuntoId){
   if(!STATE.content[assuntoId]) STATE.content[assuntoId] = {attempts:0,correct:0,status:'red',lastSeen:null,srDue:null,srInterval:0,firstDate:null};
-  return STATE.content[assuntoId];
+  const c = STATE.content[assuntoId];
+  if(c.correctWeighted==null) c.correctWeighted = c.correct||0; // migração: registros antigos sem confiança herdam o valor bruto
+  if(!c.recent) c.recent = [];
+  return c;
+}
+function weightedAcc(c){
+  if(!c.attempts) return null;
+  const cw = c.correctWeighted!=null ? c.correctWeighted : c.correct;
+  return cw/c.attempts;
 }
 
 /* ============================= PHASE & PRIORITY ============================= */
@@ -492,7 +533,7 @@ function phaseInfo(){
 function accuracyOf(assuntoId){
   const c = STATE.content[assuntoId];
   if(!c || c.attempts===0) return null;
-  return c.correct/c.attempts;
+  return c.correct/c.attempts; // acerto bruto, exibido ao aluno — não ponderado por confiança
 }
 function statusFromAccuracy(acc, attempts, firstDate){
   if(attempts===0 || acc===null) return 'red';
@@ -509,21 +550,41 @@ function statusFromAccuracy(acc, attempts, firstDate){
 function refreshAllStatuses(){
   ASSUNTOS.forEach(a=>{
     const c = contentFor(a.id);
-    const acc = c.attempts? c.correct/c.attempts : null;
-    c.status = statusFromAccuracy(acc, c.attempts, c.firstDate);
+    c.status = statusFromAccuracy(weightedAcc(c), c.attempts, c.firstDate);
   });
+}
+function diagnosticAccFor(materiaId){
+  const s = STATE.diagnostic.materiaScore && STATE.diagnostic.materiaScore[materiaId];
+  return s ? s.acc : null;
+}
+function recentDeclineBoost(c){
+  if(c.recent.length<3) return 0;
+  const overall = weightedAcc(c); if(overall===null) return 0;
+  const recentAcc = c.recent.filter(Boolean).length/c.recent.length;
+  return recentAcc < overall-0.15 ? 3 : 0; // desempenho recente pior que a média histórica: sobe prioridade
 }
 function priorityScore(assunto){
   const c = contentFor(assunto.id);
-  const acc = c.attempts? c.correct/c.attempts : 0.3; // unseen assumed weak
+  const diagAcc = diagnosticAccFor(assunto.materiaId);
+  const acc = c.attempts ? weightedAcc(c) : (diagAcc!=null ? diagAcc : 0.3); // sem tentativas: usa diagnóstico, senão assume fraco
   const dificuldade = 1-acc;
-  const erros = STATE.errors.filter(e=>e.assuntoId===assunto.id).length;
+  const erros = STATE.errors.filter(e=>e.assuntoId===assunto.id && !e.resolvido).length;
   const dueBoost = (c.srDue && c.srDue<=todayISO()) ? 6 : 0;
   const masteryPenalty = c.status==='green' ? 8 : 0;
-  return (assunto.peso*2) + (dificuldade*4) + Math.min(erros,5) + dueBoost - masteryPenalty;
+  const recente = recentDeclineBoost(c);
+  const left = daysLeft();
+  const urgencyMult = left<=20 ? 1.35 : left<=45 ? 1.15 : 1; // tempo restante: aperta prioridade dos pesados perto da prova
+  return ((assunto.peso*2) + (dificuldade*4) + Math.min(erros,5) + dueBoost + recente - masteryPenalty) * urgencyMult;
 }
 function rankedAssuntos(){
   return [...ASSUNTOS].sort((a,b)=>priorityScore(b)-priorityScore(a));
+}
+function priorityBadge(assunto){
+  const score = priorityScore(assunto);
+  if(score>=22) return {emoji:'🔥',label:'Prioridade máxima',cls:'b-red'};
+  if(score>=14) return {emoji:'🟠',label:'Alta prioridade',cls:'b-orange'};
+  if(score>=7) return {emoji:'🟡',label:'Média prioridade',cls:'b-yellow'};
+  return {emoji:'⚪',label:'Baixa prioridade',cls:'b-neutral'};
 }
 
 /* ============================= SPACED REPETITION ============================= */
@@ -545,6 +606,19 @@ function dueReviewsToday(){
 
 /* ============================= ERROR NOTEBOOK ============================= */
 const MOTIVOS = ['não sabia o conteúdo','esqueci','interpretação','cálculo','distração','confundiu conceitos','pressa','estratégia inadequada'];
+const MOTIVO_CHIPS = [
+  {key:'não sabia o conteúdo', emoji:'🧠', label:'Não sabia'},
+  {key:'interpretação', emoji:'👀', label:'Interpretação'},
+  {key:'cálculo', emoji:'🧮', label:'Cálculo'},
+  {key:'pressa', emoji:'⚡', label:'Pressa'},
+  {key:'estratégia inadequada', emoji:'🤷', label:'Chute'},
+  {key:'confundiu conceitos', emoji:'🔀', label:'Confusão'},
+];
+const CONFIDENCE = [
+  {key:'chute', emoji:'😬', label:'Chutei', peso:0.6},
+  {key:'meio', emoji:'🤔', label:'Mais ou menos', peso:0.85},
+  {key:'certeza', emoji:'😎', label:'Tenho certeza', peso:1},
+];
 function registrarErro(q, minhaResposta, tempoSeg, motivo){
   const existing = STATE.errors.find(e=>e.questionId===q.id && !e.resolvido);
   if(existing){
@@ -569,9 +643,10 @@ function answerQuestion(q, correct){
   if(q.assuntoId){
     const c = contentFor(q.assuntoId);
     c.attempts++; if(correct) c.correct++;
+    c.recent.push(correct); if(c.recent.length>6) c.recent.shift();
     if(!c.firstDate) c.firstDate = todayISO();
     c.lastSeen = todayISO();
-    c.status = statusFromAccuracy(c.correct/c.attempts, c.attempts, c.firstDate);
+    c.status = statusFromAccuracy(weightedAcc(c), c.attempts, c.firstDate); // recalculado de novo assim que a confiança é escolhida (setConfidence)
     scheduleSR(q.assuntoId, correct);
   }
   if(!STATE.qStats[q.id]) STATE.qStats[q.id] = {seen:0,correct:0};
@@ -587,14 +662,34 @@ function bumpStreak(){
   STATE.profile.streak = (STATE.profile.lastStudyDate===yesterday) ? STATE.profile.streak+1 : 1;
   STATE.profile.lastStudyDate = today;
 }
+function setConfidence(confKey){
+  const s = QUIZ_SESSION; if(!s) return;
+  const r = s.results[s.idx]; const q = s.questions[s.idx];
+  r.confidence = confKey;
+  if(q.assuntoId){
+    const c = contentFor(q.assuntoId);
+    const conf = CONFIDENCE.find(x=>x.key===confKey) || CONFIDENCE[1];
+    if(r.correct) c.correctWeighted = (c.correctWeighted||0) + conf.peso;
+    c.status = statusFromAccuracy(weightedAcc(c), c.attempts, c.firstDate);
+  }
+  save(); render();
+}
 
 /* ============================= DAILY PLAN ============================= */
 function taskDuration(type){
   return {aprender:18, questoes:22, revisao:12, obra:12, erros:10}[type] || 15;
 }
-function buildDailyPlan(minutes){
+function buildDailyPlan(minutes, opts){
+  opts = opts || {};
   const phase = phaseInfo();
   const {contentDue, errorsDue} = dueReviewsToday();
+  // modo relâmpago: só cabe UMA tarefa, então escolhe direto a de maior retorno (erro pendente > revisão vencida > ponto fraco)
+  if(opts.fast){
+    if(errorsDue.length) return {date:todayISO(), minutes, fast:true, tasks:[{id:'t_err',type:'erros',titulo:'Caderno de erros',sub:`Refazer ${Math.min(errorsDue.length,5)} questões que você já errou`,dur:minutes,status:'pendente'}]};
+    if(contentDue.length){ const a=contentDue[0]; return {date:todayISO(), minutes, fast:true, tasks:[{id:'t_rev',type:'revisao',titulo:`Revisão — ${a.nome}`,sub:`${a.materiaNome} · revisão espaçada`,dur:minutes,assuntoId:a.id,status:'pendente'}]}; }
+    const w = rankedAssuntos()[0];
+    return {date:todayISO(), minutes, fast:true, tasks:[{id:'t_q_'+w.id,type:'questoes',titulo:`Questões — ${w.nome}`,sub:`${w.materiaNome} · treino relâmpago`,dur:minutes,assuntoId:w.id,status:'pendente'}]};
+  }
   const tasks = [];
   let budget = minutes;
   // 1) spaced errors due (highest ROI: known content, fixable fast)
@@ -610,7 +705,7 @@ function buildDailyPlan(minutes){
   }
   // 3) fill with priority ranked assuntos, respecting phase content/practice ratio
   const ranked = rankedAssuntos().filter(a=>!tasks.find(t=>t.assuntoId===a.id));
-  const [pctContent] = phase.contPrat;
+  const pctContent = opts.tired ? Math.min(phase.contPrat[0], 20) : phase.contPrat[0]; // cansado: prioriza prática rápida (maior retorno) sobre aprender conteúdo novo
   let i=0;
   while(budget >= 10 && i < ranked.length){
     const a = ranked[i]; i++;
@@ -635,7 +730,7 @@ function buildDailyPlan(minutes){
   if(!tasks.length){
     tasks.push({id:'t_fallback',type:'questoes',titulo:'Treino rápido geral',sub:'5 questões variadas',dur:Math.min(minutes,15),status:'pendente'});
   }
-  return {date:todayISO(), minutes, tasks};
+  return {date:todayISO(), minutes, tired:!!opts.tired, tasks};
 }
 function ensureTodayPlan(){
   if(STATE.dailyPlan && STATE.dailyPlan.date===todayISO()) return STATE.dailyPlan;
@@ -731,6 +826,17 @@ function viewHTML(){
 }
 
 /* ---------- HOME ---------- */
+function greeting(){
+  const h = new Date().getHours();
+  return h<12 ? 'Bom dia' : h<18 ? 'Boa tarde' : 'Boa noite';
+}
+function diaPerdidoBanner(){
+  const last = STATE.profile.lastStudyDate;
+  if(!last) return '';
+  const gap = daysBetween(new Date(last+'T00:00:00'), new Date());
+  if(gap<=1) return '';
+  return `<div class="banner-info">👋 Você ficou ${gap} dias sem estudar — sem problema. Recalculamos suas prioridades pra hoje, nada se acumula mecanicamente.</div>`;
+}
 function homeView(){
   if(ACTIVE_TASK) return taskRunnerHTML();
   const total = ASSUNTOS.length;
@@ -740,22 +846,25 @@ function homeView(){
   const plan = ensureTodayPlan();
   const {contentDue, errorsDue} = dueReviewsToday();
   const weakest = weakestAssunto(); const strongest = strongestAssunto();
+  const firstPending = plan ? plan.tasks.find(t=>t.status==='pendente') : null;
 
   return `
   <div class="card">
-    <div class="row-between">
+    <div class="hero-greeting">${greeting()} 👋</div>
+    <div class="row-between" style="margin-top:6px;">
       <div>
         <div class="label-eyebrow">Fase ${phase.n} de 5 · ${phase.nome}</div>
-        <h1 style="font-size:1.3rem;margin-top:2px;">${domPct}% do conteúdo do PAS 1 dominado</h1>
+        <h1 class="title-lg" style="margin-top:2px;">${domPct}% do conteúdo do PAS 1 dominado</h1>
       </div>
       <div style="text-align:right;">
         <div class="mono" style="font-size:1.6rem;font-weight:700;color:var(--accent);">${daysLeft()}</div>
-        <div class="label-eyebrow">dias até a prova</div>
+        <div class="label-eyebrow">dias até a prova ✅</div>
       </div>
     </div>
     <div class="bar" style="margin-top:10px;"><div style="width:${domPct}%"></div></div>
   </div>
 
+  ${diaPerdidoBanner()}
   ${alertsHTML()}
 
   ${!plan ? `
@@ -765,15 +874,20 @@ function homeView(){
       ${[30,60,90,120,180].map(m=>`<button data-time="${m}">${fmtMinutes(m)}</button>`).join('')}
       <button data-time="custom">Outro</button>
     </div>
-    <button class="btn btn-ghost btn-block" style="margin-top:10px;" data-action="tired">😮‍💨 Hoje estou cansado — sessão curta</button>
+    <div class="row" style="gap:8px;margin-top:10px;">
+      <button class="btn btn-ghost" style="flex:1;" data-action="fast10">⚡ Só tenho 10 minutos</button>
+      <button class="btn btn-ghost" style="flex:1;" data-action="tired">😴 Hoje estou cansado</button>
+    </div>
   </div>` : `
   <div class="card">
-    <div class="section-title row-between"><h2>O que estudar hoje?</h2><button class="btn btn-ghost btn-sm" data-action="replan">Refazer plano</button></div>
-    <div style="margin-top:4px;">
+    <div class="section-title row-between"><h2>🎯 Missão de hoje</h2><button class="btn btn-ghost btn-sm" data-action="replan">Refazer plano</button></div>
+    ${firstPending ? `<button class="btn btn-primary mission-cta btn-block" style="margin:8px 0 2px;" data-action="start-mission">🚀 Começar missão</button>` : ''}
+    <div style="margin-top:8px;">
       ${plan.tasks.map(t=>taskRowHTML(t)).join('')}
     </div>
     <hr style="margin:10px 0;">
-    <div class="row-between">
+    <div class="bar"><div style="width:${Math.round(plan.tasks.filter(t=>t.status==='concluida').length/plan.tasks.length*100)}%"></div></div>
+    <div class="row-between" style="margin-top:6px;">
       <span class="label-eyebrow">Total: ${plan.tasks.reduce((s,t)=>s+t.dur,0)} min</span>
       <span class="label-eyebrow">${plan.tasks.filter(t=>t.status==='concluida').length}/${plan.tasks.length} concluídas</span>
     </div>
@@ -819,6 +933,18 @@ function taskRowHTML(t){
   </div>`;
 }
 
+function startTaskById(taskId){
+  const task = STATE.dailyPlan.tasks.find(t=>t.id===taskId);
+  if(!task) return;
+  ACTIVE_TASK = {...task, _nivel:1};
+  if(task.type==='questoes'||task.type==='revisao'){
+    const list = task.assuntoId? questoesPorAssunto(task.assuntoId) : shuffle(QUESTOES).slice(0,5);
+    startQuiz(shuffle(list), task.type);
+  } else if(task.type==='erros'){
+    const ids = STATE.errors.filter(e=>!e.resolvido && e.nextReview<=todayISO()).slice(0,6).map(e=>e.questionId);
+    startQuiz(QUESTOES.filter(q=>ids.includes(q.id)), 'erros');
+  } else { render(); }
+}
 function weakestAssunto(){
   const seen = ASSUNTOS.filter(a=>contentFor(a.id).attempts>0);
   if(!seen.length) return null;
@@ -934,7 +1060,17 @@ function quizRunnerHTML(){
     </div>
     <p class="qstatement">${q.enun}</p>
     ${quizOptionsHTML(q,s)}
-    ${s.answered ? quizFeedbackHTML(q,s) : ''}
+    ${s.answered && !s.results[s.idx].confidence ? confidenceHTML() : ''}
+    ${s.answered && s.results[s.idx].confidence ? quizFeedbackHTML(q,s) : ''}
+  </div>`;
+}
+function confidenceHTML(){
+  return `
+  <div>
+    <div class="label-eyebrow" style="margin-bottom:6px;">Qual sua confiança nessa resposta?</div>
+    <div class="confidence-row">
+      ${CONFIDENCE.map(c=>`<button data-action="pick-confidence" data-conf="${c.key}"><span class="emoji">${c.emoji}</span>${c.label}</button>`).join('')}
+    </div>
   </div>`;
 }
 function quizOptionsHTML(q,s){
@@ -959,18 +1095,22 @@ function quizOptionsHTML(q,s){
 }
 function quizFeedbackHTML(q,s){
   const r = s.results[s.idx];
+  const confInfo = CONFIDENCE.find(c=>c.key===r.confidence);
   return `
   <div class="card-flat" style="border-left:3px solid ${r.correct?'var(--green)':'var(--red)'};">
-    <div style="font-weight:700;color:${r.correct?'var(--green)':'var(--red)'};">${r.correct?'✓ Você acertou':'✗ Você errou'}</div>
+    <div class="row-between">
+      <div style="font-weight:700;color:${r.correct?'var(--green)':'var(--red)'};">${r.correct?'✓ Você acertou':'✗ Você errou'}</div>
+      ${confInfo? `<span class="badge b-neutral">${confInfo.emoji} ${confInfo.label}</span>` : ''}
+    </div>
     <p style="font-size:.88rem;margin:6px 0 0;">${q.res}</p>
     ${q.oficial? `<p style="font-size:.74rem;color:var(--muted);margin-top:6px;">Fonte: ${q.fonte} — item ${q.itemOriginal}.</p>` : ''}
   </div>
   ${(!r.correct && q.assuntoId) ? `
   <div>
     <div class="label-eyebrow" style="margin-bottom:6px;">Por que você acha que errou?</div>
-    <select class="chip-input" data-field="motivo">
-      ${MOTIVOS.map(m=>`<option value="${m}">${m}</option>`).join('')}
-    </select>
+    <div class="motivo-chips">
+      ${MOTIVO_CHIPS.map(m=>`<button class="${r.motivo===m.key?'sel':''}" data-action="pick-motivo" data-motivo="${m.key}">${m.emoji} ${m.label}</button>`).join('')}
+    </div>
   </div>` : ''}
   <button class="btn btn-primary btn-block" data-action="next-question">${s.idx+1<s.questions.length? 'Próxima questão':'Ver resultado'}</button>`;
 }
@@ -1002,10 +1142,12 @@ function submitAnswer(val){
 function finalizeCurrentAnswer(){
   const s = QUIZ_SESSION; const q = s.questions[s.idx]; const r = s.results[s.idx];
   if(!r.correct && q.assuntoId){
-    const sel = document.querySelector('[data-field="motivo"]');
-    const motivo = sel? sel.value : MOTIVOS[0];
-    registrarErro(q, r.resposta, r.tempo, motivo);
+    registrarErro(q, r.resposta, r.tempo, r.motivo || MOTIVOS[0]);
+  } else if(r.correct && q.assuntoId){
+    const err = STATE.errors.find(e=>e.questionId===q.id && !e.resolvido);
+    if(err) registrarAcertoErroReview(err.id); // acerto confiante empurra a revisão espaçada pra frente (1→7→15→30)
   }
+  if(ACTIVE_TASK && ACTIVE_TASK.type==='diagnostico'){ STATE.diagnostic.inProgress = JSON.parse(JSON.stringify(s)); }
   s.idx++; s.answered=false; s.qStartTs=Date.now();
   save(); render();
 }
@@ -1039,8 +1181,10 @@ function mapaListaView(){
           <summary>${mat.nome} <span class="label-eyebrow">${mat.assuntos.filter(a=>contentFor(a.id).status==='green').length}/${mat.assuntos.length}</span></summary>
           ${mat.assuntos.map(a=>{
             const c = contentFor(a.id);
+            const pb = priorityBadge(a);
             return `<div class="assunto-row">
               <span class="status-dot dot-${c.status}"></span>
+              <span class="priority-flag" title="${pb.label}">${pb.emoji}</span>
               <span class="name" style="cursor:pointer;" data-action="assunto-detail" data-assunto="${a.id}">${a.nome}</span>
               <span class="hab">${a.hab}</span>
               <button class="btn btn-ghost btn-sm" data-action="practice-assunto" data-assunto="${a.id}">Praticar</button>
@@ -1050,7 +1194,7 @@ function mapaListaView(){
       `).join('')}
     </div>
   `).join('')}
-  <div class="footer-note">Status: 🔴 não iniciado · 🟠 aprendendo (40-69% de acerto) · 🟡 precisa revisar (70-84%) · 🟢 dominado (85%+ com retenção após alguns dias). Toque no nome de um assunto para ver detalhes, estudar ou buscar uma explicação.</div>
+  <div class="footer-note">Status: 🔴 não iniciado · 🟠 aprendendo (40-69% de acerto) · 🟡 precisa revisar (70-84%) · 🟢 dominado (85%+ com retenção após alguns dias). Prioridade: 🔥 máxima · 🟠 alta · 🟡 média · ⚪ baixa — calculada por importância na matriz, dificuldade, erros, revisão vencida e dias restantes até a prova. Toque no nome de um assunto para ver detalhes, estudar ou buscar uma explicação.</div>
   `;
 }
 
@@ -1187,10 +1331,25 @@ function diagnosticoView(){
   if(ACTIVE_TASK && ACTIVE_TASK.type==='diagnostico') return quizRunnerHTML();
   if(STATE.diagnostic.done){
     const scores = STATE.diagnostic.materiaScore;
+    const top3 = STATE.diagnostic.top3 || [];
     return `
+    ${top3.length ? `
+    <div class="card" style="border-color:var(--accent);">
+      <div class="label-eyebrow">Baseado no seu diagnóstico</div>
+      <h2 class="title-md">Seus 3 maiores focos agora</h2>
+      ${top3.map((mid,i)=>{
+        const mat = AREAS.flatMap(a=>a.materias).find(m=>m.id===mid);
+        const s = scores[mid];
+        return `<div class="row" style="padding:8px 0;${i>0?'border-top:1px solid var(--border);':''}">
+          <span style="font-weight:800;color:var(--accent);">${i+1}</span>
+          <span style="font-weight:700;flex:1;">${mat?mat.nome:mid}</span>
+          <span class="badge b-red">${s.nivel}</span>
+        </div>`;
+      }).join('')}
+    </div>` : ''}
     <div class="card">
-      <h2>Diagnóstico concluído</h2>
-      <p style="color:var(--muted);font-size:.85rem;">Resultado usado para montar seu plano. Você pode refazer quando quiser.</p>
+      <h2 class="title-md">Diagnóstico concluído</h2>
+      <p class="subtitle">Resultado usado para montar seu plano diário. Você pode refazer quando quiser.</p>
       ${Object.entries(scores).map(([materiaId,s])=>{
         const mat = AREAS.flatMap(a=>a.materias).find(m=>m.id===materiaId);
         return `<div class="row-between" style="padding:8px 0;border-top:1px solid var(--border);">
@@ -1201,18 +1360,29 @@ function diagnosticoView(){
       <button class="btn btn-secondary btn-block" style="margin-top:12px;" data-action="start-diagnostic">Refazer diagnóstico</button>
     </div>`;
   }
+  const inProgress = STATE.diagnostic.inProgress;
   return `
   <div class="card" style="text-align:center;">
     <div style="font-size:2rem;">🧭</div>
-    <h2>Diagnóstico inicial</h2>
-    <p style="color:var(--muted);font-size:.9rem;">${QUESTOES.filter(q=>q.diag).length} questões cobrindo as 4 áreas do PAS 1. Sem pressão — é para descobrir seu ponto de partida real, não para tirar nota.</p>
-    <button class="btn btn-primary btn-block" data-action="start-diagnostic">Começar diagnóstico</button>
+    <h2 class="title-md">Diagnóstico inicial</h2>
+    <p class="subtitle">${QUESTOES.filter(q=>q.diag).length} questões cobrindo as 4 áreas do PAS 1 (Humanidades, Linguagens, Matemática, Ciências da Natureza). Não vale nota — é só para descobrirmos seu ponto de partida real e montar seu plano de estudos.</p>
+    <p class="subtitle">Vamos avaliar: 🧠 conhecimento atual · 🎯 prioridades por matéria · ⚠️ maiores dificuldades · 📅 seu plano de estudos.</p>
+    ${inProgress ? `
+    <button class="btn btn-primary btn-block" data-action="resume-diagnostic">Continuar de onde parei (questão ${inProgress.idx+1}/${inProgress.questions.length})</button>
+    <button class="btn btn-ghost btn-block" style="margin-top:8px;" data-action="start-diagnostic">Começar do zero</button>` : `
+    <button class="btn btn-primary btn-block" data-action="start-diagnostic">Começar diagnóstico</button>`}
   </div>`;
 }
 function startDiagnostic(){
   ACTIVE_TASK = {type:'diagnostico'};
+  STATE.diagnostic.inProgress = null;
   const diagQs = QUESTOES.filter(q=>q.diag);
   startQuiz(shuffle(diagQs), 'diagnostico');
+}
+function resumeDiagnostic(){
+  ACTIVE_TASK = {type:'diagnostico'};
+  QUIZ_SESSION = STATE.diagnostic.inProgress;
+  render();
 }
 function finishDiagnostic(){
   const byMateria = {};
@@ -1229,7 +1399,9 @@ function finishDiagnostic(){
     const prioridade = acc<0.4?'MUITO ALTA':acc<0.7?'ALTA':'MÉDIA';
     materiaScore[mid] = {nivel,prioridade,acc};
   });
-  STATE.diagnostic = {done:true, materiaScore};
+  const top3 = Object.entries(materiaScore).sort((a,b)=>a[1].acc-b[1].acc).slice(0,3).map(([mid])=>mid);
+  STATE.diagnostic = {done:true, materiaScore, top3};
+  STATE.dailyPlan = null; // força replanejar já considerando o novo diagnóstico
   save();
 }
 
@@ -1311,22 +1483,31 @@ function errosView(){
   const byMotivo = {};
   errs.forEach(e=>{byMotivo[e.motivo] = (byMotivo[e.motivo]||0)+1;});
   const topMotivo = Object.entries(byMotivo).sort((a,b)=>b[1]-a[1])[0];
+  const today = todayISO();
   return `
   <div class="card">
     <div class="section-title"><h2>Caderno de erros</h2></div>
-    ${errs.length===0? `<div class="empty">Nenhum erro pendente. Continue treinando! 🎉</div>` : `
-    <p style="font-size:.85rem;color:var(--muted);">${errs.length} questão(ões) para refazer, com repetição espaçada (1 → 7 → 15 → 30 dias).</p>
+    ${errs.length===0? `
+    <div class="empty">
+      <div style="font-size:1.6rem;">🧠</div>
+      <p style="font-weight:700;color:var(--ink);margin:6px 0 2px;">Seu cérebro ainda não tropeçou por aqui.</p>
+      <p style="font-size:.85rem;">Quando você errar questões, elas voltam pra cá pra você vencê-las depois.</p>
+      <button class="btn btn-primary" style="margin-top:10px;" data-action="goto-questoes">Fazer questões</button>
+    </div>` : `
+    <p class="subtitle">${errs.length} questão(ões) para refazer, com repetição espaçada adaptativa (erra de novo → intervalo encurta; acerta com confiança → intervalo aumenta: 1 → 7 → 15 → 30 dias).</p>
     ${topMotivo && topMotivo[1]>=3 ? `<div class="card-flat" style="border-left:3px solid var(--accent-2);margin-bottom:10px;">📊 Padrão identificado: você errou ${topMotivo[1]} questões recentes por "${topMotivo[0]}".</div>` : ''}
     <button class="btn btn-primary btn-block" data-action="mode" data-mode="erros">Refazer todos agora</button>
     <hr style="margin:14px 0;">
     ${errs.slice(0,20).map(e=>{
       const q = getQuestao(e.questionId); const a = getAssunto(e.assuntoId);
+      const due = e.nextReview<=today;
       return `<div class="task">
         <div class="task-icon">🧠</div>
         <div class="task-body">
           <div class="task-title">${a.nome}</div>
-          <div class="task-sub">${e.motivo} · errou ${e.vezes}x · próxima revisão ${e.nextReview}</div>
+          <div class="task-sub">${e.motivo} · errou ${e.vezes}x · ${due?'revisão hoje':'próxima revisão '+e.nextReview}</div>
         </div>
+        <button class="btn btn-ghost btn-sm" data-action="retry-error" data-err="${e.id}">Tentar novamente</button>
       </div>`;
     }).join('')}`}
   </div>`;
@@ -1365,7 +1546,7 @@ function obrasView(){
       </div>
     </div>`;
   }).join('')}
-  <div class="footer-note">Lista oficial divulgada pela Cebraspe/UnB em 21/01/2026 para o subprograma PAS 2026-2028. A análise interpretativa aprofundada de cada obra (contexto, temas, possíveis cobranças) é a próxima etapa da plataforma — confirme sempre com o material oficial.</div>
+  <div class="footer-note"><span class="status-official ok">✅ Lista oficial</span> divulgada pela Cebraspe/UnB em 21/01/2026 para o subprograma PAS 2026-2028. A análise interpretativa aprofundada de cada obra (contexto, temas, possíveis cobranças) é a próxima etapa da plataforma — confirme sempre com o material oficial.</div>
   `;
 }
 function startObraStudy(obraId){ ACTIVE_TASK = {type:'obra', obraId}; ROUTE='home'; render(); }
@@ -1385,11 +1566,15 @@ function startObrasQuiz(){
 function estrategiaView(){
   return `
   <div class="card">
-    <h2>🎯 Estratégia PAS 1</h2>
-    <p style="color:var(--muted);font-size:.85rem;">Baseado nas regras de correção vigentes do PAS/Cebraspe (a confirmar em detalhe no edital 2026-2028, previsto para 25/08/2026).</p>
+    <h2 class="title-md">🎯 Estratégia PAS 1</h2>
+    <div>
+      <span class="status-official ok">✅ Data e regras gerais confirmadas</span>
+      <span class="status-official pending">🟡 Detalhes do edital 2026-2028 aguardando publicação</span>
+    </div>
+    <p class="subtitle" style="margin-top:6px;">A prova é no dia 06/12/2026 (domingo) — confirmado pela UnB/Cebraspe. As regras de pontuação abaixo vêm do Documento Norteador do PAS, que vale para todo o programa; detalhes específicos (tempo de prova, nº exato de questões) ainda dependem do edital do subprograma 2026-2028.</p>
   </div>
   <div class="card">
-    <h3>Como funciona a pontuação</h3>
+    <h3>Como funciona a pontuação <span class="status-official ok" style="margin-left:4px;">✅ confirmado</span></h3>
     <ul style="font-size:.9rem;line-height:1.7;padding-left:20px;">
       <li><b>Tipo Certo/Errado</b>: acerto soma, <b>erro desconta</b> pontos. Se não tiver nenhuma segurança, avalie deixar em branco (branco = 0, não é punido).</li>
       <li><b>Tipo múltipla escolha (1 correta)</b>: acerto vale mais, mas errar também desconta (menos que o C/E). Elimine alternativas erradas antes de marcar.</li>
@@ -1486,7 +1671,7 @@ function attachEvents(){
   const tiredBtn = document.querySelector('[data-action="tired"]');
   if(tiredBtn) tiredBtn.addEventListener('click',()=>{
     STATE.profile.tiredToday = true;
-    STATE.dailyPlan = buildDailyPlan(30);
+    STATE.dailyPlan = buildDailyPlan(30,{tired:true});
     save(); render();
   });
   const replanBtn = document.querySelector('[data-action="replan"]');
@@ -1497,17 +1682,16 @@ function attachEvents(){
     save(); render();
   }));
 
-  document.querySelectorAll('[data-action="start-task"]').forEach(el=>el.addEventListener('click',()=>{
-    const task = STATE.dailyPlan.tasks.find(t=>t.id===el.dataset.task);
-    ACTIVE_TASK = {...task, _nivel:1};
-    if(task.type==='questoes'||task.type==='revisao'){
-      const list = task.assuntoId? questoesPorAssunto(task.assuntoId) : shuffle(QUESTOES).slice(0,5);
-      startQuiz(shuffle(list), task.type);
-    } else if(task.type==='erros'){
-      const ids = STATE.errors.filter(e=>!e.resolvido && e.nextReview<=todayISO()).slice(0,6).map(e=>e.questionId);
-      startQuiz(QUESTOES.filter(q=>ids.includes(q.id)), 'erros');
-    } else { render(); }
-  }));
+  document.querySelectorAll('[data-action="start-task"]').forEach(el=>el.addEventListener('click',()=>startTaskById(el.dataset.task)));
+  const missionBtn = document.querySelector('[data-action="start-mission"]');
+  if(missionBtn) missionBtn.addEventListener('click',()=>{
+    const t = STATE.dailyPlan.tasks.find(x=>x.status==='pendente');
+    if(t) startTaskById(t.id);
+  });
+  const fast10Btn = document.querySelector('[data-action="fast10"]');
+  if(fast10Btn) fast10Btn.addEventListener('click',()=>{
+    STATE.dailyPlan = buildDailyPlan(10,{fast:true}); save(); render();
+  });
 
   document.querySelectorAll('[data-action="practice-assunto"]').forEach(el=>el.addEventListener('click',()=>{
     ACTIVE_TASK = {type:'banco'};
@@ -1561,13 +1745,29 @@ function attachEvents(){
   }));
   const nextQ = document.querySelector('[data-action="next-question"]');
   if(nextQ) nextQ.addEventListener('click', finalizeCurrentAnswer);
+  document.querySelectorAll('[data-action="pick-confidence"]').forEach(el=>el.addEventListener('click',()=>{
+    setConfidence(el.dataset.conf);
+  }));
+  document.querySelectorAll('[data-action="pick-motivo"]').forEach(el=>el.addEventListener('click',()=>{
+    const s = QUIZ_SESSION; s.results[s.idx].motivo = el.dataset.motivo; render();
+  }));
 
   const startDiag = document.querySelector('[data-action="start-diagnostic"]');
   if(startDiag) startDiag.addEventListener('click', startDiagnostic);
+  const resumeDiag = document.querySelector('[data-action="resume-diagnostic"]');
+  if(resumeDiag) resumeDiag.addEventListener('click', resumeDiagnostic);
 
   document.querySelectorAll('[data-action="mode"]').forEach(el=>el.addEventListener('click',()=>{
     ROUTE='questoes'; startModeQuiz(el.dataset.mode);
   }));
+  document.querySelectorAll('[data-action="retry-error"]').forEach(el=>el.addEventListener('click',()=>{
+    const err = STATE.errors.find(e=>e.id===el.dataset.err);
+    if(!err) return;
+    ACTIVE_TASK = {type:'banco', mode:'erros'};
+    startQuiz([getQuestao(err.questionId)], 'erros');
+  }));
+  const gotoQ = document.querySelector('[data-action="goto-questoes"]');
+  if(gotoQ) gotoQ.addEventListener('click',()=>{ ROUTE='questoes'; render(); });
 
   document.querySelectorAll('[data-action="nivel-next"]').forEach(el=>el.addEventListener('click',()=>{
     ACTIVE_TASK._nivel = (ACTIVE_TASK._nivel||1)+1; render();
