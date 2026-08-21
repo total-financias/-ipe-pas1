@@ -256,14 +256,14 @@ html[data-textsize="g"]{ font-size:18px; }
   .bottom-nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;color:var(--muted);font-size:.62rem;font-weight:700;padding:6px 2px;border-radius:10px;}
   .bottom-nav button.active{color:var(--accent);background:var(--surface-2);}
 }
-/* Modo sidebar (lateral direita) só entra em vigor com min-width:900px E com data-force-top
+/* Modo sidebar (lateral esquerda) só entra em vigor com min-width:900px E com data-force-top
    ausente — data-force-top é recalculado via JS a partir de window.innerWidth a cada resize,
    como segunda checagem independente da media query. Isso evita a sidebar "de desktop" tomar
    conta da tela inteira em telas pequenas caso a media query sozinha se comporte de forma
    inesperada dentro de algum wrapper/preview (ex.: artifact). */
 @media(min-width:900px){
   :root[data-menu="sidebar"]:not([data-force-top="true"]) #app{flex-direction:row;align-items:flex-start;max-width:1320px;}
-  :root[data-menu="sidebar"]:not([data-force-top="true"]) .topbar{position:sticky;top:0;align-self:flex-start;order:2;width:236px;max-width:80vw;flex-shrink:0;border-bottom:none;border-left:1px solid var(--border);height:100vh;overflow-y:auto;transition:width .18s ease;}
+  :root[data-menu="sidebar"]:not([data-force-top="true"]) .topbar{position:sticky;top:0;align-self:flex-start;order:1;width:236px;max-width:80vw;flex-shrink:0;border-bottom:none;border-right:1px solid var(--border);height:100vh;overflow-y:auto;transition:width .18s ease;}
   :root[data-menu="sidebar"]:not([data-force-top="true"]) .topbar-inner{flex-direction:column;align-items:stretch;gap:10px;}
   :root[data-menu="sidebar"]:not([data-force-top="true"]) .brand{justify-content:center;}
   :root[data-menu="sidebar"]:not([data-force-top="true"]) .sidebar-toggle{display:block;position:absolute;top:14px;right:14px;}
@@ -273,7 +273,7 @@ html[data-textsize="g"]{ font-size:18px; }
   :root[data-menu="sidebar"]:not([data-force-top="true"]) .tab-group-label{display:block;font-size:.68rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:12px 10px 4px;}
   :root[data-menu="sidebar"]:not([data-force-top="true"]) .tab-group-label:first-child{padding-top:2px;}
   :root[data-menu="sidebar"]:not([data-force-top="true"]) .tab{width:100%;justify-content:flex-start;border-radius:10px;}
-  :root[data-menu="sidebar"]:not([data-force-top="true"]) main{flex:1;min-width:0;order:1;}
+  :root[data-menu="sidebar"]:not([data-force-top="true"]) main{flex:1;min-width:0;order:2;}
   :root[data-menu="sidebar"]:not([data-force-top="true"])[data-sidebar-collapsed="true"] .topbar{width:72px;}
   :root[data-menu="sidebar"]:not([data-force-top="true"])[data-sidebar-collapsed="true"] .sidebar-toggle{position:static;margin:0 auto;}
   :root[data-menu="sidebar"]:not([data-force-top="true"])[data-sidebar-collapsed="true"] .topbar-inner{align-items:center;}
@@ -1425,7 +1425,7 @@ function topbarHTML(){
   <div class="topbar">
     <div class="topbar-inner">
       <div class="brand"><div class="brand-mark">🌳</div> <span class="brand-text">Ipê <span style="color:var(--muted);font-weight:600;font-size:.8em;">PAS1</span></span></div>
-      <button class="sidebar-toggle" data-action="toggle-sidebar" aria-label="Recolher/expandir menu">${collapsed?'⏵':'⏴'}</button>
+      <button class="sidebar-toggle" data-action="toggle-sidebar" aria-label="Recolher/expandir menu">${collapsed?'⏴':'⏵'}</button>
       <div class="stat-pills">
         <div class="pill">🔥 <b>${STATE.profile.streak}</b></div>
         <div class="pill">⭐ <b>${STATE.profile.xp}</b></div>
