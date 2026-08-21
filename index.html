@@ -69,6 +69,9 @@ button{font-family:var(--font-body);cursor:pointer;}
 .tab{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:100px;border:1px solid transparent;background:transparent;color:var(--muted);font-weight:600;font-size:.85rem;}
 .tab.active{background:var(--surface-2);color:var(--ink);border-color:var(--border);}
 .tab:hover:not(.active){color:var(--ink-soft);}
+.tab-group-label{display:none;}
+.sidebar-toggle{display:none;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;width:28px;height:28px;color:var(--ink-soft);font-size:.85rem;flex-shrink:0;}
+.sidebar-toggle:hover{color:var(--ink);}
 
 main{flex:1;padding:18px 16px 90px;max-width:100%;}
 .view{display:flex;flex-direction:column;gap:var(--view-gap,16px);animation:fade .25s ease;}
@@ -254,14 +257,29 @@ html[data-textsize="g"]{ font-size:18px; }
   .bottom-nav button.active{color:var(--accent);background:var(--surface-2);}
 }
 @media(min-width:900px){
-  :root[data-menu="sidebar"] #app{flex-direction:row;align-items:flex-start;max-width:1160px;}
-  :root[data-menu="sidebar"] .topbar{position:sticky;top:0;align-self:flex-start;width:220px;flex-shrink:0;border-bottom:none;border-right:1px solid var(--border);height:100vh;overflow-y:auto;}
-  :root[data-menu="sidebar"] .topbar-inner{flex-direction:column;align-items:flex-start;gap:10px;}
-  :root[data-menu="sidebar"] .stat-pills{flex-direction:column;align-items:flex-start;width:100%;}
+  :root[data-menu="sidebar"] #app{flex-direction:row;align-items:flex-start;max-width:1320px;}
+  :root[data-menu="sidebar"] .topbar{position:sticky;top:0;align-self:flex-start;order:2;width:236px;flex-shrink:0;border-bottom:none;border-left:1px solid var(--border);height:100vh;overflow-y:auto;transition:width .18s ease;}
+  :root[data-menu="sidebar"] .topbar-inner{flex-direction:column;align-items:stretch;gap:10px;}
+  :root[data-menu="sidebar"] .brand{justify-content:center;}
+  :root[data-menu="sidebar"] .sidebar-toggle{display:block;position:absolute;top:14px;right:14px;}
+  :root[data-menu="sidebar"] .stat-pills{flex-direction:column;align-items:stretch;width:100%;}
   :root[data-menu="sidebar"] .tabs{flex-direction:column;overflow-x:visible;padding:6px 10px 16px;}
   :root[data-menu="sidebar"] .tabs-fade{display:none;}
-  :root[data-menu="sidebar"] .tab{width:100%;justify-content:flex-start;}
-  :root[data-menu="sidebar"] main{flex:1;min-width:0;}
+  :root[data-menu="sidebar"] .tab-group-label{display:block;font-size:.68rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:12px 10px 4px;}
+  :root[data-menu="sidebar"] .tab-group-label:first-child{padding-top:2px;}
+  :root[data-menu="sidebar"] .tab{width:100%;justify-content:flex-start;border-radius:10px;}
+  :root[data-menu="sidebar"] main{flex:1;min-width:0;order:1;}
+  :root[data-menu="sidebar"][data-sidebar-collapsed="true"] .topbar{width:72px;}
+  :root[data-menu="sidebar"][data-sidebar-collapsed="true"] .sidebar-toggle{position:static;margin:0 auto;}
+  :root[data-menu="sidebar"][data-sidebar-collapsed="true"] .topbar-inner{align-items:center;}
+  :root[data-menu="sidebar"][data-sidebar-collapsed="true"] .brand-text,
+  :root[data-menu="sidebar"][data-sidebar-collapsed="true"] .tab-group-label,
+  :root[data-menu="sidebar"][data-sidebar-collapsed="true"] .tab-label,
+  :root[data-menu="sidebar"][data-sidebar-collapsed="true"] .pill b,
+  :root[data-menu="sidebar"][data-sidebar-collapsed="true"] .pill.days{display:none;}
+  :root[data-menu="sidebar"][data-sidebar-collapsed="true"] .stat-pills{align-items:center;}
+  :root[data-menu="sidebar"][data-sidebar-collapsed="true"] .pill{padding:5px;justify-content:center;}
+  :root[data-menu="sidebar"][data-sidebar-collapsed="true"] .tab{justify-content:center;padding:8px;}
 }
 
 hr{border:none;border-top:1px solid var(--border);margin:2px 0;}
@@ -642,7 +660,7 @@ function defaultState(){
     simulados:[], // {id,date,tipo,areaId,total,acertos,erros,brancos,tempoTotal,tempoMedio,fracos:[assuntoId]}
     activity:{}, // dateISO -> {questoes,minutos,revisoes,obras,simulados} — base da Visão Semanal
     timeStats:{totalSeg:0,count:0},
-    appearance:{colorTheme:'original', mode:'system', layout:'dashboard', menu:'top', density:'confortavel', textSize:'m', homeOrder:['nivel','pontos','revisoes','desafio'], homeHidden:[]}, // colorTheme: original|azul|roxo|laranja|rosa|mono|custom (+customHex); mode: system|light|dark; layout: dashboard|foco|game; menu: top|sidebar; density: compacto|confortavel|amplo; textSize: p|m|g
+    appearance:{colorTheme:'original', mode:'system', layout:'dashboard', menu:'sidebar', sidebarCollapsed:false, bgMode:'auto', bgHex:null, density:'confortavel', textSize:'m', homeOrder:['nivel','pontos','revisoes','desafio'], homeHidden:[]}, // colorTheme: original|azul|roxo|laranja|rosa|mono|custom (+customHex); mode: system|light|dark; layout: dashboard|foco|game; menu: top|sidebar; bgMode: auto|preto|grafite|claro|escuro|custom (+bgHex); density: compacto|confortavel|amplo; textSize: p|m|g
     desafio:{date:null, questionId:null, answered:false}, // desafio do dia — seleção determinística por data
   };
 }
@@ -715,6 +733,73 @@ function hslToHex(h,s,l){
   const toHex=x=>Math.round(255*x).toString(16).padStart(2,'0');
   return '#'+toHex(f(0))+toHex(f(8))+toHex(f(4));
 }
+/* Paleta completa por tema × modo — cada tema controla bg/surface/surface2/border/ink/inkSoft/muted além do accent,
+   pra que trocar de tema mude o app inteiro (não só bordas/botões). */
+const THEME_PALETTES = {
+  original:{
+    light:{bg:'#FBF7EE',surface:'#FFFFFF',surface2:'#F2EAD3',border:'#E3D6B4',ink:'#20281F',inkSoft:'#4B5245',muted:'#8A8267',accent:'#2F6E4F',accentStrong:'#1F5138',accentInk:'#F6FBF3'},
+    dark: {bg:'#12160F',surface:'#1A2018',surface2:'#222A1D',border:'#333B2B',ink:'#ECE7D8',inkSoft:'#C6C2AC',muted:'#8D9184',accent:'#5FBE8B',accentStrong:'#7ED3A5',accentInk:'#0E1A13'},
+  },
+  azul:{
+    light:{bg:'#F2F6FC',surface:'#FFFFFF',surface2:'#E4ECFA',border:'#C9D9F0',ink:'#141C2E',inkSoft:'#3E4A63',muted:'#7A88A3',accent:'#2464EB',accentStrong:'#1B4FC4',accentInk:'#F3F7FF'},
+    dark: {bg:'#0B1220',surface:'#121B2E',surface2:'#182338',border:'#28344C',ink:'#E7ECF7',inkSoft:'#B7C2D9',muted:'#7E8AA5',accent:'#6AA5FF',accentStrong:'#9CC4FF',accentInk:'#0B1526'},
+  },
+  roxo:{
+    light:{bg:'#F8F5FC',surface:'#FFFFFF',surface2:'#EDE4FA',border:'#D9C7F2',ink:'#1F1730',inkSoft:'#4A3D63',muted:'#8579A0',accent:'#7C3AED',accentStrong:'#6425C7',accentInk:'#F8F5FF'},
+    dark: {bg:'#150F22',surface:'#1D1530',surface2:'#241A3D',border:'#372753',ink:'#EAE3F7',inkSoft:'#C3B4DE',muted:'#8B7DA8',accent:'#B08AFB',accentStrong:'#C9AEFC',accentInk:'#180F2E'},
+  },
+  laranja:{
+    light:{bg:'#FDF6EE',surface:'#FFFFFF',surface2:'#FBE9D6',border:'#F0CDA0',ink:'#2B1D10',inkSoft:'#5C4127',muted:'#9C7B52',accent:'#DD6A20',accentStrong:'#B8541A',accentInk:'#FFF6EF'},
+    dark: {bg:'#1B140D',surface:'#241A11',surface2:'#2C2015',border:'#453322',ink:'#F5E8D9',inkSoft:'#D9BC9C',muted:'#9C7B52',accent:'#F0925B',accentStrong:'#F5AC80',accentInk:'#2A1408'},
+  },
+  rosa:{
+    light:{bg:'#FBF3F6',surface:'#FFFFFF',surface2:'#F7E3EC',border:'#F0C4D8',ink:'#2B1620',inkSoft:'#5C3346',muted:'#9C7188',accent:'#DB2E72',accentStrong:'#B71F5C',accentInk:'#FFF3F8'},
+    dark: {bg:'#1C0F16',surface:'#251620',surface2:'#2E1B28',border:'#452433',ink:'#F5E3EC',inkSoft:'#D9AFC4',muted:'#9C7188',accent:'#F472A8',accentStrong:'#F79FC3',accentInk:'#2E0F1D'},
+  },
+  mono:{
+    light:{bg:'#F5F5F3',surface:'#FFFFFF',surface2:'#E8E8E5',border:'#D2D2CD',ink:'#1A1A18',inkSoft:'#45453F',muted:'#82827A',accent:'#2B2B2B',accentStrong:'#000000',accentInk:'#FFFFFF',accent2:'#5A5A5A',accent2Ink:'#FFFFFF'},
+    dark: {bg:'#111111',surface:'#1A1A1A',surface2:'#222222',border:'#333333',ink:'#EDEDED',inkSoft:'#C4C4C4',muted:'#8A8A8A',accent:'#E5E5E5',accentStrong:'#FFFFFF',accentInk:'#141414',accent2:'#B5B5B5',accent2Ink:'#141414'},
+  },
+};
+function isEffectivelyDark(mode){
+  if(mode==='dark') return true;
+  if(mode==='light') return false;
+  return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+}
+function customThemePalette(hex, dark){
+  const [h,s,l] = hexToHsl(hex);
+  const lClamped = Math.min(Math.max(l,22),62); // clamp de luminosidade pra manter contraste legível em claro e escuro
+  const sBoost = Math.max(s,35);
+  const accent = hslToHex(h,sBoost,lClamped);
+  const accentStrong = hslToHex(h,sBoost,Math.max(lClamped-14,8));
+  const accentInk = lClamped>55 ? '#20281F' : '#FFFFFF';
+  const sBg = Math.min(s,22);
+  const base = dark
+    ? {bg:hslToHex(h,sBg,9),surface:hslToHex(h,sBg,14),surface2:hslToHex(h,sBg,18),border:hslToHex(h,sBg+6,27),ink:'#F0F0EA',inkSoft:'#C9C7BE',muted:'#96948A'}
+    : {bg:hslToHex(h,Math.min(sBg,14),96),surface:'#FFFFFF',surface2:hslToHex(h,Math.min(sBg,16),91),border:hslToHex(h,Math.min(sBg,20),80),ink:'#20221C',inkSoft:'#4B5245',muted:'#8A8267'};
+  return {...base, accent, accentStrong, accentInk};
+}
+function customBgOverride(hex){
+  const [h,s,l] = hexToHsl(hex);
+  if(l>50) return {bg:hex, surface:hslToHex(h,Math.min(s,20),Math.min(l+6,98)), surface2:hslToHex(h,Math.min(s,25),Math.max(l-6,80)), border:hslToHex(h,Math.min(s,30),Math.max(l-18,65)), ink:'#1C1C1A', inkSoft:'#4A4A45', muted:'#88887F'};
+  return {bg:hex, surface:hslToHex(h,Math.min(s,25),Math.min(l+5,22)), surface2:hslToHex(h,Math.min(s,28),Math.min(l+10,28)), border:hslToHex(h,Math.min(s,30),Math.min(l+20,38)), ink:'#F0F0EA', inkSoft:'#C9C7BE', muted:'#96948A'};
+}
+const BG_MODE_OVERRIDES = {
+  preto:  {bg:'#0A0A0A',surface:'#141414',surface2:'#1B1B1B',border:'#2A2A2A',ink:'#F0F0F0',inkSoft:'#C4C4C4',muted:'#8A8A8A'},
+  grafite:{bg:'#16181B',surface:'#1E2124',surface2:'#262A2E',border:'#383D42',ink:'#EDEDED',inkSoft:'#C4C4C4',muted:'#8A8A8A'},
+  claro:  {bg:'#FAFAF8',surface:'#FFFFFF',surface2:'#F0F0EC',border:'#DEDEDA',ink:'#1C1C1A',inkSoft:'#4A4A45',muted:'#88887F'},
+  escuro: {bg:'#121212',surface:'#1C1C1C',surface2:'#242424',border:'#333333',ink:'#EDEDED',inkSoft:'#C4C4C4',muted:'#8A8A8A'},
+};
+const TOKEN_CSS_VAR = {bg:'--bg',surface:'--surface',surface2:'--surface-2',border:'--border',ink:'--ink',inkSoft:'--ink-soft',muted:'--muted',accent:'--accent',accentStrong:'--accent-strong',accentInk:'--accent-ink',accent2:'--accent-2',accent2Ink:'--accent-2-ink'};
+function themePaletteFor(ap, dark){
+  let palette;
+  if(ap.colorTheme==='custom' && ap.customHex) palette = customThemePalette(ap.customHex, dark);
+  else palette = (THEME_PALETTES[ap.colorTheme] || THEME_PALETTES.original)[dark?'dark':'light'];
+  const bgMode = ap.bgMode || 'auto';
+  if(bgMode==='custom' && ap.bgHex) palette = {...palette, ...customBgOverride(ap.bgHex)};
+  else if(BG_MODE_OVERRIDES[bgMode]) palette = {...palette, ...BG_MODE_OVERRIDES[bgMode]};
+  return palette;
+}
 function applyAppearance(){
   const ap = STATE.appearance || {colorTheme:'original', mode:'system'};
   const root = document.documentElement;
@@ -722,24 +807,22 @@ function applyAppearance(){
   else if(ap.mode==='dark') root.setAttribute('data-theme','dark');
   else root.removeAttribute('data-theme');
   root.removeAttribute('data-color-theme');
-  root.style.removeProperty('--accent'); root.style.removeProperty('--accent-strong'); root.style.removeProperty('--accent-ink');
-  if(ap.colorTheme==='custom' && ap.customHex){
-    const [h,s,l] = hexToHsl(ap.customHex);
-    const lClamped = Math.min(Math.max(l,22),62); // clamp de luminosidade pra manter contraste legível em claro e escuro
-    const sBoost = Math.max(s,35);
-    const accent = hslToHex(h,sBoost,lClamped);
-    const strong = hslToHex(h,sBoost,Math.max(lClamped-14,8));
-    const ink = lClamped>55 ? '#20281F' : '#FFFFFF';
-    root.style.setProperty('--accent', accent);
-    root.style.setProperty('--accent-strong', strong);
-    root.style.setProperty('--accent-ink', ink);
-  } else if(ap.colorTheme && ap.colorTheme!=='original'){
-    root.setAttribute('data-color-theme', ap.colorTheme);
-  }
+  const dark = isEffectivelyDark(ap.mode||'system');
+  const palette = themePaletteFor(ap, dark);
+  Object.keys(TOKEN_CSS_VAR).forEach(key=>{
+    if(palette[key]) root.style.setProperty(TOKEN_CSS_VAR[key], palette[key]);
+    else root.style.removeProperty(TOKEN_CSS_VAR[key]);
+  });
   root.setAttribute('data-layout', ap.layout||'dashboard');
-  root.setAttribute('data-menu', ap.menu||'top');
+  root.setAttribute('data-menu', ap.menu||'sidebar');
+  root.setAttribute('data-sidebar-collapsed', ap.sidebarCollapsed? 'true':'false');
   root.setAttribute('data-density', ap.density||'confortavel');
   root.setAttribute('data-textsize', ap.textSize||'m');
+}
+if(window.matchMedia){
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>{
+    if((STATE.appearance.mode||'system')==='system') applyAppearance();
+  });
 }
 
 /* ============================= PHASE & PRIORITY ============================= */
@@ -1050,6 +1133,17 @@ const SIMULADO_TYPES = [
   {key:'area', nome:'Simulado por área', emoji:'🧠', n:20, desc:'Escolha uma área e treine só nela.', pickArea:true},
   {key:'completo', nome:'Simulado PAS 1 completo', emoji:'🏆', n:60, desc:'O máximo de questões do banco, todas as áreas — o mais perto do dia da prova.'},
 ];
+
+/* ---------- NAVEGAÇÃO (config única — gera sidebar, topo, bottom-nav e "mais") ---------- */
+const NAV_SECTIONS = [
+  {group:'Principal', items:[['home','🏠','Hoje'],['trilha','🧭','Trilha'],['semana','📅','Semana'],['mapa','🗺️','Mapa']]},
+  {group:'Estudo', items:[['diagnostico','🧭','Diagnóstico'],['questoes','✏️','Questões'],['redacao','📝','Redação'],['simulados','🏁','Simulados'],['erros','🧠','Erros']]},
+  {group:'PAS 1', items:[['obras','📚','Obras'],['provas','🗂️','Provas anteriores'],['desafio','⚔️','Desafio'],['estrategia','🎯','Estratégia']]},
+  {group:'Evolução', items:[['progresso','📈','Progresso'],['conquistas','🏆','Conquistas'],['professor','🤖','Professor']]},
+  {group:'Sistema', items:[['ajustes','🎨','Personalização']]},
+];
+const NAV_FLAT = NAV_SECTIONS.flatMap(s=>s.items);
+const NAV_MOBILE_IDS = ['home','trilha','questoes','redacao'];
 function applyFilters(list){
   return list.filter(q=>{
     if(FILTERS.tipo!=='all' && q.tipo!==FILTERS.tipo) return false;
@@ -1109,18 +1203,26 @@ function achievementToastHTML(){
   </div>`;
 }
 function mobileBottomNavHTML(){
-  const items = [['home','🏠','Hoje'],['mapa','🗺️','Mapa'],['questoes','✏️','Questões'],['simulados','🏁','Simulados']];
+  const items = NAV_FLAT.filter(([id])=>NAV_MOBILE_IDS.includes(id));
   return `<div class="bottom-nav">
     ${items.map(([id,icon,label])=>`<button class="${ROUTE===id?'active':''}" data-route="${id}">${icon}<span>${label}</span></button>`).join('')}
     <button class="${MODAL==='moreMenu'?'active':''}" data-action="open-more-menu">☰<span>Mais</span></button>
   </div>`;
 }
 function moreMenuHTML(){
-  const items = [['semana','📅','Semana'],['diagnostico','🧭','Diagnóstico'],['erros','🧠','Caderno de erros'],['obras','📚','Obras'],['provas','🗂️','Provas anteriores'],['desafio','⚔️','Desafio do dia'],['conquistas','🏆','Conquistas'],['professor','🤖','Professor Ipê'],['estrategia','🎯','Estratégia'],['progresso','📈','Progresso'],['ajustes','🎨','Ajustes']];
   return `<div class="modal-bg" data-action="close-modal"><div class="modal" onclick="event.stopPropagation()">
     <h3>Mais opções</h3>
-    <div style="display:flex;flex-direction:column;gap:4px;margin-top:8px;">
-      ${items.map(([id,icon,label])=>`<button class="btn btn-secondary btn-block" style="justify-content:flex-start;" data-route="${id}">${icon} ${label}</button>`).join('')}
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+      ${NAV_SECTIONS.map(sec=>{
+        const items = sec.items.filter(([id])=>!NAV_MOBILE_IDS.includes(id));
+        if(!items.length) return '';
+        return `<div>
+          <div class="label-eyebrow" style="padding:0 4px 4px;">${sec.group}</div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            ${items.map(([id,icon,label])=>`<button class="btn btn-secondary btn-block" style="justify-content:flex-start;" data-route="${id}">${icon} ${label}</button>`).join('')}
+          </div>
+        </div>`;
+      }).join('')}
     </div>
   </div></div>`;
 }
@@ -1143,11 +1245,12 @@ function dayRecapHTML(){
 
 function topbarHTML(){
   const left = daysLeft();
-  const tabs = [['home','🏠','Hoje'],['semana','📅','Semana'],['mapa','🗺️','Mapa'],['diagnostico','🧭','Diagnóstico'],['questoes','✏️','Questões'],['simulados','🏁','Simulados'],['erros','🧠','Erros'],['obras','📚','Obras'],['provas','🗂️','Provas anteriores'],['desafio','⚔️','Desafio'],['conquistas','🏆','Conquistas'],['professor','🤖','Professor'],['estrategia','🎯','Estratégia'],['progresso','📈','Progresso'],['ajustes','🎨','Ajustes']];
+  const collapsed = !!(STATE.appearance && STATE.appearance.sidebarCollapsed);
   return `
   <div class="topbar">
     <div class="topbar-inner">
-      <div class="brand"><div class="brand-mark">🌳</div> Ipê <span style="color:var(--muted);font-weight:600;font-size:.8em;">PAS1</span></div>
+      <div class="brand"><div class="brand-mark">🌳</div> <span class="brand-text">Ipê <span style="color:var(--muted);font-weight:600;font-size:.8em;">PAS1</span></span></div>
+      <button class="sidebar-toggle" data-action="toggle-sidebar" aria-label="Recolher/expandir menu">${collapsed?'⏵':'⏴'}</button>
       <div class="stat-pills">
         <div class="pill">🔥 <b>${STATE.profile.streak}</b></div>
         <div class="pill">⭐ <b>${STATE.profile.xp}</b></div>
@@ -1156,7 +1259,10 @@ function topbarHTML(){
     </div>
     <div class="tabs-wrap">
       <div class="tabs">
-        ${tabs.map(([id,icon,label])=>`<button class="tab ${ROUTE===id?'active':''}" data-route="${id}">${icon} ${label}</button>`).join('')}
+        ${NAV_SECTIONS.map(sec=>`
+          <div class="tab-group-label">${sec.group}</div>
+          ${sec.items.map(([id,icon,label])=>`<button class="tab ${ROUTE===id?'active':''}" data-route="${id}" title="${label}">${icon} <span class="tab-label">${label}</span></button>`).join('')}
+        `).join('')}
       </div>
       <div class="tabs-fade left"></div>
       <div class="tabs-fade right"></div>
@@ -1167,10 +1273,12 @@ function topbarHTML(){
 function viewHTML(){
   switch(ROUTE){
     case 'home': return homeView();
+    case 'trilha': return trilhaView();
     case 'semana': return semanaView();
     case 'mapa': return mapaView();
     case 'diagnostico': return diagnosticoView();
     case 'questoes': return questoesView();
+    case 'redacao': return redacaoView();
     case 'simulados': return simuladosView();
     case 'erros': return errosView();
     case 'obras': return obrasView();
@@ -1184,6 +1292,16 @@ function viewHTML(){
     default: return homeView();
   }
 }
+function comingSoonView(emoji, titulo, desc){
+  return `<div class="card" style="text-align:center;padding:32px 20px;">
+    <div style="font-size:2.2rem;">${emoji}</div>
+    <h2 class="title-md" style="margin-top:8px;">${titulo}</h2>
+    <p class="subtitle">${desc}</p>
+    <div class="footer-note" style="margin-top:12px;">🟡 Em construção — chegando em breve nesta mesma aba.</div>
+  </div>`;
+}
+function trilhaView(){ return comingSoonView('🧭','Trilha PAS 1','O caminho recomendado de estudos, de hoje até o dia da prova, está sendo construído.'); }
+function redacaoView(){ return comingSoonView('📝','Redação PAS 1','O treinador completo de redação — temas, editor, correção e histórico — está sendo construído.'); }
 
 /* ---------- HOME ---------- */
 function greeting(){
@@ -2350,6 +2468,36 @@ function homeOrderRows(ap){
     </div>`;
   }).join('');
 }
+const BG_MODES = [
+  {key:'auto', nome:'Automático', desc:'Usa o fundo do tema escolhido.'},
+  {key:'preto', nome:'Preto', desc:'Fundo bem escuro, neutro.'},
+  {key:'grafite', nome:'Grafite', desc:'Cinza-escuro suave.'},
+  {key:'claro', nome:'Claro', desc:'Fundo claro, independente do tema.'},
+  {key:'escuro', nome:'Escuro', desc:'Fundo escuro genérico.'},
+  {key:'custom', nome:'Cor personalizada', desc:'Escolha o fundo no seletor de cor.'},
+];
+function themeSwatchHTML(palette){
+  return `<div style="display:flex;gap:3px;justify-content:center;margin-top:6px;">
+    <span style="width:12px;height:12px;border-radius:4px;background:${palette.bg};border:1px solid ${palette.border};"></span>
+    <span style="width:12px;height:12px;border-radius:4px;background:${palette.surface2};border:1px solid ${palette.border};"></span>
+    <span style="width:12px;height:12px;border-radius:4px;background:${palette.accent};"></span>
+  </div>`;
+}
+function appearancePreviewHTML(ap){
+  const dark = isEffectivelyDark(ap.mode||'system');
+  const p = themePaletteFor(ap, dark);
+  return `<div class="card" style="padding:12px;background:${p.bg};border-color:${p.border};">
+    <div class="label-eyebrow" style="margin-bottom:8px;color:${p.muted};">Pré-visualização</div>
+    <div style="background:${p.surface};border:1px solid ${p.border};border-radius:12px;padding:12px;">
+      <div style="font-weight:700;font-size:.9rem;color:${p.ink};">Faltam ${daysLeft()} dias</div>
+      <div style="font-size:.78rem;color:${p.inkSoft};margin-top:2px;">Assim vão ficar os cards, textos e botões.</div>
+      <div style="background:${p.surface2};border:1px solid ${p.border};border-radius:8px;height:8px;margin-top:10px;overflow:hidden;">
+        <div style="width:62%;height:100%;background:${p.accent};"></div>
+      </div>
+      <button style="margin-top:10px;background:${p.accent};color:${p.accentInk};border:none;border-radius:100px;padding:7px 14px;font-weight:700;font-size:.8rem;">Botão de exemplo</button>
+    </div>
+  </div>`;
+}
 function ajustesView(){
   const ap = STATE.appearance;
   return `
@@ -2357,18 +2505,36 @@ function ajustesView(){
     <h2 class="title-md">🎨 Personalizar meu Ipê</h2>
     <p class="subtitle">Escolha as cores do seu jeito. As cores das áreas (Humanidades, Linguagens, Matemática, Natureza) continuam fixas, independente do tema, pra facilitar a leitura.</p>
   </div>
+  ${appearancePreviewHTML(ap)}
   <div class="card">
     <div class="label-eyebrow" style="margin-bottom:8px;">Tema de cor</div>
     <div class="grid3">
-      ${COLOR_THEMES.map(t=>`<button class="card-flat" style="text-align:center;cursor:pointer;${ap.colorTheme===t.key?'border-color:var(--accent);border-width:2px;':''}" data-action="set-color-theme" data-theme="${t.key}">
+      ${COLOR_THEMES.map(t=>{
+        const preview = themePaletteFor({...ap, colorTheme:t.key}, isEffectivelyDark(ap.mode||'system'));
+        return `<button class="card-flat" style="text-align:center;cursor:pointer;${ap.colorTheme===t.key?'border-color:var(--accent);border-width:2px;':''}" data-action="set-color-theme" data-theme="${t.key}">
         <div style="font-size:1.3rem;">${t.emoji}</div><div style="font-size:.76rem;font-weight:700;margin-top:2px;">${t.nome}</div>
-      </button>`).join('')}
+        ${themeSwatchHTML(preview)}
+      </button>`;}).join('')}
     </div>
     <div class="row" style="margin-top:14px;gap:10px;align-items:center;flex-wrap:wrap;">
       <span class="label-eyebrow">Cor personalizada</span>
       <input type="color" id="customColorPick" value="${ap.customHex||'#2F6E4F'}">
       <button class="btn btn-secondary btn-sm" data-action="apply-custom-color">Usar essa cor</button>
     </div>
+  </div>
+  <div class="card">
+    <div class="label-eyebrow" style="margin-bottom:8px;">🎨 Fundo da plataforma</div>
+    <p class="subtitle" style="margin-top:0;">Ajusta só o fundo/cards, por cima do tema de cor escolhido acima.</p>
+    <div class="grid3">
+      ${BG_MODES.map(b=>`<button class="card-flat" style="text-align:center;cursor:pointer;padding:10px 8px;${(ap.bgMode||'auto')===b.key?'border-color:var(--accent);border-width:2px;':''}" data-action="set-bgmode" data-bgmode="${b.key}">
+        <div style="font-size:.78rem;font-weight:700;">${b.nome}</div><div style="font-size:.66rem;color:var(--muted);margin-top:2px;">${b.desc}</div>
+      </button>`).join('')}
+    </div>
+    ${(ap.bgMode==='custom') ? `<div class="row" style="margin-top:14px;gap:10px;align-items:center;flex-wrap:wrap;">
+      <span class="label-eyebrow">Cor do fundo</span>
+      <input type="color" id="customBgPick" value="${ap.bgHex||'#16181B'}">
+      <button class="btn btn-secondary btn-sm" data-action="apply-custom-bg">Usar esse fundo</button>
+    </div>` : ''}
   </div>
   <div class="card">
     <div class="label-eyebrow" style="margin-bottom:8px;">Modo de exibição</div>
@@ -2401,9 +2567,10 @@ function ajustesView(){
     </div>
     <div class="label-eyebrow" style="margin:14px 0 8px;">Menu (telas grandes)</div>
     <div class="time-choice" style="grid-template-columns:1fr 1fr;">
-      <button class="${(ap.menu||'top')==='top'?'sel':''}" data-action="set-menu" data-menu="top">Superior</button>
-      <button class="${(ap.menu||'top')==='sidebar'?'sel':''}" data-action="set-menu" data-menu="sidebar">Lateral</button>
+      <button class="${(ap.menu||'sidebar')==='top'?'sel':''}" data-action="set-menu" data-menu="top">Superior</button>
+      <button class="${(ap.menu||'sidebar')==='sidebar'?'sel':''}" data-action="set-menu" data-menu="sidebar">Lateral (recomendado)</button>
     </div>
+    ${(ap.menu||'sidebar')==='sidebar' ? `<button class="btn btn-ghost btn-block" style="margin-top:8px;" data-action="toggle-sidebar">${ap.sidebarCollapsed? '⏵ Expandir menu lateral' : '⏴ Recolher menu lateral'}</button>` : ''}
   </div>
   <div class="card">
     <div class="label-eyebrow" style="margin-bottom:2px;">Organizar Home</div>
@@ -2875,6 +3042,18 @@ function attachEvents(){
   }));
   document.querySelectorAll('[data-action="set-menu"]').forEach(el=>el.addEventListener('click',()=>{
     STATE.appearance.menu = el.dataset.menu; save(); applyAppearance(); render();
+  }));
+  document.querySelectorAll('[data-action="set-bgmode"]').forEach(el=>el.addEventListener('click',()=>{
+    STATE.appearance.bgMode = el.dataset.bgmode; save(); applyAppearance(); render();
+  }));
+  const applyCustomBgBtn = document.querySelector('[data-action="apply-custom-bg"]');
+  if(applyCustomBgBtn) applyCustomBgBtn.addEventListener('click',()=>{
+    const hex = document.getElementById('customBgPick').value;
+    STATE.appearance.bgMode = 'custom'; STATE.appearance.bgHex = hex;
+    save(); applyAppearance(); render();
+  });
+  document.querySelectorAll('[data-action="toggle-sidebar"]').forEach(el=>el.addEventListener('click',()=>{
+    STATE.appearance.sidebarCollapsed = !STATE.appearance.sidebarCollapsed; save(); applyAppearance(); render();
   }));
   document.querySelectorAll('[data-action="home-move"]').forEach(el=>el.addEventListener('click',()=>{
     const ap = STATE.appearance;
