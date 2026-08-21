@@ -1065,6 +1065,7 @@ const ACHIEVEMENTS = [
     if(!antTotal) return false;
     return (competenciaTotal(e)-antTotal)/antTotal >= 0.2;
   })},
+  {id:'revisao30', emoji:'🔁', nome:'Revisão de 30 dias', desc:'Leve um erro até o fim do ciclo de revisão espaçada (1 → 7 → 15 → 30 dias).', check:()=>STATE.errors.some(e=>e.resolvido && (e._step||0)>=30)},
 ];
 let ACHIEVEMENT_TOAST = null;
 function refreshAchievements(){
@@ -2006,7 +2007,7 @@ function quizRunnerHTML(){
     </div>` : ''}
     ${(!s.simulado && elapsedMin>=50 && !s.pauseDismissed) ? `<div class="banner-info row-between">🧘 Você estudou ${elapsedMin} min. Que tal 5 min de pausa? <button class="btn btn-ghost btn-sm" data-action="dismiss-pause">Continuar</button></div>` : ''}
     <div class="qmeta">
-      <span class="badge b-neutral">${a ? a.materiaNome : 'Obras PAS'}</span>
+      <span class="badge b-neutral">${a ? a.materiaNome : (s.mode==='estrategia'? 'Estratégia PAS' : 'Obras PAS')}</span>
       ${difBadge(q.dif,q.pas)}
       <span class="badge b-neutral">${q.tipo==='CE'?'Certo/Errado':q.tipo==='NUM'?'Resposta numérica':'Múltipla escolha'}</span>
       ${q.oficial? `<span class="badge" style="background:var(--accent);color:var(--accent-ink);">🏛️ Oficial PAS ${q.ano}</span>` : `<span class="badge b-neutral" style="opacity:.65;">✍️ Treino</span>`}
@@ -2188,11 +2189,22 @@ function simuladoResultHTML(s){
   const ranked = Object.entries(porAssunto).map(([id,d])=>({a:getAssunto(id), acc:d.acertos/d.total, d}));
   const fracos = [...ranked].sort((x,y)=>x.acc-y.acc).slice(0,5);
   const fortes = [...ranked].sort((x,y)=>y.acc-x.acc).slice(0,3).filter(x=>x.acc>=0.7);
+  const porArea = {};
+  ranked.forEach(r=>{
+    if(!r.a) return;
+    const key = r.a.areaNome || 'Outros';
+    if(!porArea[key]) porArea[key] = {acertos:0,total:0};
+    porArea[key].acertos += r.d.acertos; porArea[key].total += r.d.total;
+  });
+  const anteriores = STATE.simulados.filter(sim=>sim.tipo===s.tipo);
+  const anterior = anteriores.length>=2 ? anteriores[anteriores.length-2] : null;
+  const pctAnterior = anterior ? Math.round(anterior.acertos/((anterior.total-anterior.brancos)||1)*100) : null;
   return `
   <div class="card" style="text-align:center;">
     <div class="label-eyebrow">Resultado do simulado</div>
     <div style="font-size:2.2rem;font-weight:800;font-family:var(--font-display);color:var(--accent);">${pct}%</div>
     <div style="color:var(--muted);font-size:.85rem;">aproveitamento nas respondidas — não é a fórmula oficial de pontuação do Cebraspe</div>
+    ${pctAnterior!=null ? `<div class="badge ${pct>=pctAnterior?'b-green':'b-orange'}" style="margin-top:8px;">${pct>=pctAnterior?'📈':'📉'} ${pct-pctAnterior>=0?'+':''}${pct-pctAnterior} pontos vs. seu último simulado "${SIMULADO_TYPES.find(t=>t.key===s.tipo)?.nome||s.tipo}" (${pctAnterior}%)</div>` : ''}
   </div>
   <div class="grid3">
     <div class="card-flat"><div class="label-eyebrow">Acertos</div><div class="mono" style="font-size:1.2rem;font-weight:700;color:var(--green);">${acertos}</div></div>
@@ -2202,6 +2214,14 @@ function simuladoResultHTML(s){
     <div class="card-flat"><div class="label-eyebrow">Tempo médio</div><div class="mono" style="font-size:1.05rem;font-weight:700;">${tempoMedio}s</div></div>
     <div class="card-flat"><div class="label-eyebrow">Questões</div><div class="mono" style="font-size:1.2rem;font-weight:700;">${total}</div></div>
   </div>
+  ${Object.keys(porArea).length? `
+  <div class="card">
+    <h3>Por área</h3>
+    ${Object.entries(porArea).map(([nome,d])=>{ const p = Math.round(d.acertos/d.total*100); return `<div style="margin-bottom:8px;">
+      <div class="row-between"><span style="font-size:.85rem;font-weight:600;">${nome}</span><span class="mono" style="font-size:.8rem;">${d.acertos}/${d.total}</span></div>
+      <div class="bar"><div style="width:${p}%;"></div></div>
+    </div>`; }).join('')}
+  </div>` : ''}
   ${fracos.length? `
   <div class="card">
     <h3>Os assuntos que mais precisam da sua atenção</h3>
@@ -2619,11 +2639,14 @@ function errosView(){
 }
 
 /* ---------- OBRAS ---------- */
+let OBRAS_STATUS_FILTER = 'all'; // all|novo|estudando|dominado
 function obrasView(){
   if(ACTIVE_TASK && ACTIVE_TASK.type==='obraExpress') return taskRunnerHTML();
+  if(ACTIVE_TASK && ACTIVE_TASK.type==='banco') return quizRunnerHTML();
   const cats = Object.keys(CAT_INFO);
   const total = OBRAS.length;
   const dominadas = OBRAS.filter(o=>STATE.obrasStatus[o.id]==='dominado').length;
+  const statusFilters = [['all','Todas'],['novo','Não iniciadas'],['estudando','Estudando'],['dominado','Dominadas']];
   return `
   <div class="card">
     <div class="section-title row-between"><h2>Obras oficiais PAS 1</h2><span class="mono" style="color:var(--accent);font-weight:700;">${dominadas}/${total}</span></div>
@@ -2635,17 +2658,26 @@ function obrasView(){
       <a class="btn btn-ghost" href="${OBRAS_PLAYLIST}" target="_blank" rel="noopener">▶️ Playlist completa</a>
     </div>
   </div>
+  <div class="card">
+    <input type="text" id="obraSearchInput" class="chip-input" placeholder="🔍 Buscar por título ou autor..." autocomplete="off">
+    <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:10px;">
+      ${statusFilters.map(([key,label])=>`<button class="btn ${OBRAS_STATUS_FILTER===key?'btn-secondary':'btn-ghost'} btn-sm" data-action="obras-status-filter" data-status="${key}">${label}</button>`).join('')}
+    </div>
+  </div>
+  <div id="obrasCatList">
   ${cats.map(cat=>{
-    const list = OBRAS.filter(o=>o.cat===cat);
+    let list = OBRAS.filter(o=>o.cat===cat);
+    if(OBRAS_STATUS_FILTER!=='all') list = list.filter(o=>(STATE.obrasStatus[o.id]||'novo')===OBRAS_STATUS_FILTER);
     const info = CAT_INFO[cat];
-    const dom = list.filter(o=>STATE.obrasStatus[o.id]==='dominado').length;
-    return `<div class="card">
-      <div class="section-title row-between"><h2>${info.emoji} ${info.nome}</h2><span class="mono" style="color:var(--muted);font-size:.85rem;">${dom}/${list.length}</span></div>
-      <div class="bar" style="margin-bottom:10px;"><div style="width:${Math.round(dom/list.length*100)}%"></div></div>
+    const allInCat = OBRAS.filter(o=>o.cat===cat);
+    const dom = allInCat.filter(o=>STATE.obrasStatus[o.id]==='dominado').length;
+    return `<div class="card obra-cat-card" data-cat="${cat}" ${!list.length?'style="display:none;"':''}>
+      <div class="section-title row-between"><h2>${info.emoji} ${info.nome}</h2><span class="mono" style="color:var(--muted);font-size:.85rem;">${dom}/${allInCat.length}</span></div>
+      <div class="bar" style="margin-bottom:10px;"><div style="width:${Math.round(dom/allInCat.length*100)}%"></div></div>
       <div style="display:flex;flex-direction:column;gap:8px;">
       ${list.map(o=>{
         const st = STATE.obrasStatus[o.id]||'novo';
-        return `<div class="obra-card" style="display:flex;flex-direction:column;gap:6px;">
+        return `<div class="obra-card" data-search="${(o.titulo+' '+(o.autor||'')).toLowerCase().replace(/"/g,'')}" style="display:flex;flex-direction:column;gap:6px;">
           <div class="row-between">
             <div>
               <div style="font-weight:700;font-size:.88rem;">${o.titulo}${o.qtd?` <span style="color:var(--muted);font-weight:500;">(${o.qtd})</span>`:''}</div>
@@ -2658,8 +2690,10 @@ function obrasView(){
         </div>`;
       }).join('')}
       </div>
+      ${!list.length? `<div class="empty">Nenhuma obra nessa categoria com esse filtro.</div>` : ''}
     </div>`;
   }).join('')}
+  </div>
   <div class="footer-note"><span class="status-official ok">✅ Lista oficial</span> divulgada pela Cebraspe/UnB em 21/01/2026 para o subprograma PAS 2026-2028. Resumos e links (vídeo/leitura, quando disponíveis) foram compilados a partir do acervo do <a href="https://passeandounb.com/obras-do-pas-1/" target="_blank" rel="noopener">passeandounb.com</a> — confirme sempre com o material oficial.</div>
   `;
 }
@@ -2998,7 +3032,59 @@ function conquistasView(){
 }
 
 /* ---------- ESTRATÉGIA ---------- */
+const ESTRATEGIA_QUIZ = [
+ {enun:'Você não tem nenhuma ideia sobre uma questão Certo/Errado e não consegue eliminar nenhuma opção. O que costuma ser mais seguro?', opts:['Chutar Certo','Chutar Errado','Deixar em branco','Pular a prova toda'], gab:2, res:'Em Certo/Errado, o erro desconta pontos — sem nenhuma pista, deixar em branco costuma ser mais seguro que chutar.'},
+ {enun:'Qual tipo de questão do PAS não tem penalidade por erro?', opts:['Certo/Errado','Múltipla escolha','Resposta numérica','Redação'], gab:2, res:'Questões de resposta numérica não descontam por erro — vale sempre tentar.'},
+ {enun:'O que acontece se você zerar a redação no PAS 1?', opts:['Perde só os pontos da redação','É eliminado do processo','Nada, a redação é bônus','Repete a prova'], gab:1, res:'A redação é obrigatória e zerá-la elimina o candidato — nunca deixe em branco.'},
+ {enun:'Uma afirmação Certo/Errado mistura um trecho verdadeiro com um trecho falso. Qual o gabarito mais provável?', opts:['Certo, porque a maior parte é verdadeira','Errado, a questão toda vira errada','Depende do humor do examinador','Sempre anulada'], gab:1, res:'Em C/E, um único trecho falso torna a afirmação inteira errada, mesmo que o resto esteja correto.'},
+ {enun:'Qual é a ordem sugerida de resolução da prova?', opts:['Da questão 1 até a última, na ordem','Primeiro as mais difíceis, pra "tirar do caminho"','Certezas → resposta numérica → C/E e MC com alguma segurança → resto, com redação sempre reservada','Só a redação, o resto não importa'], gab:2, res:'A estratégia sugerida prioriza certezas e o tipo sem penalidade, reservando tempo fixo pra redação.'},
+ {enun:'Se uma questão está tomando muito mais tempo que a média das outras, o que fazer?', opts:['Insistir até resolver, custe o que custar','Marcar e voltar depois, se sobrar tempo','Deixar a prova toda incompleta por causa dela','Pedir mais tempo ao fiscal'], gab:1, res:'Cronometrar e "marcar e voltar depois" evita perder tempo demais numa única questão e comprometer o resto da prova.'},
+];
+const ESTRATEGIA_MODULOS = [
+ {key:'pontuacao', emoji:'🎯', nome:'Pontuação', status:'ok',
+  html:`<ul style="font-size:.9rem;line-height:1.7;padding-left:20px;">
+    <li><b>Tipo Certo/Errado</b>: acerto soma, <b>erro desconta</b> pontos. Se não tiver nenhuma segurança, avalie deixar em branco (branco = 0, não é punido).</li>
+    <li><b>Tipo múltipla escolha (1 correta)</b>: acerto vale mais, mas errar também desconta (menos que o C/E). Elimine alternativas erradas antes de marcar.</li>
+    <li><b>Tipo resposta numérica</b>: não tem penalidade por erro — vale a pena sempre tentar, mesmo com dúvida.</li>
+  </ul>`},
+ {key:'tempo', emoji:'⏱', nome:'Tempo', status:'ok',
+  html:`<ol style="font-size:.9rem;line-height:1.7;padding-left:20px;">
+    <li>Uma primeira passada rápida: responda o que você tem certeza absoluta.</li>
+    <li>Segunda passada: questões tipo resposta numérica — sem risco, sempre tente.</li>
+    <li>Terceira passada: Certo/Errado e múltipla escolha em que você consegue eliminar alternativas ou tem razoável segurança.</li>
+    <li>Deixe por último as questões em que você não faz ideia.</li>
+    <li>Reserve tempo fixo para a redação — não deixe para os últimos 10 minutos.</li>
+    <li>Cronometre seu treino: se uma questão está tomando muito mais tempo que a média, marque e volte depois.</li>
+  </ol>`},
+ {key:'ce', emoji:'⚠️', nome:'Certo/Errado', status:'ok',
+  html:`<ul style="font-size:.9rem;line-height:1.7;padding-left:20px;">
+    <li>Uma afirmação que mistura um trecho verdadeiro com um trecho falso vira <b>Errada</b> por inteiro.</li>
+    <li>Releia o comando procurando negativas ("não", "exceto", "incorreto") — elas invertem o que a questão está pedindo.</li>
+    <li>Desconfie de palavras absolutas ("sempre", "nunca", "todos", "nenhum") — costumam ser mais fáceis de derrubar com um único contraexemplo.</li>
+    <li>Sem nenhuma pista e sem conseguir eliminar nada: deixar em branco costuma ser mais seguro que chutar.</li>
+  </ul>`},
+ {key:'redacao', emoji:'📝', nome:'Redação', status:'ok',
+  html:`<ul style="font-size:.9rem;line-height:1.7;padding-left:20px;">
+    <li><b>Redação obrigatória</b>, com tema único no PAS 1. <b>Zerar a redação elimina o candidato</b> — nunca deixe em branco, mesmo faltando tempo.</li>
+    <li>Reserve um tempo fixo pra ela desde o início da prova — não deixe pra decidir "se sobrar tempo".</li>
+    <li>Use o treinador de <a data-route="redacao" style="color:var(--accent);font-weight:600;cursor:pointer;">Redação</a> pra chegar no dia da prova com o ritmo de escrita já calibrado.</li>
+  </ul>`},
+ {key:'pegadinhas', emoji:'🧠', nome:'Pegadinhas', status:'ok',
+  html:`<ul style="font-size:.9rem;line-height:1.7;padding-left:20px;">
+    <li>Afirmações "quase certas" que trocam um detalhe (uma data, um nome, um número) são o erro mais comum de leitura apressada.</li>
+    <li>Textos de apoio (gráficos, tabelas, trechos literários) costumam ser reaproveitados em várias questões seguidas — leia com atenção uma vez só.</li>
+    <li>Enunciados muito longos geralmente têm 1-2 informações que realmente importam pra responder — treine identificar o "núcleo" da pergunta.</li>
+  </ul>`},
+ {key:'diaprova', emoji:'🏁', nome:'Dia da prova', status:'pending',
+  html:`<ul style="font-size:.9rem;line-height:1.7;padding-left:20px;">
+    <li>Durma bem na véspera — mais vale estar descansado do que revisar até tarde.</li>
+    <li>Separe documento e material permitido com antecedência.</li>
+    <li>Chegue com folga ao local de prova.</li>
+  </ul>
+  <p class="footer-note">🟡 Horário de portões, material permitido e demais regras operacionais do dia dependem do edital do subprograma 2026-2028 — confirme no edital oficial assim que sair.</p>`},
+];
 function estrategiaView(){
+  if(ACTIVE_TASK && ACTIVE_TASK.type==='banco') return quizRunnerHTML();
   return `
   <div class="card">
     <h2 class="title-md">🎯 Estratégia PAS 1</h2>
@@ -3006,37 +3092,20 @@ function estrategiaView(){
       <span class="status-official ok">✅ Data e regras gerais confirmadas</span>
       <span class="status-official pending">🟡 Detalhes do edital 2026-2028 aguardando publicação</span>
     </div>
-    <p class="subtitle" style="margin-top:6px;">A prova é no dia 06/12/2026 (domingo) — confirmado pela UnB/Cebraspe. As regras de pontuação abaixo vêm do Documento Norteador do PAS, que vale para todo o programa; detalhes específicos (tempo de prova, nº exato de questões) ainda dependem do edital do subprograma 2026-2028.</p>
+    <p class="subtitle" style="margin-top:6px;">A prova é no dia 06/12/2026 (domingo) — confirmado pela UnB/Cebraspe. As regras abaixo vêm do Documento Norteador do PAS, que vale para todo o programa; detalhes específicos (tempo de prova, nº exato de questões) ainda dependem do edital do subprograma 2026-2028.</p>
+    <button class="btn btn-primary btn-block" style="margin-top:10px;" data-action="estrategia-quiz">🧠 Testar o que você sabe (6 perguntas)</button>
   </div>
-  <div class="card">
-    <h3>Como funciona a pontuação <span class="status-official ok" style="margin-left:4px;">✅ confirmado</span></h3>
-    <ul style="font-size:.9rem;line-height:1.7;padding-left:20px;">
-      <li><b>Tipo Certo/Errado</b>: acerto soma, <b>erro desconta</b> pontos. Se não tiver nenhuma segurança, avalie deixar em branco (branco = 0, não é punido).</li>
-      <li><b>Tipo múltipla escolha (1 correta)</b>: acerto vale mais, mas errar também desconta (menos que o C/E). Elimine alternativas erradas antes de marcar.</li>
-      <li><b>Tipo resposta numérica</b>: não tem penalidade por erro — vale a pena sempre tentar, mesmo com dúvida.</li>
-      <li><b>Redação obrigatória</b> com tema único no PAS 1. <b>Zerar a redação elimina o candidato</b> — nunca deixe em branco, mesmo faltando tempo.</li>
-    </ul>
-  </div>
-  <div class="card">
-    <h3>Ordem de resolução sugerida</h3>
-    <ol style="font-size:.9rem;line-height:1.7;padding-left:20px;">
-      <li>Uma primeira passada rápida: responda o que você tem certeza absoluta.</li>
-      <li>Segunda passada: questões tipo B (resposta numérica) — sem risco, sempre tente.</li>
-      <li>Terceira passada: Certo/Errado e múltipla escolha em que você consegue eliminar alternativas ou tem razoável segurança.</li>
-      <li>Deixe por último as questões em que você não faz ideia — e aí avalie: eliminou alguma opção? Vale o risco. Não eliminou nada em C/E? Considere deixar em branco.</li>
-      <li>Reserve tempo fixo para a redação — não deixe para os últimos 10 minutos.</li>
-    </ol>
-  </div>
-  <div class="card">
-    <h3>Evitar erros de distração</h3>
-    <ul style="font-size:.9rem;line-height:1.7;padding-left:20px;">
-      <li>Releia o comando da questão procurando negativas ("não", "exceto", "incorreto").</li>
-      <li>Em Certo/Errado, cuidado com afirmações que misturam um trecho verdadeiro com um trecho falso — a questão toda vira Errado.</li>
-      <li>Cronometre seu treino: se uma questão está tomando muito mais tempo que a média, marque e volte depois.</li>
-    </ul>
-  </div>
+  ${ESTRATEGIA_MODULOS.map(m=>`<div class="card">
+    <h3>${m.emoji} ${m.nome} ${m.status==='ok'? '<span class="status-official ok" style="margin-left:4px;">✅ confirmado</span>' : '<span class="status-official pending" style="margin-left:4px;">🟡 aguardando confirmação</span>'}</h3>
+    ${m.html}
+  </div>`).join('')}
   <div class="footer-note">Regras específicas de tempo de prova, número exato de questões por tipo e cronograma de inscrição ainda dependem do edital 2026-2028 (previsto 25/08/2026) — revise esta seção quando ele sair.</div>
   `;
+}
+function startEstrategiaQuiz(){
+  const questions = shuffle(ESTRATEGIA_QUIZ).map((q,i)=>({id:'estrat_'+i, assuntoId:null, tipo:'MC', dif:'medio', enun:q.enun, opts:q.opts, gab:q.gab, res:q.res}));
+  ACTIVE_TASK = {type:'banco', mode:'estrategia'};
+  startQuiz(questions, 'estrategia');
 }
 
 /* ---------- PROGRESSO ---------- */
@@ -3050,6 +3119,43 @@ function evolutionInsightHTML(){
   const delta = now.accuracy - past.accuracy;
   const arrow = delta>3?'📈':delta<-3?'📉':'➡️';
   return `<p class="subtitle">${arrow} Sua taxa de acerto foi de ${past.accuracy}% (em ${fmtDate(new Date(past.date+'T00:00:00'))}) para ${now.accuracy}% agora — ${delta>=0?'+':''}${delta} pontos.</p>`;
+}
+function dominioBreakdownHTML(){
+  const counts = {red:0, orange:0, yellow:0, green:0};
+  ASSUNTOS.forEach(a=>{ counts[contentFor(a.id).status]++; });
+  const total = ASSUNTOS.length || 1;
+  const order = ['red','orange','yellow','green'];
+  const colors = {red:'var(--red)', orange:'var(--orange)', yellow:'var(--yellow)', green:'var(--green)'};
+  return `<div class="card">
+    <h3>Domínio por status</h3>
+    <div style="display:flex;height:14px;border-radius:8px;overflow:hidden;margin:10px 0;background:var(--surface-2);">
+      ${order.filter(k=>counts[k]).map(k=>`<div style="width:${counts[k]/total*100}%;background:${colors[k]};" title="${counts[k]}"></div>`).join('')}
+    </div>
+    <div class="row" style="gap:14px;flex-wrap:wrap;font-size:.78rem;">
+      <span>${STATUS_TRAIL_ICON.red} Não iniciado: <b class="mono">${counts.red}</b></span>
+      <span>${STATUS_TRAIL_ICON.orange} Aprendendo: <b class="mono">${counts.orange}</b></span>
+      <span>${STATUS_TRAIL_ICON.yellow} Precisa revisar: <b class="mono">${counts.yellow}</b></span>
+      <span>${STATUS_TRAIL_ICON.green} Dominado: <b class="mono">${counts.green}</b></span>
+    </div>
+  </div>`;
+}
+function weeklyEvolutionHTML(){
+  const weeks = [];
+  for(let i=5;i>=0;i--){
+    const d = new Date(); d.setDate(d.getDate()-i*7);
+    const dow = (d.getDay()+6)%7; const monday = new Date(d); monday.setDate(d.getDate()-dow); monday.setHours(0,0,0,0);
+    const dates = []; for(let j=0;j<7;j++){ const x=new Date(monday); x.setDate(monday.getDate()+j); dates.push(x.toISOString().slice(0,10)); }
+    const t = weekTotals(dates);
+    weeks.push({label: fmtDate(monday), minutos:t.minutos});
+  }
+  const max = Math.max(1, ...weeks.map(w=>w.minutos));
+  return `<div class="card">
+    <h3>Evolução semanal (minutos estudados)</h3>
+    <div class="sparkline" style="margin-top:8px;">
+      ${weeks.map(w=>`<div class="spark-bar" title="Semana de ${w.label}: ${w.minutos} min"><div style="height:${Math.max(4, Math.round(w.minutos/max*100))}%;"></div></div>`).join('')}
+    </div>
+    <div class="row-between" style="font-size:.68rem;color:var(--muted);margin-top:4px;"><span>${weeks[0].label}</span><span>${weeks[weeks.length-1].label} (semana atual)</span></div>
+  </div>`;
 }
 function progressoView(){
   const totalQ = Object.values(STATE.qStats).reduce((s,q)=>s+q.seen,0);
@@ -3094,6 +3200,8 @@ function progressoView(){
       </div>`;
     }).join('')}
   </div>
+  ${dominioBreakdownHTML()}
+  ${weeklyEvolutionHTML()}
   <div class="card">
     <h3>📝 Redação</h3>
     ${(()=>{ const rs = redacaoStats(); return rs.total? `
@@ -3398,6 +3506,20 @@ function attachEvents(){
   }));
 
   document.querySelectorAll('[data-action="study-obra"]').forEach(el=>el.addEventListener('click',()=>startObraStudy(el.dataset.obra)));
+  document.querySelectorAll('[data-action="obras-status-filter"]').forEach(el=>el.addEventListener('click',()=>{
+    OBRAS_STATUS_FILTER = el.dataset.status; render();
+  }));
+  const obraSearchInput = document.getElementById('obraSearchInput');
+  if(obraSearchInput) obraSearchInput.addEventListener('input',()=>{
+    const q = obraSearchInput.value.trim().toLowerCase();
+    document.querySelectorAll('#obrasCatList .obra-card').forEach(card=>{
+      card.style.display = (!q || card.dataset.search.includes(q)) ? '' : 'none';
+    });
+    document.querySelectorAll('#obrasCatList .obra-cat-card').forEach(catCard=>{
+      const anyVisible = [...catCard.querySelectorAll('.obra-card')].some(c=>c.style.display!=='none');
+      catCard.style.display = anyVisible ? '' : 'none';
+    });
+  });
   document.querySelectorAll('[data-action="obra-status"]').forEach(el=>el.addEventListener('click',()=>{
     STATE.obrasStatus[el.dataset.obra] = el.dataset.status;
     logActivity({obras:1, minutos:8});
@@ -3406,6 +3528,8 @@ function attachEvents(){
   }));
   const obrasQuizBtn = document.querySelector('[data-action="obras-quiz"]');
   if(obrasQuizBtn) obrasQuizBtn.addEventListener('click', startObrasQuiz);
+  const estrategiaQuizBtn = document.querySelector('[data-action="estrategia-quiz"]');
+  if(estrategiaQuizBtn) estrategiaQuizBtn.addEventListener('click', startEstrategiaQuiz);
   const obrasReviewBtn = document.querySelector('[data-action="obras-review"]');
   if(obrasReviewBtn) obrasReviewBtn.addEventListener('click',()=>{
     const pending = OBRAS.filter(o=>(STATE.obrasStatus[o.id]||'novo')!=='dominado');
