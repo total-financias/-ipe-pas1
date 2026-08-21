@@ -667,6 +667,68 @@ const PROVAS_ANTERIORES = [
  {ano:2005,prova:'https://passeandounb.com/wp-content/uploads/2020/08/pas-1-prova-2005.pdf',gabarito:'https://passeandounb.com/wp-content/uploads/2020/08/pas-1-gabarito-2005.pdf'},
 ];
 
+/* ---------- REDAÇÃO ---------- */
+const REDACAO_TEMAS = [
+ {id:'r1', tema:'Os desafios da mobilidade urbana nas grandes cidades brasileiras', apoio:['O tempo médio de deslocamento casa-trabalho vem crescendo nas capitais.','Cidades como Curitiba e Bogotá são citadas como referência em transporte coletivo.','O aumento de aplicativos de transporte individual pressiona o trânsito e a infraestrutura pública.']},
+ {id:'r2', tema:'O papel da educação financeira na formação dos jovens', apoio:['Pesquisas apontam baixo nível de conhecimento financeiro entre adolescentes brasileiros.','Alguns países já incluem educação financeira no currículo obrigatório.','O endividamento entre jovens adultos tem crescido nos últimos anos.']},
+ {id:'r3', tema:'Os impactos das redes sociais na saúde mental dos adolescentes', apoio:['Estudos associam uso excessivo de redes sociais a ansiedade e comparação social.','Países como a Austrália discutem restringir o acesso de menores a redes sociais.','A "cultura da curtida" é apontada como fator de pressão psicológica entre jovens.']},
+ {id:'r4', tema:'O combate ao desmatamento no Cerrado brasileiro', apoio:['O Cerrado é um dos biomas mais desmatados e menos protegidos legalmente do Brasil.','A expansão do agronegócio é apontada como principal motor do desmatamento no bioma.','O Cerrado é considerado o "berço das águas" do Brasil, por abastecer grandes bacias hidrográficas.']},
+ {id:'r5', tema:'A valorização das culturas indígenas na sociedade brasileira contemporânea', apoio:['O Brasil tem mais de 300 povos indígenas, com línguas e culturas distintas.','O protagonismo indígena tem crescido em espaços de decisão política e cultural.','Ainda há conflitos por demarcação de terras indígenas em diversas regiões do país.']},
+ {id:'r6', tema:'Os desafios do combate à desinformação na era digital', apoio:['A circulação de notícias falsas cresce especialmente em períodos eleitorais e de crise sanitária.','Plataformas digitais têm sido cobradas a criar mecanismos de checagem de fatos.','A falta de letramento midiático é apontada como fator que facilita a disseminação de boatos.']},
+ {id:'r7', tema:'A importância da preservação da água potável no século XXI', apoio:['Regiões do Brasil já enfrentam crises hídricas recorrentes, como o Nordeste e partes do Sudeste.','O uso agrícola responde pela maior parte do consumo de água doce no país.','Organismos internacionais alertam para o risco de conflitos futuros por recursos hídricos.']},
+ {id:'r8', tema:'O envelhecimento populacional e seus desafios para o Brasil', apoio:['A expectativa de vida brasileira aumentou significativamente nas últimas décadas.','O sistema previdenciário enfrenta pressão com a mudança da pirâmide etária.','Políticas de saúde e acessibilidade para idosos ainda são insuficientes em muitos municípios.']},
+ {id:'r9', tema:'Os caminhos para a inclusão de pessoas com deficiência na sociedade', apoio:['A falta de acessibilidade em espaços públicos ainda é uma barreira recorrente nas cidades brasileiras.','A legislação brasileira prevê cotas de trabalho para pessoas com deficiência.','O desenho universal é apontado como estratégia para ampliar a inclusão desde o planejamento urbano.']},
+ {id:'r10', tema:'Os riscos do negacionismo científico para a sociedade', apoio:['Movimentos negacionistas ganharam força durante a pandemia de covid-19.','A queda nas taxas de vacinação em algumas regiões é associada à desinformação científica.','Cientistas apontam a necessidade de melhorar a comunicação pública da ciência.']},
+ {id:'r11', tema:'O papel da leitura na formação crítica dos jovens', apoio:['Pesquisas indicam queda no hábito de leitura entre adolescentes brasileiros.','Bibliotecas públicas e escolares enfrentam desafios de investimento e manutenção.','A leitura é associada ao desenvolvimento do pensamento crítico e da argumentação.']},
+ {id:'r12', tema:'Os desafios da convivência entre gerações no mundo do trabalho', apoio:['Hoje é comum encontrar até quatro gerações diferentes convivendo no mesmo ambiente de trabalho.','Divergências sobre tecnologia e formas de comunicação são apontadas como fontes de conflito.','Empresas têm buscado programas de mentoria reversa entre gerações.']},
+];
+const REDACAO_MODOS = [
+ {key:'completa', emoji:'📝', nome:'Redação completa', desc:'Tema, apoio, tempo cronometrado — a redação inteira.', tempo:55, foco:null},
+ {key:'introducao', emoji:'⚡', nome:'Introdução', desc:'Só o parágrafo de abertura e a tese.', tempo:12, foco:'estrutura'},
+ {key:'tese', emoji:'🎯', nome:'Tese', desc:'Praticar só a formulação do ponto de vista central.', tempo:8, foco:'tema'},
+ {key:'desenvolvimento', emoji:'🧱', nome:'Desenvolvimento', desc:'Um parágrafo de argumentação, com dados/exemplos.', tempo:15, foco:'argumentacao'},
+ {key:'argumentacao', emoji:'🧠', nome:'Argumentação', desc:'Treino focado em conectivos e encadeamento de ideias.', tempo:15, foco:'coesao'},
+ {key:'conclusao', emoji:'✨', nome:'Conclusão', desc:'Fechamento e proposta de intervenção.', tempo:12, foco:'conclusao'},
+ {key:'corrigir', emoji:'🔍', nome:'Corrigir redação', desc:'Cole um texto que você já escreveu pra passar pelo checklist.', tempo:0, foco:null},
+];
+const REDACAO_COMPETENCIAS = [
+ {key:'norma', nome:'Domínio da norma culta', desc:'Ortografia, concordância, pontuação e registro formal.'},
+ {key:'tema', nome:'Compreensão do tema', desc:'Desenvolve o assunto proposto sem fugir dele.'},
+ {key:'estrutura', nome:'Organização e estrutura', desc:'Introdução, desenvolvimento e conclusão bem delimitados.'},
+ {key:'argumentacao', nome:'Argumentação e coesão', desc:'Usa dados/exemplos e conectivos pra encadear as ideias.'},
+ {key:'conclusao', nome:'Proposta de intervenção/fechamento', desc:'Conclusão consistente com a tese, com fechamento claro.'},
+];
+const REDACAO_CATEGORIAS = ['Tema','Tese','Argumentação','Coesão','Gramática','Pontuação','Repetição','Clareza','Conclusão','Estrutura'];
+function redacaoTemaSemana(){
+  const dow = (new Date().getDay()+6)%7;
+  const monday = new Date(); monday.setDate(monday.getDate()-dow); monday.setHours(0,0,0,0);
+  const weekKey = monday.toISOString().slice(0,10);
+  const idx = hashStr(weekKey) % REDACAO_TEMAS.length;
+  return REDACAO_TEMAS[idx];
+}
+function getRedacaoTema(id){ return REDACAO_TEMAS.find(t=>t.id===id) || redacaoTemaSemana(); }
+function redacaoEntries(){ return (STATE.redacao && STATE.redacao.entries) || []; }
+function competenciaTotal(entry){
+  if(!entry || !entry.competencias) return 0;
+  return REDACAO_COMPETENCIAS.reduce((s,c)=>s+(entry.competencias[c.key]||0),0); // máx 20 (5 competências x 0-4)
+}
+function competenciaLabel(total){
+  if(total>=17) return {label:'Muito bom domínio', cls:'b-green'};
+  if(total>=12) return {label:'Bom domínio', cls:'b-yellow'};
+  if(total>=6) return {label:'Em desenvolvimento', cls:'b-orange'};
+  return {label:'Iniciante', cls:'b-red'};
+}
+function redacaoStats(){
+  const entries = redacaoEntries();
+  const corrigidas = entries.filter(e=>e.corrigida);
+  const mediaCompetencia = corrigidas.length ? Math.round(corrigidas.reduce((s,e)=>s+competenciaTotal(e),0)/corrigidas.length*10)/10 : null;
+  const tempoMedio = entries.length ? Math.round(entries.reduce((s,e)=>s+(e.tempoSeg||0),0)/entries.length/60) : 0;
+  const catFreq = {};
+  entries.forEach(e=>(e.categorias||[]).forEach(c=>catFreq[c]=(catFreq[c]||0)+1));
+  const topCat = Object.entries(catFreq).sort((a,b)=>b[1]-a[1])[0];
+  return {total:entries.length, corrigidasCount:corrigidas.length, mediaCompetencia, tempoMedio, catFreq, topCat: topCat? topCat[0] : null};
+}
+
 /* ============================= STATE ============================= */
 function todayISO(){const d=new Date();d.setHours(0,0,0,0);return d.toISOString().slice(0,10);}
 function daysBetween(a,b){return Math.round((b-a)/86400000);}
@@ -688,6 +750,7 @@ function defaultState(){
     timeStats:{totalSeg:0,count:0},
     appearance:{colorTheme:'original', mode:'system', layout:'dashboard', menu:'sidebar', sidebarCollapsed:false, bgMode:'auto', bgHex:null, density:'confortavel', textSize:'m', homeOrder:['nivel','pontos','revisoes','desafio'], homeHidden:[]}, // colorTheme: original|azul|roxo|laranja|rosa|mono|custom (+customHex); mode: system|light|dark; layout: dashboard|foco|game; menu: top|sidebar; bgMode: auto|preto|grafite|claro|escuro|custom (+bgHex); density: compacto|confortavel|amplo; textSize: p|m|g
     desafio:{date:null, questionId:null, answered:false}, // desafio do dia — seleção determinística por data
+    redacao:{entries:[], draft:null}, // entries: [{id,date,modo,temaId,texto,palavras,tempoSeg,isProva,versaoAnteriorId,corrigida,competencias:{},categorias:[]}]; draft: rascunho não enviado em andamento
   };
 }
 let STATE = load();
@@ -697,11 +760,12 @@ function load(){
     if(!raw) return defaultState();
     const parsed = JSON.parse(raw);
     const def = defaultState();
-    const defDiagnostic = def.diagnostic, defProfile = def.profile, defAppearance = def.appearance; // guarda os defaults antes do Object.assign raso sobrescrever
+    const defDiagnostic = def.diagnostic, defProfile = def.profile, defAppearance = def.appearance, defRedacao = def.redacao; // guarda os defaults antes do Object.assign raso sobrescrever
     const merged = Object.assign(def, parsed);
     merged.diagnostic = Object.assign(defDiagnostic, parsed.diagnostic||{});
     merged.profile = Object.assign(defProfile, parsed.profile||{});
     merged.appearance = Object.assign(defAppearance, parsed.appearance||{});
+    merged.redacao = Object.assign(defRedacao, parsed.redacao||{});
     return merged;
   }catch(e){return defaultState();}
 }
@@ -709,7 +773,7 @@ function timeStats(){ if(!STATE.timeStats) STATE.timeStats = {totalSeg:0,count:0
 function logActivity(patch){
   const d = todayISO();
   if(!STATE.activity) STATE.activity = {};
-  if(!STATE.activity[d]) STATE.activity[d] = {questoes:0,minutos:0,revisoes:0,obras:0,simulados:0};
+  if(!STATE.activity[d]) STATE.activity[d] = {questoes:0,minutos:0,revisoes:0,obras:0,simulados:0,redacoes:0};
   const a = STATE.activity[d];
   Object.keys(patch).forEach(k=>{ a[k] = (a[k]||0) + patch[k]; });
 }
@@ -987,6 +1051,20 @@ const ACHIEVEMENTS = [
   {id:'obrasCat', emoji:'📚', nome:'Mestre das Obras', desc:'Domine todas as obras de pelo menos uma categoria.', check:()=>Object.keys(CAT_INFO).some(cat=>{const list=OBRAS.filter(o=>o.cat===cat); return list.length>0 && list.every(o=>STATE.obrasStatus[o.id]==='dominado');})},
   {id:'sim1', emoji:'🏁', nome:'Primeiro simulado completo', desc:'Finalize um simulado.', check:()=>STATE.simulados.length>=1},
   {id:'oficial100', emoji:'🏛️', nome:'100 questões oficiais', desc:'Responda (ou revise) 100 vezes questões oficiais do PAS.', check:()=>totalOficiaisRespondidas()>=100},
+  {id:'redacao1', emoji:'✍️', nome:'Primeira redação', desc:'Envie sua primeira redação (qualquer modo) para correção.', check:()=>redacaoEntries().length>=1},
+  {id:'redacao4sem', emoji:'🔥', nome:'4 semanas escrevendo', desc:'Escreva pelo menos 1 redação por semana durante 4 semanas.', check:()=>{
+    const weeks = new Set(redacaoEntries().map(e=>{ const d=new Date(e.date+'T00:00:00'); const dow=(d.getDay()+6)%7; d.setDate(d.getDate()-dow); return d.toISOString().slice(0,10); }));
+    return weeks.size>=4;
+  }},
+  {id:'redacaoArg', emoji:'🧠', nome:'Mestre da Argumentação', desc:'Tire nota máxima em Argumentação e coesão em pelo menos 3 redações corrigidas.', check:()=>redacaoEntries().filter(e=>e.corrigida && (e.competencias.argumentacao||0)>=4).length>=3},
+  {id:'redacaoEvolucao', emoji:'📈', nome:'Melhorou 20%', desc:'Reescreva uma redação e melhore a nota do checklist em pelo menos 20%.', check:()=>redacaoEntries().some(e=>{
+    if(!e.corrigida || !e.versaoAnteriorId) return false;
+    const ant = redacaoEntries().find(x=>x.id===e.versaoAnteriorId);
+    if(!ant || !ant.corrigida) return false;
+    const antTotal = competenciaTotal(ant);
+    if(!antTotal) return false;
+    return (competenciaTotal(e)-antTotal)/antTotal >= 0.2;
+  })},
 ];
 let ACHIEVEMENT_TOAST = null;
 function refreshAchievements(){
@@ -1196,6 +1274,23 @@ let ROUTE = 'home';
 let QUIZ_SESSION = null; // {questions:[], idx, correctCount, mode, results:[]}
 let ACTIVE_TASK = null;
 let MODAL = null;
+let REDACAO_TIMER = null;
+function stopRedacaoTimer(){ if(REDACAO_TIMER){ clearInterval(REDACAO_TIMER); REDACAO_TIMER=null; } }
+function wireRedacaoTimer(){
+  stopRedacaoTimer();
+  const timerEl = document.getElementById('redacaoTimer');
+  const wcEl = document.getElementById('redacaoWordCount');
+  const ta = document.getElementById('redacaoEditor');
+  if(!timerEl || !ta || !ACTIVE_TASK || ACTIVE_TASK.type!=='redacao') return;
+  const tick = ()=>{
+    timerEl.textContent = '⏱ ' + fmtElapsed(Date.now()-ACTIVE_TASK.startedAt);
+    const n = ta.value.trim() ? ta.value.trim().split(/\s+/).length : 0;
+    wcEl.textContent = n + (n===1?' palavra':' palavras');
+  };
+  tick();
+  ta.addEventListener('input', tick);
+  REDACAO_TIMER = setInterval(tick, 1000);
+}
 let MAPA_VIEW = 'lista';
 let MINDMAP_AREA = AREAS[0].id;
 let ASSUNTO_DETAIL_ID = null;
@@ -1252,6 +1347,7 @@ function render(){
   ACHIEVEMENT_TOAST = null;
   attachEvents();
   updateTabsFade();
+  wireRedacaoTimer();
   window.scrollTo(0,0);
 }
 function menuFabHTML(){
@@ -1433,6 +1529,7 @@ function trilhaView(){
       </div>`).join('')}
     </div>
   </div>
+  ${redacaoTrilhaBannerHTML()}
   <div class="card">
     <div class="section-title"><h2>Sua jornada</h2></div>
     <div class="trail" style="margin-top:8px;">
@@ -1449,7 +1546,145 @@ function trilhaView(){
     <div class="footer-note" style="margin-top:10px;">🌿 Amanhã/Depois/Semana são projeções — recalculadas a cada visita com base no que você já dominou, errou ou revisou. O único plano "de verdade" gravado é o de hoje.</div>
   </div>`;
 }
-function redacaoView(){ return comingSoonView('📝','Redação PAS 1','O treinador completo de redação — temas, editor, correção e histórico — está sendo construído.'); }
+function redacaoView(){
+  if(ACTIVE_TASK) return taskRunnerHTML();
+  const temaSemana = redacaoTemaSemana();
+  const modoCompleta = REDACAO_MODOS[0];
+  const stats = redacaoStats();
+  const entries = redacaoEntries();
+  const recentes = [...entries].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,8);
+  return `
+  <div class="card">
+    <div class="section-title"><h2>📝 Redação PAS 1</h2></div>
+    <p class="subtitle">Treine do parágrafo isolado à redação completa, cronometrada. A correção é um checklist de autoavaliação — não é o critério oficial do Cebraspe.</p>
+  </div>
+  <div class="card">
+    <div class="label-eyebrow">Redação da semana</div>
+    <h3 style="margin:4px 0 6px;">${temaSemana.tema}</h3>
+    <div class="row" style="gap:14px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);margin-bottom:10px;">
+      <span>⏱ ${modoCompleta.tempo} min sugeridos</span>
+      <span>🎯 Objetivo: praticar a redação inteira, do início ao fim</span>
+    </div>
+    <button class="btn btn-primary btn-block" data-action="redacao-start" data-modo="completa" data-tema="${temaSemana.id}">Começar</button>
+  </div>
+  <div class="card">
+    <div class="label-eyebrow" style="margin-bottom:8px;">Modos de treino</div>
+    <div class="grid2">
+      ${REDACAO_MODOS.filter(m=>m.key!=='completa').map(m=>`<button class="card-flat" style="text-align:center;cursor:pointer;" data-action="redacao-start" data-modo="${m.key}">
+        <div style="font-size:1.2rem;">${m.emoji}</div><div style="font-weight:700;font-size:.8rem;margin-top:2px;">${m.nome}</div><div style="font-size:.68rem;color:var(--muted);margin-top:2px;">${m.desc}</div>
+      </button>`).join('')}
+      <button class="card-flat" style="text-align:center;cursor:pointer;background:var(--accent);color:var(--accent-ink);" data-action="redacao-start" data-modo="completa" data-prova="1">
+        <div style="font-size:1.2rem;">🏁</div><div style="font-weight:700;font-size:.8rem;margin-top:2px;">Modo prova</div><div style="font-size:.68rem;margin-top:2px;opacity:.85;">Sem apoio, sem dicas — só o cronômetro.</div>
+      </button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-title row-between"><h2>Histórico</h2><span class="mono" style="color:var(--accent);font-weight:700;">${stats.total}</span></div>
+    ${stats.total? `
+    <div class="grid2" style="margin-bottom:10px;">
+      <div class="card-flat"><div class="label-eyebrow">Média (checklist)</div><div style="font-weight:700;font-size:1.1rem;">${stats.mediaCompetencia!=null? stats.mediaCompetencia+'/20' : '—'}</div></div>
+      <div class="card-flat"><div class="label-eyebrow">Tempo médio</div><div style="font-weight:700;font-size:1.1rem;">${stats.tempoMedio} min</div></div>
+      <div class="card-flat"><div class="label-eyebrow">Corrigidas</div><div style="font-weight:700;font-size:1.1rem;">${stats.corrigidasCount}/${stats.total}</div></div>
+      <div class="card-flat"><div class="label-eyebrow">Maior dificuldade</div><div style="font-weight:700;font-size:1.1rem;">${stats.topCat||'—'}</div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:0;">
+      ${recentes.map(e=>{
+        const m = REDACAO_MODOS.find(x=>x.key===e.modo);
+        const total = e.corrigida? competenciaTotal(e) : null;
+        return `<div class="row-between" style="font-size:.82rem;padding:8px 0;border-top:1px solid var(--border);">
+          <span>${m?m.emoji:'📝'} ${m?m.nome:e.modo} · ${e.palavras} palavras${e.isProva?' · 🏁':''}</span>
+          ${total!=null? `<span class="badge ${competenciaLabel(total).cls}">${total}/20</span>` : `<button class="btn btn-ghost btn-sm" data-action="redacao-continuar-correcao" data-entry="${e.id}">Corrigir</button>`}
+        </div>`;
+      }).join('')}
+    </div>` : `<div class="empty">Você ainda não escreveu nenhuma redação por aqui. Comece pela redação da semana ou por um treino curto.</div>`}
+  </div>`;
+}
+function redacaoTrilhaBannerHTML(){
+  const entries = redacaoEntries();
+  const last = entries.length ? entries[entries.length-1] : null;
+  const daysSince = last ? daysBetween(new Date(last.date+'T00:00:00'), new Date()) : null;
+  if(daysSince!=null && daysSince<3) return '';
+  return `<div class="card-flat" style="display:flex;align-items:center;gap:10px;">
+    <span style="font-size:1.3rem;">📝</span>
+    <div style="flex:1;font-size:.82rem;line-height:1.45;">${last? `Já fazem ${daysSince} dias desde a sua última redação — que tal um treino curto hoje?` : 'Você ainda não treinou redação por aqui — comece com um treino curto de 10-15 minutos.'}</div>
+    <button class="btn btn-secondary btn-sm" data-route="redacao">Treinar</button>
+  </div>`;
+}
+function startRedacao(modo, opts){
+  opts = opts || {};
+  const tema = opts.temaId ? getRedacaoTema(opts.temaId) : (modo==='corrigir'? null : redacaoTemaSemana());
+  const modoInfo = REDACAO_MODOS.find(m=>m.key===modo) || REDACAO_MODOS[0];
+  ACTIVE_TASK = {type:'redacao', modo, temaId: tema?tema.id:null, isProva: !!opts.isProva, versaoAnteriorId: opts.versaoAnteriorId||null, tempoSugerido: modoInfo.tempo, startedAt: Date.now(), texto: opts.texto||''};
+  ROUTE='redacao'; MODAL=null; render();
+}
+function redacaoRunnerHTML(t){
+  const modoInfo = REDACAO_MODOS.find(m=>m.key===t.modo) || REDACAO_MODOS[0];
+  const tema = t.temaId ? getRedacaoTema(t.temaId) : null;
+  const isCorrigir = t.modo==='corrigir';
+  return `<div class="card qcard">
+    <div class="row-between"><span class="badge b-neutral">${modoInfo.emoji} ${modoInfo.nome}${t.isProva?' · 🏁 Modo prova':''}</span><button class="btn btn-ghost btn-sm" data-action="cancel-task">Sair</button></div>
+    ${tema ? `<h2 style="margin-top:8px;">${tema.tema}</h2>` : '<h2 style="margin-top:8px;">Cole sua redação</h2>'}
+    ${tema && !t.isProva && tema.apoio && tema.apoio.length ? `<details style="margin:8px 0;"><summary style="cursor:pointer;font-weight:600;font-size:.85rem;color:var(--accent);">📎 Textos de apoio</summary><ul style="margin:8px 0 0;padding-left:18px;font-size:.82rem;color:var(--ink-soft);">${tema.apoio.map(a=>`<li style="margin-bottom:4px;">${a}</li>`).join('')}</ul></details>` : ''}
+    <div class="row-between" style="margin:10px 0 6px;font-size:.8rem;color:var(--muted);">
+      <span id="redacaoTimer" class="mono">⏱ 00:00</span>
+      <span id="redacaoWordCount" class="mono">0 palavras</span>
+    </div>
+    <textarea id="redacaoEditor" class="chip-input" style="min-height:260px;line-height:1.6;font-size:.92rem;" placeholder="${isCorrigir? 'Cole aqui o texto que você já escreveu...' : 'Escreva sua redação aqui...'}">${t.texto||''}</textarea>
+    <div class="row" style="gap:8px;margin-top:10px;">
+      ${!isCorrigir ? `<button class="btn btn-ghost" data-action="redacao-draft">💾 Salvar rascunho</button>` : ''}
+      <button class="btn btn-primary" style="flex:1;" data-action="redacao-enviar">✅ ${isCorrigir? 'Ir para o checklist' : 'Enviar para correção'}</button>
+    </div>
+    <div class="footer-note" style="margin-top:10px;">🟡 A correção aqui é uma avaliação educacional (checklist de autoavaliação) — não é o critério oficial de correção do PAS 1/Cebraspe.</div>
+  </div>`;
+}
+function redacaoCorrecaoHTML(t){
+  const entry = redacaoEntries().find(e=>e.id===t.entryId);
+  if(!entry) return `<div class="empty">Redação não encontrada.</div>`;
+  if(entry.corrigida) return redacaoFeedbackHTML(entry);
+  entry.categorias = entry.categorias || [];
+  entry.competencias = entry.competencias || {};
+  return `<div class="card qcard">
+    <div class="row-between"><span class="badge b-neutral">🔍 Checklist de autoavaliação</span><button class="btn btn-ghost btn-sm" data-action="cancel-task">Sair</button></div>
+    <p class="subtitle">${entry.palavras} palavras · ${fmtElapsed((entry.tempoSeg||0)*1000)}</p>
+    ${REDACAO_COMPETENCIAS.map(c=>`
+      <div class="card-flat" style="margin-top:10px;">
+        <div style="font-weight:700;font-size:.86rem;">${c.nome}</div>
+        <div style="font-size:.76rem;color:var(--muted);margin:2px 0 8px;">${c.desc}</div>
+        <div class="row" style="gap:4px;">
+          ${[0,1,2,3,4].map(v=>`<button class="btn ${((entry.competencias[c.key]||0)===v)?'btn-secondary':'btn-ghost'} btn-sm" style="flex:1;" data-action="rate-competencia" data-comp="${c.key}" data-val="${v}">${v}</button>`).join('')}
+        </div>
+      </div>`).join('')}
+    <div class="label-eyebrow" style="margin:14px 0 8px;">Principal(is) dificuldade(s) nesse texto</div>
+    <div class="row" style="gap:6px;flex-wrap:wrap;">
+      ${REDACAO_CATEGORIAS.map(cat=>`<button class="btn ${entry.categorias.includes(cat)?'btn-secondary':'btn-ghost'} btn-sm" data-action="toggle-categoria" data-cat="${cat}">${cat}</button>`).join('')}
+    </div>
+    <button class="btn btn-primary btn-block" style="margin-top:16px;" data-action="redacao-concluir">Concluir avaliação</button>
+    <div class="footer-note" style="margin-top:10px;">🟡 Avaliação educacional — reflita com sinceridade sobre seu próprio texto pra essa autoavaliação valer a pena.</div>
+  </div>`;
+}
+function redacaoFeedbackHTML(entry){
+  const total = competenciaTotal(entry);
+  const lbl = competenciaLabel(total);
+  const fortes = REDACAO_COMPETENCIAS.filter(c=>(entry.competencias[c.key]||0)>=3);
+  const melhorar = REDACAO_COMPETENCIAS.filter(c=>(entry.competencias[c.key]||0)<2);
+  const anterior = entry.versaoAnteriorId ? redacaoEntries().find(e=>e.id===entry.versaoAnteriorId) : null;
+  return `<div class="card qcard">
+    <div class="row-between"><span class="badge ${lbl.cls}">${lbl.label}</span><span class="mono" style="font-weight:700;">${total}/20</span></div>
+    <h2 style="margin-top:8px;">Avaliação concluída</h2>
+    ${anterior ? `<div class="card-flat" style="margin:10px 0;"><div class="label-eyebrow">Comparado com a versão anterior</div>
+      <div class="row-between" style="margin-top:4px;font-size:.85rem;"><span>Palavras</span><span class="mono">${anterior.palavras} → ${entry.palavras}</span></div>
+      <div class="row-between" style="font-size:.85rem;"><span>Nota do checklist</span><span class="mono">${competenciaTotal(anterior)}/20 → ${total}/20</span></div>
+    </div>` : ''}
+    ${fortes.length? `<div class="card-flat" style="margin-top:10px;"><div class="label-eyebrow">✅ Pontos fortes</div><div style="margin-top:4px;font-size:.85rem;">${fortes.map(c=>c.nome).join(', ')}</div></div>` : ''}
+    ${melhorar.length? `<div class="card-flat" style="margin-top:10px;"><div class="label-eyebrow">⚠️ O que melhorar</div><div style="margin-top:4px;font-size:.85rem;">${melhorar.map(c=>c.nome).join(', ')}</div></div>` : ''}
+    ${entry.categorias && entry.categorias.length? `<div class="card-flat" style="margin-top:10px;"><div class="label-eyebrow">🔥 Principal dificuldade marcada</div><div style="margin-top:4px;font-size:.85rem;">${entry.categorias.join(', ')}</div></div>` : ''}
+    <div class="card-flat" style="margin-top:10px;"><div class="label-eyebrow">🎯 Meta pra próxima redação</div><div style="margin-top:4px;font-size:.85rem;">${melhorar.length? 'Foque em '+melhorar[0].nome.toLowerCase()+'.' : 'Continue nesse nível — tente reduzir o tempo de escrita.'}</div></div>
+    <div class="row" style="gap:8px;margin-top:14px;">
+      ${!entry.versaoAnteriorId ? `<button class="btn btn-secondary" style="flex:1;" data-action="redacao-reescrever" data-entry="${entry.id}">🔁 Reescrever</button>` : ''}
+      <button class="btn btn-primary" style="flex:1;" data-action="cancel-task">Voltar pra Redação</button>
+    </div>
+  </div>`;
+}
 
 /* ---------- HOME ---------- */
 function greeting(){
@@ -1682,6 +1917,8 @@ function taskRunnerHTML(){
   if(t.type==='aprender') return aprenderHTML(t);
   if(t.type==='obra') return obraStudyHTML(t);
   if(t.type==='obraExpress') return obraExpressHTML(t);
+  if(t.type==='redacao') return redacaoRunnerHTML(t);
+  if(t.type==='redacao-correcao') return redacaoCorrecaoHTML(t);
   return `<div class="empty">Tarefa desconhecida</div>`;
 }
 
@@ -2858,6 +3095,17 @@ function progressoView(){
     }).join('')}
   </div>
   <div class="card">
+    <h3>📝 Redação</h3>
+    ${(()=>{ const rs = redacaoStats(); return rs.total? `
+    <div class="grid3">
+      <div class="card-flat"><div class="label-eyebrow">Redações</div><div class="mono" style="font-size:1.2rem;font-weight:700;">${rs.total}</div></div>
+      <div class="card-flat"><div class="label-eyebrow">Média checklist</div><div class="mono" style="font-size:1.2rem;font-weight:700;">${rs.mediaCompetencia!=null? rs.mediaCompetencia+'/20':'—'}</div></div>
+      <div class="card-flat"><div class="label-eyebrow">Tempo médio</div><div class="mono" style="font-size:1.2rem;font-weight:700;">${rs.tempoMedio} min</div></div>
+    </div>
+    <div class="footer-note" style="margin-top:8px;">Maior dificuldade recorrente: ${rs.topCat||'ainda sem dados suficientes'}.</div>
+    ` : `<div class="row" style="align-items:center;gap:8px;"><p style="font-size:.85rem;color:var(--muted);margin:0;flex:1;">Você ainda não treinou redação.</p><button class="btn btn-secondary btn-sm" data-route="redacao">Começar</button></div>`; })()}
+  </div>
+  <div class="card">
     <h3>Backup dos seus dados</h3>
     <p style="font-size:.85rem;color:var(--muted);">Seus dados ficam salvos neste navegador. Ainda não há conta/nuvem — exporte um backup de vez em quando para não perder o progresso.</p>
     <div class="row" style="gap:8px;">
@@ -2871,7 +3119,7 @@ function progressoView(){
 }
 
 /* ---------- VISÃO SEMANAL ---------- */
-const WEEKLY_GOAL = {questoes:150, minutos:600, revisoes:12, obras:2, simulados:1};
+const WEEKLY_GOAL = {questoes:150, minutos:600, revisoes:12, obras:2, simulados:1, redacoes:1};
 function weekDates(){
   const d = new Date(); const dow = (d.getDay()+6)%7; // 0=segunda
   const monday = new Date(d); monday.setDate(d.getDate()-dow); monday.setHours(0,0,0,0);
@@ -2880,8 +3128,8 @@ function weekDates(){
   return arr;
 }
 function weekTotals(dates){
-  const t = {questoes:0,minutos:0,revisoes:0,obras:0,simulados:0};
-  dates.forEach(d=>{ const a = STATE.activity[d]; if(a){ t.questoes+=a.questoes||0; t.minutos+=a.minutos||0; t.revisoes+=a.revisoes||0; t.obras+=a.obras||0; t.simulados+=a.simulados||0; } });
+  const t = {questoes:0,minutos:0,revisoes:0,obras:0,simulados:0,redacoes:0};
+  dates.forEach(d=>{ const a = STATE.activity[d]; if(a){ t.questoes+=a.questoes||0; t.minutos+=a.minutos||0; t.revisoes+=a.revisoes||0; t.obras+=a.obras||0; t.simulados+=a.simulados||0; t.redacoes+=a.redacoes||0; } });
   return t;
 }
 function dayState(dateISO, todayIso){
@@ -2925,6 +3173,7 @@ function semanaView(){
     ${weeklyGoalRowHTML('Revisões', totals.revisoes, WEEKLY_GOAL.revisoes)}
     ${weeklyGoalRowHTML('Obras', totals.obras, WEEKLY_GOAL.obras)}
     ${weeklyGoalRowHTML('Simulados', totals.simulados, WEEKLY_GOAL.simulados)}
+    ${weeklyGoalRowHTML('Redações', totals.redacoes, WEEKLY_GOAL.redacoes)}
   </div>
   <div class="footer-note">✅ dia completo · 🟡 dia parcial · ❌ sem atividade registrada · 🎯 hoje. A meta semanal é uma referência geral fixa — ajuste seu ritmo conforme sua fase de estudo, não é uma regra oficial do PAS.</div>
   `;
@@ -3020,7 +3269,76 @@ function attachEvents(){
   }));
 
   const cancelBtn = document.querySelector('[data-action="cancel-task"]');
-  if(cancelBtn) cancelBtn.addEventListener('click',()=>{ ACTIVE_TASK=null; QUIZ_SESSION=null; render(); });
+  if(cancelBtn) cancelBtn.addEventListener('click',()=>{ stopRedacaoTimer(); ACTIVE_TASK=null; QUIZ_SESSION=null; render(); });
+
+  document.querySelectorAll('[data-action="redacao-start"]').forEach(el=>el.addEventListener('click',()=>{
+    startRedacao(el.dataset.modo, {temaId: el.dataset.tema||null, isProva: el.dataset.prova==='1'});
+  }));
+  const redacaoDraftBtn = document.querySelector('[data-action="redacao-draft"]');
+  if(redacaoDraftBtn) redacaoDraftBtn.addEventListener('click',()=>{
+    const ta = document.getElementById('redacaoEditor');
+    if(!ta || !ACTIVE_TASK) return;
+    STATE.redacao.draft = {modo:ACTIVE_TASK.modo, temaId:ACTIVE_TASK.temaId, texto:ta.value, startedAt:ACTIVE_TASK.startedAt};
+    save();
+    const old = redacaoDraftBtn.textContent;
+    redacaoDraftBtn.textContent = '✓ Salvo';
+    setTimeout(()=>{ redacaoDraftBtn.textContent = old; }, 1500);
+  });
+  const redacaoEnviarBtn = document.querySelector('[data-action="redacao-enviar"]');
+  if(redacaoEnviarBtn) redacaoEnviarBtn.addEventListener('click',()=>{
+    const ta = document.getElementById('redacaoEditor');
+    if(!ta || !ACTIVE_TASK) return;
+    const texto = ta.value.trim();
+    if(!texto){ alert('Escreva ou cole um texto antes de enviar.'); return; }
+    stopRedacaoTimer();
+    const palavras = texto.split(/\s+/).filter(Boolean).length;
+    const tempoSeg = Math.round((Date.now()-ACTIVE_TASK.startedAt)/1000);
+    const entry = {
+      id:'red_'+Date.now(), date:todayISO(), modo:ACTIVE_TASK.modo, temaId:ACTIVE_TASK.temaId,
+      texto, palavras, tempoSeg, isProva:!!ACTIVE_TASK.isProva, versaoAnteriorId:ACTIVE_TASK.versaoAnteriorId||null,
+      corrigida:false, competencias:{}, categorias:[],
+    };
+    STATE.redacao.entries.push(entry);
+    STATE.redacao.draft = null;
+    const prevXp = STATE.profile.xp;
+    STATE.profile.xp += ACTIVE_TASK.modo==='completa' ? 40 : ACTIVE_TASK.modo==='corrigir' ? 10 : 15;
+    checkLevelUp(prevXp, STATE.profile.xp);
+    logActivity({redacoes:1, minutos:Math.round(tempoSeg/60)});
+    ACTIVE_TASK = {type:'redacao-correcao', entryId:entry.id};
+    save(); render();
+  });
+  document.querySelectorAll('[data-action="rate-competencia"]').forEach(el=>el.addEventListener('click',()=>{
+    const entry = redacaoEntries().find(e=>e.id===ACTIVE_TASK.entryId);
+    if(!entry) return;
+    entry.competencias[el.dataset.comp] = Number(el.dataset.val);
+    save(); render();
+  }));
+  document.querySelectorAll('[data-action="toggle-categoria"]').forEach(el=>el.addEventListener('click',()=>{
+    const entry = redacaoEntries().find(e=>e.id===ACTIVE_TASK.entryId);
+    if(!entry) return;
+    const cat = el.dataset.cat;
+    const i = entry.categorias.indexOf(cat);
+    if(i>=0) entry.categorias.splice(i,1); else entry.categorias.push(cat);
+    save(); render();
+  }));
+  const redacaoConcluirBtn = document.querySelector('[data-action="redacao-concluir"]');
+  if(redacaoConcluirBtn) redacaoConcluirBtn.addEventListener('click',()=>{
+    const entry = redacaoEntries().find(e=>e.id===ACTIVE_TASK.entryId);
+    if(!entry) return;
+    entry.corrigida = true;
+    const prevXp = STATE.profile.xp;
+    STATE.profile.xp += 15;
+    checkLevelUp(prevXp, STATE.profile.xp);
+    save(); render();
+  });
+  document.querySelectorAll('[data-action="redacao-reescrever"]').forEach(el=>el.addEventListener('click',()=>{
+    const entry = redacaoEntries().find(e=>e.id===el.dataset.entry);
+    if(!entry) return;
+    startRedacao(entry.modo, {temaId:entry.temaId, isProva:entry.isProva, versaoAnteriorId:entry.id});
+  }));
+  document.querySelectorAll('[data-action="redacao-continuar-correcao"]').forEach(el=>el.addEventListener('click',()=>{
+    ACTIVE_TASK = {type:'redacao-correcao', entryId: el.dataset.entry}; render();
+  }));
 
   const finishBtn = document.querySelector('[data-action="finish-task"]');
   if(finishBtn) finishBtn.addEventListener('click',()=>{
@@ -3262,11 +3580,12 @@ function doImport(ev){
     try{
       const parsed = JSON.parse(e.target.result);
       const def = defaultState();
-      const defDiagnostic = def.diagnostic, defProfile = def.profile, defAppearance = def.appearance;
+      const defDiagnostic = def.diagnostic, defProfile = def.profile, defAppearance = def.appearance, defRedacao = def.redacao;
       const merged = Object.assign(def, parsed);
       merged.diagnostic = Object.assign(defDiagnostic, parsed.diagnostic||{});
       merged.profile = Object.assign(defProfile, parsed.profile||{});
       merged.appearance = Object.assign(defAppearance, parsed.appearance||{});
+      merged.redacao = Object.assign(defRedacao, parsed.redacao||{});
       STATE = merged;
       applyAppearance();
       save(); render();
