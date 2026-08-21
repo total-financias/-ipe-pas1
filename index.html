@@ -831,12 +831,19 @@ function totalPlanDays(){ return Math.max(1, daysBetween(new Date(STATE.startDat
 function phaseInfo(){
   const total = totalPlanDays(), left = daysLeft();
   const elapsedPct = 1 - (left/total);
-  if(elapsedPct < .25) return {n:1,nome:'Base',foco:'Fundamentos e interpretação',contPrat:[70,30]};
-  if(elapsedPct < .55) return {n:2,nome:'Aprendizado + Exercícios',foco:'Conteúdo + prática crescente',contPrat:[40,60]};
-  if(elapsedPct < .80) return {n:3,nome:'Modo PAS',foco:'Questões estilo PAS e interdisciplinaridade',contPrat:[20,80]};
-  if(elapsedPct < .95) return {n:4,nome:'Simulados',foco:'Simulados e correção de rota',contPrat:[10,90]};
-  return {n:5,nome:'Reta Final',foco:'Revisão, erros recorrentes e estratégia',contPrat:[5,95]};
+  if(elapsedPct < .25) return {n:1,nome:'Base',emoji:'🌱',foco:'Fundamentos e interpretação',contPrat:[70,30]};
+  if(elapsedPct < .55) return {n:2,nome:'Consolidação',emoji:'🌿',foco:'Conteúdo + prática crescente',contPrat:[40,60]};
+  if(elapsedPct < .80) return {n:3,nome:'Modo PAS',emoji:'🌳',foco:'Questões estilo PAS e interdisciplinaridade',contPrat:[20,80]};
+  if(elapsedPct < .95) return {n:4,nome:'Simulados',emoji:'🌼',foco:'Simulados e correção de rota',contPrat:[10,90]};
+  return {n:5,nome:'Reta Final',emoji:'🏆',foco:'Revisão, erros recorrentes e estratégia',contPrat:[5,95]};
 }
+const FASES_TRILHA = [
+  {n:1,nome:'Base',emoji:'🌱'},
+  {n:2,nome:'Consolidação',emoji:'🌿'},
+  {n:3,nome:'Modo PAS',emoji:'🌳'},
+  {n:4,nome:'Simulados',emoji:'🌼'},
+  {n:5,nome:'Reta Final',emoji:'🏆'},
+];
 function accuracyOf(assuntoId){
   const c = STATE.content[assuntoId];
   if(!c || c.attempts===0) return null;
@@ -1102,6 +1109,47 @@ function ensureTodayPlan(){
   if(STATE.dailyPlan && STATE.dailyPlan.date===todayISO()) return STATE.dailyPlan;
   return null;
 }
+/* Projeção leve de um dia futuro (amanhã, depois...) pra Trilha — não é um plano real gravado,
+   é só uma sugestão determinística baseada na priorização atual, excluindo assuntos já cobertos
+   nos dias anteriores da projeção. Recalcula a cada render, então acompanha diagnóstico/erros/desempenho. */
+function previewDayPlan(excludeIds, minutes){
+  const ranked = rankedAssuntos().filter(a=>!excludeIds.includes(a.id));
+  const tasks = [];
+  let budget = minutes;
+  let i=0;
+  while(budget>=10 && i<ranked.length && tasks.length<4){
+    const a = ranked[i]; i++;
+    const c = contentFor(a.id);
+    const isNew = c.attempts===0;
+    if(isNew && c.status==='red' && budget>=taskDuration('aprender')){
+      tasks.push({id:'p_learn_'+a.id,type:'aprender',titulo:`Aprender — ${a.nome}`,sub:a.materiaNome,dur:taskDuration('aprender'),assuntoId:a.id});
+      budget -= taskDuration('aprender');
+    } else if(budget>=taskDuration('questoes') && questoesPorAssunto(a.id).length){
+      tasks.push({id:'p_q_'+a.id,type:'questoes',titulo:`Questões — ${a.nome}`,sub:a.materiaNome,dur:taskDuration('questoes'),assuntoId:a.id});
+      budget -= taskDuration('questoes');
+    }
+  }
+  if(!tasks.length && ranked.length){
+    const a = ranked[0];
+    tasks.push({id:'p_q_'+a.id,type:'questoes',titulo:`Questões — ${a.nome}`,sub:a.materiaNome,dur:taskDuration('questoes'),assuntoId:a.id});
+  }
+  return tasks;
+}
+function whyTaskHTML(t){
+  if(!t.assuntoId) return 'Faz parte do seu plano por ajudar a manter o ritmo de estudos.';
+  const a = getAssunto(t.assuntoId); if(!a) return '';
+  const c = contentFor(a.id);
+  const acc = c.attempts? Math.round(weightedAcc(c)*100) : null;
+  const erros = STATE.errors.filter(e=>e.assuntoId===a.id && !e.resolvido).length;
+  const prereqId = PREREQ[a.id]; const prereqAssunto = prereqId? getAssunto(prereqId): null;
+  const reasons = [];
+  if(acc!=null) reasons.push(`sua taxa de acerto aqui é ${acc}%`);
+  else reasons.push('você ainda não praticou esse assunto');
+  if(erros>0) reasons.push(`você tem ${erros} erro(s) pendente(s) nele`);
+  if(prereqAssunto) reasons.push(`ele se conecta com "${prereqAssunto.nome}"`);
+  reasons.push(`faltam ${daysLeft()} dias até a prova`);
+  return `${a.nome} foi recomendado porque: ${reasons.join('; ')}.`;
+}
 
 /* ============================= ICONS ============================= */
 const TASK_ICON = {aprender:'📖',questoes:'✏️',revisao:'🔄',obra:'📚',erros:'🧠'};
@@ -1300,7 +1348,76 @@ function comingSoonView(emoji, titulo, desc){
     <div class="footer-note" style="margin-top:12px;">🟡 Em construção — chegando em breve nesta mesma aba.</div>
   </div>`;
 }
-function trilhaView(){ return comingSoonView('🧭','Trilha PAS 1','O caminho recomendado de estudos, de hoje até o dia da prova, está sendo construído.'); }
+function trilhaView(){
+  if(ACTIVE_TASK) return taskRunnerHTML();
+  const plan = ensureTodayPlan();
+  const phase = phaseInfo();
+  const todayTasks = plan ? plan.tasks : [];
+  const todayIds = todayTasks.filter(t=>t.assuntoId).map(t=>t.assuntoId);
+  const amanha = previewDayPlan(todayIds, 60);
+  const amanhaIds = amanha.filter(t=>t.assuntoId).map(t=>t.assuntoId);
+  const depois = previewDayPlan([...todayIds, ...amanhaIds], 60);
+  const depoisIds = depois.filter(t=>t.assuntoId).map(t=>t.assuntoId);
+  const semana = previewDayPlan([...todayIds, ...amanhaIds, ...depoisIds], 220);
+  const firstPending = todayTasks.find(t=>t.status==='pendente');
+
+  function dayNode(icon, label, tasks, opts){
+    opts = opts || {};
+    return `<div class="trail-node">
+      <div class="trail-line"></div>
+      <div class="trail-dot">${icon}</div>
+      <div class="trail-body">
+        <div class="trail-name">${label}</div>
+        ${!tasks.length ? `<div class="trail-sub">${opts.needsPlan? 'Você ainda não definiu o tempo disponível de hoje.' : 'Nada de novo previsto — bom sinal, você está em dia.'}</div>` : tasks.map(t=>{
+          const pb = t.assuntoId ? priorityBadge(getAssunto(t.assuntoId)) : null;
+          return `<div class="card-flat" style="margin-top:8px;padding:10px 12px;">
+            <div class="row-between">
+              <div style="font-weight:700;font-size:.84rem;">${TASK_ICON[t.type]||'📘'} ${t.titulo}</div>
+              ${pb? `<span class="badge ${pb.cls}" style="font-size:.64rem;white-space:nowrap;">${pb.emoji} ${pb.label}</span>` : ''}
+            </div>
+            <div class="trail-sub" style="margin-top:2px;">${t.sub} · ${t.dur} min</div>
+            ${t.assuntoId ? `<details style="margin-top:6px;"><summary style="cursor:pointer;font-size:.74rem;color:var(--accent);font-weight:600;">Por que estudar isso?</summary><p style="font-size:.74rem;color:var(--ink-soft);margin:6px 0 0;">${whyTaskHTML(t)}</p></details>` : ''}
+            ${opts.actionable && t.status==='pendente' ? `<button class="btn btn-primary btn-sm" style="margin-top:8px;" data-action="start-task" data-task="${t.id}">Iniciar</button>` : ''}
+            ${opts.actionable && t.status==='concluida' ? `<span class="badge b-green" style="margin-top:8px;display:inline-block;">✓ Concluída</span>` : ''}
+          </div>`;
+        }).join('')}
+        ${opts.needsPlan && !tasks.length ? `<button class="btn btn-secondary btn-sm" style="margin-top:8px;" data-route="home">Definir tempo de hoje</button>` : ''}
+      </div>
+    </div>`;
+  }
+
+  return `
+  <div class="card">
+    <div class="section-title"><h2>🧭 Minha Trilha PAS 1</h2></div>
+    <p class="subtitle">O caminho recomendado de estudos, com base no seu diagnóstico, desempenho e nos ${daysLeft()} dias até a prova. Nada aqui é travado — é uma sugestão que se recalcula sozinha conforme você estuda.</p>
+    <button class="btn btn-primary btn-block" style="margin-top:6px;" data-action="trilha-agora">▶️ O que faço agora?</button>
+  </div>
+  <div class="card">
+    <div class="section-title"><h2>Fases até a prova</h2></div>
+    <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px;">
+      ${FASES_TRILHA.map(f=>`<div class="card-flat" style="flex:1;min-width:96px;text-align:center;${f.n===phase.n?'border-color:var(--accent);border-width:2px;':'opacity:.55;'}">
+        <div style="font-size:1.2rem;">${f.emoji}</div>
+        <div style="font-weight:700;font-size:.74rem;margin-top:2px;">${f.nome}</div>
+        ${f.n===phase.n? '<div style="font-size:.6rem;color:var(--accent);font-weight:700;margin-top:2px;">VOCÊ ESTÁ AQUI</div>':''}
+      </div>`).join('')}
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-title"><h2>Sua jornada</h2></div>
+    <div class="trail" style="margin-top:8px;">
+      ${dayNode('🌱','HOJE', todayTasks, {actionable:true, needsPlan:true})}
+      ${dayNode('🌿','AMANHÃ', amanha)}
+      ${dayNode('🌳','DEPOIS DE AMANHÃ', depois)}
+    </div>
+    <details style="margin-top:12px;">
+      <summary style="cursor:pointer;font-weight:700;font-size:.85rem;">Ver próximos 7 dias (resumo)</summary>
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
+        ${semana.length? semana.map(t=>`<div class="row-between" style="font-size:.8rem;"><span>${TASK_ICON[t.type]||'📘'} ${t.titulo}</span><span class="label-eyebrow">${t.dur} min</span></div>`).join('') : '<div class="footer-note">Sem sugestões extras por enquanto — você já cobriu boa parte do conteúdo prioritário.</div>'}
+      </div>
+    </details>
+    <div class="footer-note" style="margin-top:10px;">🌿 Amanhã/Depois/Semana são projeções — recalculadas a cada visita com base no que você já dominou, errou ou revisou. O único plano "de verdade" gravado é o de hoje.</div>
+  </div>`;
+}
 function redacaoView(){ return comingSoonView('📝','Redação PAS 1','O treinador completo de redação — temas, editor, correção e histórico — está sendo construído.'); }
 
 /* ---------- HOME ---------- */
@@ -2826,6 +2943,12 @@ function attachEvents(){
   if(missionBtn) missionBtn.addEventListener('click',()=>{
     const t = STATE.dailyPlan.tasks.find(x=>x.status==='pendente');
     if(t) startTaskById(t.id);
+  });
+  const trilhaAgoraBtn = document.querySelector('[data-action="trilha-agora"]');
+  if(trilhaAgoraBtn) trilhaAgoraBtn.addEventListener('click',()=>{
+    const plan = ensureTodayPlan();
+    const t = plan && plan.tasks.find(x=>x.status==='pendente');
+    if(t) startTaskById(t.id); else { ROUTE='home'; render(); }
   });
   const fast10Btn = document.querySelector('[data-action="fast10"]');
   if(fast10Btn) fast10Btn.addEventListener('click',()=>{
