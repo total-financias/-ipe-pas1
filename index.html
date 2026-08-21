@@ -60,8 +60,12 @@ button{font-family:var(--font-body);cursor:pointer;}
 .pill.days{background:var(--accent);color:var(--accent-ink);border-color:transparent;}
 .pill.days b{color:var(--accent-ink);}
 
-.tabs{display:flex;gap:4px;overflow-x:auto;padding:0 12px 10px;scrollbar-width:none;}
-.tabs::-webkit-scrollbar{display:none;}
+.tabs-wrap{position:relative;}
+.tabs{display:flex;gap:4px;overflow-x:auto;padding:0 12px 10px;scrollbar-width:thin;}
+.tabs-fade{position:absolute;top:0;bottom:10px;width:32px;pointer-events:none;opacity:0;transition:opacity .15s ease;}
+.tabs-fade.left{left:0;background:linear-gradient(90deg,var(--bg),transparent);}
+.tabs-fade.right{right:0;background:linear-gradient(270deg,var(--bg),transparent);}
+.tabs-fade.show{opacity:1;}
 .tab{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:100px;border:1px solid transparent;background:transparent;color:var(--muted);font-weight:600;font-size:.85rem;}
 .tab.active{background:var(--surface-2);color:var(--ink);border-color:var(--border);}
 .tab:hover:not(.active){color:var(--ink-soft);}
@@ -255,6 +259,7 @@ html[data-textsize="g"]{ font-size:18px; }
   :root[data-menu="sidebar"] .topbar-inner{flex-direction:column;align-items:flex-start;gap:10px;}
   :root[data-menu="sidebar"] .stat-pills{flex-direction:column;align-items:flex-start;width:100%;}
   :root[data-menu="sidebar"] .tabs{flex-direction:column;overflow-x:visible;padding:6px 10px 16px;}
+  :root[data-menu="sidebar"] .tabs-fade{display:none;}
   :root[data-menu="sidebar"] .tab{width:100%;justify-content:flex-start;}
   :root[data-menu="sidebar"] main{flex:1;min-width:0;}
 }
@@ -473,71 +478,101 @@ function questoesPorAssunto(assuntoId){return QUESTOES.filter(q=>q.assuntoId===a
 
 /* ---- Obras oficiais PAS 1 2026-2028 (fonte: cebraspe.org.br, lista divulgada 21/01/2026) ---- */
 const OBRAS = [
- {id:'m1',cat:'musica',titulo:'O Rubor Sanguinis',autor:'Hildegard Von Bingen'},
- {id:'m2',cat:'musica',titulo:'Concerto Grosso op.6 HWV 324',autor:'Corelli'},
- {id:'m3',cat:'musica',titulo:"Dido and Aeneas – Dido's Lament",autor:'Purcell'},
- {id:'m4',cat:'musica',titulo:'Obrigado Darcy',autor:'Emicida'},
- {id:'m5',cat:'musica',titulo:'Tiro ao Álvaro (versão Demônios da Garoa)',autor:'Adoniran Barbosa'},
- {id:'m6',cat:'musica',titulo:'Canto dos Escravos - Canto I',autor:'Clementina de Jesus'},
- {id:'m7',cat:'musica',titulo:'Libras',autor:'Banda Surdodum'},
- {id:'m8',cat:'musica',titulo:'Sinfonia das Florestas',autor:'Ricardo Tacuchian'},
- {id:'m9',cat:'musica',titulo:'Saga da Amazônia (versão Socorro Lira)',autor:'Vital Farias'},
- {id:'m10',cat:'musica',titulo:'Quatro Contas',autor:'Dona Onete'},
- {id:'m11',cat:'musica',titulo:'Sinfonia 2 "Brasília" - 3º mov.',autor:'César Guerra Peixe'},
- {id:'m12',cat:'musica',titulo:'Ondas do mar de Vigo',autor:'Martin Codax'},
- {id:'m13',cat:'musica',titulo:'Palmares 1999',autor:'Natiruts'},
- {id:'a1',cat:'arte',titulo:'Manto tupinambá',autor:''},
- {id:'a2',cat:'arte',titulo:'Universidade de Sankoré',autor:'Mali'},
- {id:'a3',cat:'arte',titulo:'Forró Pé de Serra',autor:'J. Borges'},
- {id:'a4',cat:'arte',titulo:'Toca da Entrada do Baixão da Vaca',autor:'Serra da Capivara'},
- {id:'a5',cat:'arte',titulo:'Ourives trabalhando (Tumba 181)',autor:'Egito antigo'},
- {id:'a6',cat:'arte',titulo:'Laocoonte e seus filhos',autor:''},
- {id:'a7',cat:'arte',titulo:'Coliseu',autor:'Roma'},
- {id:'a8',cat:'arte',titulo:'Mosaico de Teodora',autor:'Ravena'},
- {id:'a9',cat:'arte',titulo:'Juízo Final',autor:'Vasari/Zuccari'},
- {id:'a10',cat:'arte',titulo:'Igreja de São Jorge',autor:'Lalibela, Etiópia'},
- {id:'v1',cat:'audiovisual',titulo:'Guerras do Brasil, ep. 1',autor:'Luiz Bolognesi'},
- {id:'v2',cat:'audiovisual',titulo:'Abuela Grillo',autor:''},
- {id:'v3',cat:'audiovisual',titulo:'América Latina',autor:'Fábio Brazz'},
- {id:'v4',cat:'audiovisual',titulo:'Nego Bispo',autor:'série Trajetórias'},
- {id:'v5',cat:'audiovisual',titulo:'Clima de Risco',autor:'TV Cultura'},
- {id:'v6',cat:'audiovisual',titulo:'GPS, como funciona',autor:''},
- {id:'v7',cat:'audiovisual',titulo:'A física da corrida',autor:'Nerdologia'},
- {id:'v8',cat:'audiovisual',titulo:'Nobel Prize Chemistry 2025 (MOFs)',autor:'animação'},
- {id:'v9',cat:'audiovisual',titulo:'Falas da Terra',autor:''},
- {id:'v10',cat:'audiovisual',titulo:'Terraplanismo, pós-verdade...',autor:'Mariana Alvim, TEDx Goiânia'},
- {id:'v11',cat:'audiovisual',titulo:"Xondaró Ka'aguy Reguá",autor:''},
- {id:'t1',cat:'texto',titulo:'Apologia de Sócrates',autor:'Platão'},
- {id:'t2',cat:'texto',titulo:'Linguagem humana existe há 135 mil anos',autor:'texto de divulgação científica'},
- {id:'t3',cat:'texto',titulo:'Garimpo de ouro na Amazônia (crise Yanomami)',autor:''},
- {id:'t4',cat:'texto',titulo:'Artigo científico sobre ciclo de vida de insetos em HQ',autor:''},
- {id:'t5',cat:'texto',titulo:'A Divina Comédia (versão HQ)',autor:'Dante Alighieri'},
- {id:'t6',cat:'texto',titulo:'O que tem debaixo da Terra (HQ)',autor:''},
- {id:'t7',cat:'texto',titulo:'As redes sociais são uma armadilha',autor:'Zygmunt Bauman'},
- {id:'t8',cat:'texto',titulo:'Discurso no Concílio de Clermont',autor:'Papa Urbano II'},
- {id:'t9',cat:'texto',titulo:'Ideias para adiar o fim do mundo',autor:'Ailton Krenak'},
- {id:'t10',cat:'texto',titulo:'A categoria político-cultural de amefricanidade',autor:'Lélia Gonzalez'},
- {id:'t11',cat:'texto',titulo:'Chuvas, erosão e represas (rio São Francisco)',autor:''},
- {id:'t12',cat:'texto',titulo:'Programa BiomasBR (monitoramento por satélite)',autor:''},
- {id:'t13',cat:'texto',titulo:'Atividade antioxidante de frutas do cerrado',autor:'artigo científico'},
- {id:'t14',cat:'texto',titulo:'Art. 5º, incisos I-XII',autor:'Constituição Federal'},
- {id:'t15',cat:'texto',titulo:'O Cerrado está morrendo',autor:'Revista Darcy'},
- {id:'l1',cat:'literatura',titulo:'Cantiga (trovadorismo galego-português)',autor:'Juião Bolseiro',qtd:1},
- {id:'l2',cat:'literatura',titulo:'Soneto',autor:'Petrarca',qtd:1},
- {id:'l3',cat:'literatura',titulo:'Poemas selecionados',autor:'Gregório de Matos',qtd:4},
- {id:'l4',cat:'literatura',titulo:'Sermão do Bom Ladrão',autor:'Padre Antônio Vieira',qtd:1},
- {id:'l5',cat:'literatura',titulo:'Poemas selecionados',autor:'Cláudio Manuel da Costa',qtd:2},
- {id:'l6',cat:'literatura',titulo:'Poema(s) selecionado(s)',autor:'Graça Graúna',qtd:1},
- {id:'l7',cat:'literatura',titulo:'Trecho de romance',autor:'Jeferson Tenório',qtd:1},
- {id:'l8',cat:'literatura',titulo:'Soneto XVIII',autor:'Shakespeare',qtd:1},
- {id:'l9',cat:'literatura',titulo:'Epopeia de Gilgamesh',autor:'',qtd:1},
- {id:'l10',cat:'literatura',titulo:'Cantigas selecionadas',autor:'trovadorismo medieval (4 autores)',qtd:4},
- {id:'l11',cat:'literatura',titulo:'Poemas selecionados',autor:'Camões',qtd:2},
- {id:'l12',cat:'literatura',titulo:'Carta a El-Rei D. Manuel',autor:'Pero Vaz de Caminha',qtd:1},
- {id:'p1',cat:'teatro',titulo:'Medeia',autor:'Eurípides'},
- {id:'p2',cat:'teatro',titulo:'A Pena e a Lei',autor:'Ariano Suassuna'},
+ {id:'m1',cat:'musica',titulo:'O Rubor Sanguinis',autor:'Hildegard Von Bingen',resumo:'Canto sacro medieval composto pela abadessa e mística alemã Hildegard von Bingen, uma das primeiras compositoras identificadas da história da música ocidental.',link:'https://www.youtube.com/watch?v=WDeR9MeGNPg'},
+ {id:'m2',cat:'musica',titulo:'Concerto Grosso op.6 HWV 324',autor:'Corelli',resumo:'Concerto grosso barroco de Arcangelo Corelli, gênero que contrapõe um pequeno grupo solista (concertino) à orquestra (ripieno) — típico do barroco instrumental italiano.',link:'https://www.youtube.com/watch?v=e68h3Qwm2OA'},
+ {id:'m3',cat:'musica',titulo:"Dido and Aeneas – Dido's Lament",autor:'Purcell',resumo:"Ária final da ópera barroca 'Dido and Aeneas', de Henry Purcell — Dido lamenta a partida de Eneias antes de morrer, sobre um baixo ostinato descendente famoso na história da música.",link:'https://www.youtube.com/watch?v=3jPiYzUhGDo'},
+ {id:'m4',cat:'musica',titulo:'Obrigado Darcy',autor:'Emicida',resumo:"Faixa de Emicida em homenagem a Darcy Ribeiro, dialogando com a obra 'O Povo Brasileiro' sobre formação étnica e racismo estrutural no Brasil.",link:'https://www.youtube.com/watch?v=YvQLw8XRBKQ'},
+ {id:'m5',cat:'musica',titulo:'Tiro ao Álvaro (versão Demônios da Garoa)',autor:'Adoniran Barbosa',resumo:'Samba humorístico de Adoniran Barbosa, marco do samba paulistano, retratando o cotidiano popular urbano com o sotaque e a oralidade característicos do compositor.',link:'https://www.youtube.com/watch?v=73Pq5QcSZmA'},
+ {id:'m6',cat:'musica',titulo:'Canto dos Escravos - Canto I',autor:'Clementina de Jesus',resumo:'Registro de cantos de tradição afro-brasileira (jongo) interpretados por Clementina de Jesus, ligados à memória da escravidão e à resistência cultural negra.',link:'https://www.youtube.com/watch?v=9xcdwP6YxYk'},
+ {id:'m7',cat:'musica',titulo:'Libras',autor:'Banda Surdodum',resumo:'Grupo de percussão formado por músicos surdos, símbolo de acessibilidade e da cultura surda no Brasil, unindo vibração percussiva e Língua Brasileira de Sinais.',link:'https://www.youtube.com/watch?v=FcqaeXOwK8E'},
+ {id:'m8',cat:'musica',titulo:'Sinfonia das Florestas',autor:'Ricardo Tacuchian',resumo:'Obra sinfônica de Ricardo Tacuchian que dialoga com temas ambientais e a floresta amazônica, exemplo de música erudita brasileira contemporânea com pauta ecológica.',link:'https://www.youtube.com/watch?v=J9kAG6Za-j0'},
+ {id:'m9',cat:'musica',titulo:'Saga da Amazônia (versão Socorro Lira)',autor:'Vital Farias',resumo:'Canção de Vital Farias sobre a Amazônia, tratando de preservação ambiental e identidade regional — aqui na versão de Socorro Lira.',link:'https://www.youtube.com/watch?v=4B8q5xoVl_I'},
+ {id:'m10',cat:'musica',titulo:'Quatro Contas',autor:'Dona Onete',resumo:'Carimbó de Dona Onete, cantora e compositora paraense que projetou a música regional amazônica no cenário nacional já na terceira idade.',link:'https://www.youtube.com/watch?v=9anwu-nTcqQ'},
+ {id:'m11',cat:'musica',titulo:'Sinfonia 2 "Brasília" - 3º mov.',autor:'César Guerra Peixe',resumo:'Sinfonia de César Guerra Peixe dedicada à construção de Brasília, exemplo de música erudita brasileira do século XX ligada à modernização do país.',link:'https://www.youtube.com/watch?v=x7E6f7pUD6E'},
+ {id:'m12',cat:'musica',titulo:'Ondas do mar de Vigo',autor:'Martin Codax',resumo:'Cantiga de amigo galego-portuguesa (trovadorismo medieval) de Martim Codax, com eu lírico feminino que dialoga com as ondas do mar à espera do amado.',link:'https://www.youtube.com/watch?v=xRFyGDTaHD0'},
+ {id:'m13',cat:'musica',titulo:'Palmares 1999',autor:'Natiruts',resumo:'Reggae de Natiruts que resgata a memória do Quilombo dos Palmares e de Zumbi, conectando a tradição jamaicana do reggae à resistência negra brasileira.',link:'https://www.youtube.com/watch?v=ZcXTJhliAgY'},
+ {id:'a1',cat:'arte',titulo:'Manto tupinambá',autor:'',resumo:'Manto cerimonial de penas feito pelo povo Tupinambá, um dos artefatos indígenas mais emblemáticos do Brasil colonial — peça repatriada da Dinamarca ao Brasil em 2024 após mais de 300 anos na Europa.',link:'https://pt.wikipedia.org/wiki/Manto_tupinamb%C3%A1'},
+ {id:'a2',cat:'arte',titulo:'Universidade de Sankoré',autor:'Mali',resumo:'Mesquita-madraça de Tombuctu (Mali), um dos maiores centros de ensino e produção de manuscritos do mundo islâmico medieval — evidência da sofisticação intelectual da África Ocidental antes da colonização.',link:'https://blackpast.org/wp-content/uploads/2024/09/sankore-mosque.jpg'},
+ {id:'a3',cat:'arte',titulo:'Forró Pé de Serra',autor:'J. Borges',resumo:'Xilogravura de J. Borges, mestre pernambucano da arte popular e da literatura de cordel, retratando cenas do cotidiano nordestino como o forró.',link:'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj-gk3LzxdAD7_GkZpEx_yQaMIstXlYjGfzg7d4vGWKXWcVn2d4-FrMCogSXXon28iea4Z9MjKEgrKCJK99JTDY8OZooVqbPkZ_C9-rNGWUh_kz5SmAKGwX_rZnxc60VPbUwXljlXMVWNz_/s640/j-borges-forro-pe-de-serra-66x48-cm-xilo.jpg'},
+ {id:'a4',cat:'arte',titulo:'Toca da Entrada do Baixão da Vaca',autor:'Serra da Capivara',resumo:'Sítio de pinturas rupestres do Parque Nacional Serra da Capivara (PI), um dos registros mais antigos de presença humana nas Américas, central no debate sobre o povoamento do continente.',link:'https://www.researchgate.net/profile/Daniela-Cisneiros/publication/344785200/figure/fig2/AS:949062585032705@1603285561319/Figura-5-Toca-da-Entrada-do-Baixao-da-Vaca-Parque-Nacional-Serra-da-Capivara-PI-Foto.jpg'},
+ {id:'a5',cat:'arte',titulo:'Ourives trabalhando (Tumba 181)',autor:'Egito antigo',resumo:'Pintura mural de uma tumba egípcia (Vale dos Nobres) retratando um ourives em atividade — exemplo de arte funerária egípcia que documenta também o cotidiano do trabalho artesanal.',link:'https://commons.wikimedia.org/wiki/File:Maler_der_Grabkammer_der_Bildhauer_Nebamun_und_Ipuki_004.jpg'},
+ {id:'a6',cat:'arte',titulo:'Laocoonte e seus filhos',autor:'',resumo:'Escultura helenística que retrata o sacerdote troiano Laocoonte e seus filhos atacados por serpentes — ícone do dramatismo e do movimento na escultura da Antiguidade.',link:'https://pt.wikipedia.org/wiki/Grupo_de_Laocoonte'},
+ {id:'a7',cat:'arte',titulo:'Coliseu',autor:'Roma',resumo:'Anfiteatro Flaviano em Roma, símbolo da engenharia romana e dos espetáculos públicos (lutas de gladiadores, caçadas) que marcaram a vida social do Império.',link:'https://pt.wikipedia.org/wiki/Coliseu'},
+ {id:'a8',cat:'arte',titulo:'Mosaico de Teodora',autor:'Ravena',resumo:'Mosaico bizantino da Basílica de San Vitale (Ravena) que retrata a imperatriz Teodora, símbolo da fusão entre poder político e religioso no Império Bizantino.',link:'https://pt.wikipedia.org/wiki/Ficheiro:Mosaic_of_Theodora_-_Basilica_San_Vitale_(Ravenna,_Italy).jpg'},
+ {id:'a9',cat:'arte',titulo:'Juízo Final',autor:'Vasari/Zuccari',resumo:'Afresco monumental na cúpula da Catedral de Florença representando o Juízo Final, iniciado por Giorgio Vasari e concluído por Federico Zuccari — exemplo do maneirismo religioso italiano.',link:'https://en.wikipedia.org/wiki/The_Last_Judgement_(Vasari_and_Zuccari)'},
+ {id:'a10',cat:'arte',titulo:'Igreja de São Jorge',autor:'Lalibela, Etiópia',resumo:'Igreja escavada em um único bloco de rocha em Lalibela (Etiópia), patrimônio do cristianismo etíope medieval e símbolo da arquitetura religiosa africana anterior à colonização.',link:'https://pt.wikipedia.org/wiki/Igreja_de_S%C3%A3o_Jorge_(Lalibela)'},
+ {id:'v1',cat:'audiovisual',titulo:'Guerras do Brasil, ep. 1',autor:'Luiz Bolognesi',resumo:'Primeiro episódio da série documental de animação "Guerras do Brasil", de Luiz Bolognesi, sobre os conflitos entre colonizadores europeus e povos indígenas.',link:'https://www.youtube.com/watch?v=1C7eQBl6_pk'},
+ {id:'v2',cat:'audiovisual',titulo:'Abuela Grillo',autor:'',resumo:'Curta de animação boliviano baseado em uma lenda indígena, que usa a personagem "Abuela Grillo" (a chuva) para criticar a mercantilização da água.',link:'https://www.youtube.com/watch?v=hSltkjA9I_c'},
+ {id:'v3',cat:'audiovisual',titulo:'América Latina',autor:'Fábio Brazz',resumo:'Canção/videoclipe de Fábio Brazz que discute identidade, colonização e desigualdades sociais da América Latina em tom crítico e popular.',link:'https://www.youtube.com/watch?v=a0nz2Gm9BPY'},
+ {id:'v4',cat:'audiovisual',titulo:'Nego Bispo',autor:'série Trajetórias',resumo:'Episódio da série "Trajetórias" (Itaú Cultural) sobre Antônio Bispo dos Santos, o Nêgo Bispo, pensador quilombola conhecido pelo conceito de "contracolonialismo".',link:'https://www.youtube.com/watch?v=Tqt9BnrolFg'},
+ {id:'v5',cat:'audiovisual',titulo:'Clima de Risco',autor:'TV Cultura',resumo:'Reportagem da TV Cultura sobre mudanças climáticas e seus riscos socioambientais, relacionando aquecimento global a eventos extremos no Brasil.',link:'https://www.youtube.com/watch?v=G0_mdo4w3WI'},
+ {id:'v6',cat:'audiovisual',titulo:'GPS, como funciona',autor:'',resumo:'Vídeo educativo que explica o funcionamento do GPS — triangulação de sinais entre satélites — ligado a discussões sobre esfericidade da Terra e tecnologia espacial.',link:'https://www.youtube.com/watch?v=qzOA41vA8Qw'},
+ {id:'v7',cat:'audiovisual',titulo:'A física da corrida',autor:'Nerdologia',resumo:'Vídeo do canal Nerdologia (Átila Iamarino) sobre os princípios de física envolvidos na corrida humana — atrito, força, biomecânica.',link:'https://www.youtube.com/watch?v=KHpPlcy4o4w'},
+ {id:'v8',cat:'audiovisual',titulo:'Nobel Prize Chemistry 2025 (MOFs)',autor:'animação',resumo:'Animação oficial sobre a descoberta premiada no Nobel de Química 2025: as estruturas metalorgânicas porosas (MOFs), usadas para capturar gases e água do ar.'},
+ {id:'v9',cat:'audiovisual',titulo:'Falas da Terra',autor:'',resumo:'Documentário (Globo Filmes) que reúne falas de lideranças indígenas sobre território, natureza e cosmovisões originárias frente à crise ambiental.',link:'https://www.youtube.com/watch?v=BdDpp6USz5Y'},
+ {id:'v10',cat:'audiovisual',titulo:'Terraplanismo, pós-verdade...',autor:'Mariana Alvim, TEDx Goiânia',resumo:'Palestra TEDx de Mariana Alvim sobre terraplanismo, negacionismo científico e pós-verdade, discutindo por que teorias sem evidência ganham força na era digital.',link:'https://www.youtube.com/watch?v=wiBJkDO2qlM'},
+ {id:'v11',cat:'audiovisual',titulo:"Xondaró Ka'aguy Reguá",autor:'',resumo:'Vídeo sobre a cultura Guarani — o termo remete aos guardiões espirituais da mata (Ka\'aguy) — abordando espiritualidade indígena e proteção territorial.'},
+ {id:'t1',cat:'texto',titulo:'Apologia de Sócrates',autor:'Platão',resumo:'Diálogo de Platão que reconstrói a defesa de Sócrates no julgamento que o condenou à morte — texto fundador da ética e da filosofia ocidental.',link:'https://drive.google.com/file/d/10TrOx9B1H-w1vV3aao10s0JUuXqvPZCb/view'},
+ {id:'t2',cat:'texto',titulo:'Linguagem humana existe há 135 mil anos',autor:'texto de divulgação científica',resumo:'Reportagem de divulgação científica sobre pesquisas que recuam a origem da linguagem humana articulada a cerca de 135 mil anos, revisando teorias sobre a evolução da fala.',link:'https://revistapesquisa.fapesp.br/linguagem-humana-existe-ha-pelo-menos-135-mil-anos/'},
+ {id:'t3',cat:'texto',titulo:'Garimpo de ouro na Amazônia (crise Yanomami)',autor:'',resumo:'Artigo científico (Cad. Saúde Pública) sobre os impactos sanitários do garimpo ilegal de ouro na Terra Indígena Yanomami — contaminação por mercúrio, malária e crise humanitária.',link:'https://www.scielo.br/j/csp/a/JDwXXTYwsWLctRkBV4vghXR/?lang=pt'},
+ {id:'t4',cat:'texto',titulo:'Artigo científico sobre ciclo de vida de insetos em HQ',autor:'',resumo:'Reportagem sobre como um biólogo e um quadrinista transformaram um artigo científico sobre o ciclo de vida de insetos em história em quadrinhos, discutindo divulgação científica acessível.',link:'https://g1.globo.com/ciencia-e-saude/noticia/2019/02/20/biologo-e-quadrinista-transformam-artigo-cientifico-sobre-o-ciclo-de-vida-dos-insetos-em-historia-em-quadrinhos.ghtml'},
+ {id:'t5',cat:'texto',titulo:'A Divina Comédia (versão HQ)',autor:'Dante Alighieri',resumo:'Adaptação em quadrinhos da obra-prima de Dante Alighieri, que narra a jornada alegórica do eu-lírico pelo Inferno, Purgatório e Paraíso.',link:'https://www.editorapeiropolis.com.br/wp-content/uploads/2021/04/DC_LE_PDF__AMOSTRA.pdf'},
+ {id:'t6',cat:'texto',titulo:'O que tem debaixo da Terra (HQ)',autor:'',resumo:'HQ de divulgação científica de Erica Miranda Suckow que explora, de forma didática, as camadas internas da Terra e fenômenos geológicos.',link:'https://drive.google.com/file/d/16VEADzmy087-S7A14Nq0LEiYV3X7vC4a/view'},
+ {id:'t7',cat:'texto',titulo:'As redes sociais são uma armadilha',autor:'Zygmunt Bauman',resumo:"Entrevista/artigo do sociólogo Zygmunt Bauman, autor do conceito de 'modernidade líquida', criticando como as redes sociais fragilizam vínculos e substituem o diálogo pelo eco de opiniões semelhantes.",link:'https://brasil.elpais.com/brasil/2015/12/30/cultura/1451504427_675885.html'},
+ {id:'t8',cat:'texto',titulo:'Discurso no Concílio de Clermont',autor:'Papa Urbano II',resumo:'Discurso do Papa Urbano II em 1095 que convocou a Primeira Cruzada, documento histórico central para entender a expansão religiosa e militar medieval europeia.',link:'https://www.thelatinlibrary.com/imperialism/readings/urban.html'},
+ {id:'t9',cat:'texto',titulo:'Ideias para adiar o fim do mundo',autor:'Ailton Krenak',resumo:'Ensaio do pensador indígena Ailton Krenak que critica o modelo civilizatório ocidental e a crise ambiental a partir de cosmovisões indígenas de relação com a natureza.',link:'https://drive.google.com/file/d/1ocVIOsUbbCCL3mknWv94jMWXqUPVFupU/view'},
+ {id:'t10',cat:'texto',titulo:'A categoria político-cultural de amefricanidade',autor:'Lélia Gonzalez',resumo:"Artigo de Lélia Gonzalez que cunha o conceito de 'amefricanidade', propondo uma identidade cultural e política comum aos povos afrodescendentes das Américas.",link:'https://periodicos.unb.br/index.php/repam/article/view/40454/31497'},
+ {id:'t11',cat:'texto',titulo:'Chuvas, erosão e represas (rio São Francisco)',autor:'',resumo:'Reportagem científica (Pesquisa FAPESP) sobre como chuvas, erosão e barreiras naturais moldaram o curso do rio São Francisco ao longo de cerca de 90 mil anos.',link:'https://revistapesquisa.fapesp.br/chuvas-erosao-e-represas-moldaram-o-rio-sao-francisco-nos-ultimos-90-mil-anos/'},
+ {id:'t12',cat:'texto',titulo:'Programa BiomasBR (monitoramento por satélite)',autor:'',resumo:'Artigo sobre o programa BiomasBR, sistema oficial de monitoramento por satélite da vegetação nativa brasileira, que reúne os sistemas Prodes, Deter e TerraClass.',link:'https://www.researchgate.net/publication/390466445_Monitoramento_oficial_da_vegetacao_nativa_brasileira_por_imagens_de_satelite_o_programa_BiomasBR_e_os_sistemas_Prodes_Deter_e_TerraClass'},
+ {id:'t13',cat:'texto',titulo:'Atividade antioxidante de frutas do cerrado',autor:'artigo científico',resumo:'Artigo científico que analisa a atividade antioxidante de frutas nativas do Cerrado, relacionando biodiversidade do bioma a potenciais benefícios à saúde.',link:'https://www.scielo.br/j/cta/a/JL5qH3Jtr4NNnXRJkphMVNG/?format=html&lang=pt'},
+ {id:'t14',cat:'texto',titulo:'Art. 5º, incisos I-XII',autor:'Constituição Federal',resumo:'Incisos I a XII do Artigo 5º da Constituição Federal de 1988, que estabelecem direitos e garantias fundamentais como igualdade, liberdade de expressão e inviolabilidade da vida privada.',link:'https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm'},
+ {id:'t15',cat:'texto',titulo:'O Cerrado está morrendo',autor:'Revista Darcy',resumo:'Reportagem da Revista Darcy (UnB) sobre o avanço do desmatamento e da degradação do Cerrado, um dos biomas mais ameaçados e menos protegidos do Brasil.',link:'https://www.revistadarcy.unb.br/images/PDF/darcy21.pdf'},
+ {id:'l1',cat:'literatura',titulo:'Cantiga (trovadorismo galego-português)',autor:'Juião Bolseiro',qtd:1,resumo:'Cantiga do trovador galego-português Juião Bolseiro, representante da lírica medieval ibérica (trovadorismo).',link:'https://drive.google.com/file/d/1K7e1BgRLr4O2e3UZcPpRbDoToeFSQED1/view'},
+ {id:'l2',cat:'literatura',titulo:'Soneto',autor:'Petrarca',qtd:1,resumo:'Soneto de Francesco Petrarca, poeta italiano cuja obra fundou o petrarquismo — tradição da poesia amorosa idealizada que influenciou toda a lírica europeia posterior, incluindo Camões.',link:'https://drive.google.com/file/d/1K7e1BgRLr4O2e3UZcPpRbDoToeFSQED1/view'},
+ {id:'l3',cat:'literatura',titulo:'Poemas selecionados',autor:'Gregório de Matos',qtd:4,resumo:"Poemas de Gregório de Matos, o 'Boca do Inferno', maior nome do Barroco brasileiro — obra marcada pelo conflito entre carne e espírito (fusão barroca) e pela sátira social afiada.",link:'https://drive.google.com/file/d/1K7e1BgRLr4O2e3UZcPpRbDoToeFSQED1/view'},
+ {id:'l4',cat:'literatura',titulo:'Sermão do Bom Ladrão',autor:'Padre Antônio Vieira',qtd:1,resumo:'Sermão do Padre Antônio Vieira, mestre da prosa barroca portuguesa, que usa a figura do bom ladrão crucificado para discutir arrependimento e salvação com forte argumentação retórica (conceptismo).',link:'https://drive.google.com/file/d/1K7e1BgRLr4O2e3UZcPpRbDoToeFSQED1/view'},
+ {id:'l5',cat:'literatura',titulo:'Poemas selecionados',autor:'Cláudio Manuel da Costa',qtd:2,resumo:'Poemas de Cláudio Manuel da Costa, um dos fundadores do Arcadismo brasileiro, marcados pelo bucolismo — a valorização da vida simples do campo em oposição à Corte.',link:'https://drive.google.com/file/d/1K7e1BgRLr4O2e3UZcPpRbDoToeFSQED1/view'},
+ {id:'l6',cat:'literatura',titulo:'Poema(s) selecionado(s)',autor:'Graça Graúna',qtd:1,resumo:'Poema de Graça Graúna, poeta indígena (Potiguara) contemporânea cuja obra dá protagonismo a vozes e cosmovisões indígenas na literatura brasileira atual.',link:'https://drive.google.com/file/d/1K7e1BgRLr4O2e3UZcPpRbDoToeFSQED1/view'},
+ {id:'l7',cat:'literatura',titulo:'Trecho de romance',autor:'Jeferson Tenório',qtd:1,resumo:'Trecho do romance de Jeferson Tenório, escritor negro contemporâneo cuja obra ("O Avesso da Pele") discute racismo estrutural, paternidade negra e violência policial no Brasil.',link:'https://drive.google.com/file/d/1K7e1BgRLr4O2e3UZcPpRbDoToeFSQED1/view'},
+ {id:'l8',cat:'literatura',titulo:'Soneto XVIII',autor:'Shakespeare',qtd:1,resumo:"Um dos sonetos mais célebres de Shakespeare (\"Shall I compare thee to a summer's day\"), sobre como a poesia pode eternizar a beleza contra a passagem do tempo.",link:'https://drive.google.com/file/d/1K7e1BgRLr4O2e3UZcPpRbDoToeFSQED1/view'},
+ {id:'l9',cat:'literatura',titulo:'Epopeia de Gilgamesh',autor:'',qtd:1,resumo:'Poema épico da Mesopotâmia antiga, um dos textos literários mais antigos já registrados, narrando a busca do rei Gilgamesh pela imortalidade.',link:'https://drive.google.com/file/d/1Sz2Wzz481neThfwvN_LQDkcDlpPyR6HC/view'},
+ {id:'l10',cat:'literatura',titulo:'Cantigas selecionadas',autor:'trovadorismo medieval (4 autores)',qtd:4,resumo:'Conjunto de cantigas de quatro trovadores galego-portugueses medievais, ilustrando os diferentes gêneros da lírica trovadoresca: amor, amigo e escárnio.',link:'https://drive.google.com/file/d/1K7e1BgRLr4O2e3UZcPpRbDoToeFSQED1/view'},
+ {id:'l11',cat:'literatura',titulo:'Poemas selecionados',autor:'Camões',qtd:2,resumo:"Poemas líricos de Luís de Camões, o maior nome do Classicismo português, conhecido pelo 'dinamismo camoniano' — a tensão entre razão clássica e sentimento.",link:'https://drive.google.com/file/d/1K7e1BgRLr4O2e3UZcPpRbDoToeFSQED1/view'},
+ {id:'l12',cat:'literatura',titulo:'Carta a El-Rei D. Manuel',autor:'Pero Vaz de Caminha',qtd:1,resumo:'Carta de Pero Vaz de Caminha ao rei D. Manuel I, considerada a certidão de nascimento do Brasil — primeiro relato oficial sobre o território e seus povos originários.',link:'https://drive.google.com/file/d/1K7e1BgRLr4O2e3UZcPpRbDoToeFSQED1/view'},
+ {id:'p1',cat:'teatro',titulo:'Medeia',autor:'Eurípides',resumo:'Tragédia grega de Eurípides sobre Medeia, que se vinga da traição de Jasão em um dos desfechos mais chocantes do teatro clássico.',link:'https://artedramaticacep.wordpress.com/wp-content/uploads/2015/07/medeia.pdf'},
+ {id:'p2',cat:'teatro',titulo:'A Pena e a Lei',autor:'Ariano Suassuna',resumo:'Peça de Ariano Suassuna, ligada ao Movimento Armorial, que usa humor e cultura popular nordestina para discutir justiça, lei e moralidade.',link:'https://drive.google.com/file/d/15U3ZSUo1J9sWS-xI65XQxadYQqEVquZ1/view'},
 ];
+const OBRAS_PLAYLIST = 'https://youtube.com/playlist?list=PLWcMotQS5AjfSYHBLB_T33hhSZ3i03Yrj';
+function obraLinkUrl(o){ return o.link || ('https://www.youtube.com/results?search_query=' + encodeURIComponent(o.titulo + ' ' + (o.autor||'') + ' PAS 1 UnB')); }
 const CAT_INFO = {musica:{nome:'Música',emoji:'🎵'},arte:{nome:'Artes Visuais',emoji:'🖼️'},audiovisual:{nome:'Audiovisual',emoji:'🎬'},texto:{nome:'Textos',emoji:'📄'},literatura:{nome:'Literatura/Poesia',emoji:'✒️'},teatro:{nome:'Teatro',emoji:'🎭'}};
+
+/* ---- Provas anteriores do PAS 1 (fonte: cdn.cebraspe.org.br e passeandounb.com/provas-anteriores-do-pas-1) ---- */
+const PROVAS_ANTERIORES = [
+ {ano:2025,parte:1,prova:'https://cdn.cebraspe.org.br/pas/arquivos/8C36DF6589D1F5827B9A1D75925A2DFD1E93E07956FD0047D440518F16CF85A9.pdf',gabarito:'https://cdn.cebraspe.org.br/pas/arquivos/A14B3A255BA981F159D618B2E1759DEEDED30BF26091F9F4692282EA273CBAB6.pdf'},
+ {ano:2025,parte:2,prova:'https://cdn.cebraspe.org.br/pas/arquivos/A9596F5E44456F918784D261DC925AFCBA2E006373513464C5B6F3B6A0F4230F.pdf',gabarito:'https://cdn.cebraspe.org.br/pas/arquivos/BEB9001FDCBAD8B695C179078180D33D97A6E8F6A13F73C3474953E388983A3C.pdf'},
+ {ano:2024,prova:'https://cdn.cebraspe.org.br/pas/arquivos/985_PAS1_001_01.pdf',gabarito:'https://cdn.cebraspe.org.br/pas/arquivos/Gab_Definitivo_985_PAS1_001_01.PDF'},
+ {ano:2023,prova:'https://cdn.cebraspe.org.br/pas/arquivos/882_PAS1_001_01.pdf',gabarito:'https://cdn.cebraspe.org.br/pas/arquivos/Gab_Definitivo_882_PAS1_001_01.PDF'},
+ {ano:2022,prova:'https://cdn.cebraspe.org.br/pas/arquivos/760_PAS1_001_01.pdf',gabarito:'https://cdn.cebraspe.org.br/pas/arquivos/Gab_Definitivo_760_PAS1_001_01.PDF'},
+ {ano:2021,parte:1,prova:'https://cdn.cebraspe.org.br/pas/arquivos/637_PAS1_001_01.pdf',gabarito:'https://cdn.cebraspe.org.br/pas/arquivos/Gab_Definitivo_637_PAS1_001_01.PDF'},
+ {ano:2021,parte:2,prova:'https://cdn.cebraspe.org.br/pas/arquivos/637_PAS1_002_01.pdf',gabarito:'https://cdn.cebraspe.org.br/pas/arquivos/Gab_Definitivo_637_PAS1_002_01.PDF'},
+ {ano:2020,parte:1,prova:'https://cdn.cebraspe.org.br/pas/arquivos/570_PAS1_001_01.pdf',gabarito:'https://cdn.cebraspe.org.br/pas/arquivos/Gab_Definitivo_570_PAS1_001_01.PDF'},
+ {ano:2020,parte:2,prova:'https://cdn.cebraspe.org.br/pas/arquivos/570_PAS1_002_01.pdf',gabarito:'https://cdn.cebraspe.org.br/pas/arquivos/Gab_Definitivo_570_PAS1_002_01.PDF'},
+ {ano:2019,prova:'https://cdn.cebraspe.org.br/pas/arquivos/461_PAS_1_2019_Matriz.pdf',gabarito:'https://cdn.cebraspe.org.br/pas/arquivos/Gab_Definitivo_461_PAS_1_2019_Matriz.PDF'},
+ {ano:2018,prova:'https://cdn.cebraspe.org.br/pas/arquivos/405_PAS1_001_01.pdf',gabarito:'https://cdn.cebraspe.org.br/pas/arquivos/Gab_Definitivo_405_PAS1_001_01.PDF'},
+ {ano:2017,prova:'https://cdn.cebraspe.org.br/pas/arquivos/PAS1313_001_01_Reduzido.pdf',gabarito:'https://cdn.cebraspe.org.br/pas/arquivos/Gab_Definitivo_PAS1313_001_01.PDF'},
+ {ano:2016,prova:'https://cdn.cebraspe.org.br/pas/arquivos/PAS1247_001_03.pdf',gabarito:'https://cdn.cebraspe.org.br/pas/arquivos/Gab_Definitivo_PAS1247_001_03.pdf'},
+ {ano:2015,prova:'https://passeandounb.com/wp-content/uploads/2021/03/pas-1-prova-2015.pdf',gabarito:'https://passeandounb.com/wp-content/uploads/2021/03/pas-1-gabarito-2015.pdf'},
+ {ano:2014,prova:'https://passeandounb.com/wp-content/uploads/2020/08/pas-1-prova-2014.pdf',gabarito:'https://passeandounb.com/wp-content/uploads/2020/08/pas-1-gabarito-2014.pdf'},
+ {ano:2013,prova:'https://passeandounb.com/wp-content/uploads/2020/08/pas-1-prova-2013.pdf',gabarito:'https://passeandounb.com/wp-content/uploads/2020/08/pas-1-gabarito-2013.pdf'},
+ {ano:2012,prova:'https://passeandounb.com/wp-content/uploads/2020/08/pas-1-prova-2012.pdf',gabarito:'https://passeandounb.com/wp-content/uploads/2020/08/pas-1-gabarito-2012.pdf'},
+ {ano:2011,prova:'https://passeandounb.com/wp-content/uploads/2020/08/pas-1-prova-2011.pdf',gabarito:'https://passeandounb.com/wp-content/uploads/2020/08/pas-1-gabarito-2011.pdf'},
+ {ano:2010,prova:'https://passeandounb.com/wp-content/uploads/2020/08/pas-1-prova-2010.pdf',gabarito:'https://passeandounb.com/wp-content/uploads/2020/08/pas-1-gabarito-2010.pdf'},
+ {ano:2009,prova:'https://passeandounb.com/wp-content/uploads/2020/08/pas-1-prova-2009.pdf',gabarito:'https://passeandounb.com/wp-content/uploads/2020/08/pas-1-gabarito-2009.pdf'},
+ {ano:2008,prova:'https://passeandounb.com/wp-content/uploads/2020/08/pas-1-prova-2008.pdf',gabarito:'https://passeandounb.com/wp-content/uploads/2020/08/pas-1-gabarito-2008.pdf'},
+ {ano:2007,prova:'https://passeandounb.com/wp-content/uploads/2020/08/pas-1-prova-2007.pdf',gabarito:'https://passeandounb.com/wp-content/uploads/2020/08/pas-1-gabarito-2007.pdf'},
+ {ano:2006,prova:'https://passeandounb.com/wp-content/uploads/2020/08/pas-1-prova-2006.pdf',gabarito:'https://passeandounb.com/wp-content/uploads/2020/08/pas-1-gabarito-2006.pdf'},
+ {ano:2005,prova:'https://passeandounb.com/wp-content/uploads/2020/08/pas-1-prova-2005.pdf',gabarito:'https://passeandounb.com/wp-content/uploads/2020/08/pas-1-gabarito-2005.pdf'},
+];
 
 /* ============================= STATE ============================= */
 function todayISO(){const d=new Date();d.setHours(0,0,0,0);return d.toISOString().slice(0,10);}
@@ -998,7 +1033,22 @@ function render(){
   LEVEL_UP_TOAST = null;
   ACHIEVEMENT_TOAST = null;
   attachEvents();
+  updateTabsFade();
   window.scrollTo(0,0);
+}
+function updateTabsFade(){
+  const wrap = document.querySelector('.tabs-wrap');
+  if(!wrap) return;
+  const el = wrap.querySelector('.tabs');
+  const leftFade = wrap.querySelector('.tabs-fade.left');
+  const rightFade = wrap.querySelector('.tabs-fade.right');
+  const sync = ()=>{
+    leftFade.classList.toggle('show', el.scrollLeft > 4);
+    rightFade.classList.toggle('show', el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+  };
+  sync();
+  el.addEventListener('scroll', sync, {passive:true});
+  if(window.ResizeObserver) new ResizeObserver(sync).observe(el);
 }
 function achievementToastHTML(){
   if(!ACHIEVEMENT_TOAST) return '';
@@ -1017,7 +1067,7 @@ function mobileBottomNavHTML(){
   </div>`;
 }
 function moreMenuHTML(){
-  const items = [['semana','📅','Semana'],['diagnostico','🧭','Diagnóstico'],['erros','🧠','Caderno de erros'],['obras','📚','Obras'],['desafio','⚔️','Desafio do dia'],['conquistas','🏆','Conquistas'],['professor','🤖','Professor Ipê'],['estrategia','🎯','Estratégia'],['progresso','📈','Progresso'],['ajustes','🎨','Ajustes']];
+  const items = [['semana','📅','Semana'],['diagnostico','🧭','Diagnóstico'],['erros','🧠','Caderno de erros'],['obras','📚','Obras'],['provas','🗂️','Provas anteriores'],['desafio','⚔️','Desafio do dia'],['conquistas','🏆','Conquistas'],['professor','🤖','Professor Ipê'],['estrategia','🎯','Estratégia'],['progresso','📈','Progresso'],['ajustes','🎨','Ajustes']];
   return `<div class="modal-bg" data-action="close-modal"><div class="modal" onclick="event.stopPropagation()">
     <h3>Mais opções</h3>
     <div style="display:flex;flex-direction:column;gap:4px;margin-top:8px;">
@@ -1044,7 +1094,7 @@ function dayRecapHTML(){
 
 function topbarHTML(){
   const left = daysLeft();
-  const tabs = [['home','🏠','Hoje'],['semana','📅','Semana'],['mapa','🗺️','Mapa'],['diagnostico','🧭','Diagnóstico'],['questoes','✏️','Questões'],['simulados','🏁','Simulados'],['erros','🧠','Erros'],['obras','📚','Obras'],['desafio','⚔️','Desafio'],['conquistas','🏆','Conquistas'],['professor','🤖','Professor'],['estrategia','🎯','Estratégia'],['progresso','📈','Progresso'],['ajustes','🎨','Ajustes']];
+  const tabs = [['home','🏠','Hoje'],['semana','📅','Semana'],['mapa','🗺️','Mapa'],['diagnostico','🧭','Diagnóstico'],['questoes','✏️','Questões'],['simulados','🏁','Simulados'],['erros','🧠','Erros'],['obras','📚','Obras'],['provas','🗂️','Provas anteriores'],['desafio','⚔️','Desafio'],['conquistas','🏆','Conquistas'],['professor','🤖','Professor'],['estrategia','🎯','Estratégia'],['progresso','📈','Progresso'],['ajustes','🎨','Ajustes']];
   return `
   <div class="topbar">
     <div class="topbar-inner">
@@ -1055,8 +1105,12 @@ function topbarHTML(){
         <div class="pill days">Faltam <b>${left}</b> dias</div>
       </div>
     </div>
-    <div class="tabs">
-      ${tabs.map(([id,icon,label])=>`<button class="tab ${ROUTE===id?'active':''}" data-route="${id}">${icon} ${label}</button>`).join('')}
+    <div class="tabs-wrap">
+      <div class="tabs">
+        ${tabs.map(([id,icon,label])=>`<button class="tab ${ROUTE===id?'active':''}" data-route="${id}">${icon} ${label}</button>`).join('')}
+      </div>
+      <div class="tabs-fade left"></div>
+      <div class="tabs-fade right"></div>
     </div>
   </div>`;
 }
@@ -1071,6 +1125,7 @@ function viewHTML(){
     case 'simulados': return simuladosView();
     case 'erros': return errosView();
     case 'obras': return obrasView();
+    case 'provas': return provasView();
     case 'estrategia': return estrategiaView();
     case 'progresso': return progressoView();
     case 'desafio': return desafioView();
@@ -1264,7 +1319,10 @@ function startTaskById(taskId){
   ACTIVE_TASK = {...task, _nivel:1};
   if(task.type==='questoes'||task.type==='revisao'){
     const list = task.assuntoId? questoesPorAssunto(task.assuntoId) : shuffle(QUESTOES).slice(0,5);
-    startQuiz(shuffle(list), task.type);
+    // questões oficiais do PAS sobre o conteúdo do dia entram primeiro, quando existirem — o resto embaralhado
+    const oficiaisDoDia = shuffle(list.filter(q=>q.oficial)).slice(0,2);
+    const resto = shuffle(list.filter(q=>!oficiaisDoDia.includes(q)));
+    startQuiz([...oficiaisDoDia, ...resto], task.type);
   } else if(task.type==='erros'){
     const ids = STATE.errors.filter(e=>!e.resolvido && e.nextReview<=todayISO()).slice(0,6).map(e=>e.questionId);
     startQuiz(QUESTOES.filter(q=>ids.includes(q.id)), 'erros');
@@ -1351,8 +1409,9 @@ function obraStudyHTML(t){
     <h2>${o.titulo}</h2>
     <p style="color:var(--ink-soft);">${o.autor||'Autoria/origem a confirmar no material oficial'}${o.qtd? ' · '+o.qtd+' peça(s) selecionada(s)':''}</p>
     <div class="card-flat" style="font-size:.85rem;">
-      Estude esta obra no material oficial (Cebraspe/UnB) e registre aqui suas próprias anotações: contexto, tema central e uma possível forma de cobrança na prova. A análise aprofundada de cada obra é a próxima etapa da plataforma — por enquanto, use esta tela para orientar sua leitura e marcar o status.
+      ${o.resumo || 'Estude esta obra no material oficial (Cebraspe/UnB) e registre aqui suas próprias anotações: contexto, tema central e uma possível forma de cobrança na prova.'}
     </div>
+    <a class="btn btn-ghost btn-sm" style="align-self:flex-start;" href="${obraLinkUrl(o)}" target="_blank" rel="noopener">${o.link?'🎥 Assistir/ler fonte':'🔍 Buscar vídeo sobre'}</a>
     <div class="row" style="gap:8px;">
       <button class="btn btn-secondary" data-action="obra-status" data-obra="${o.id}" data-status="estudando">🟠 Estudando</button>
       <button class="btn btn-primary" data-action="obra-status" data-obra="${o.id}" data-status="dominado">🟢 Dominado</button>
@@ -1766,6 +1825,7 @@ function treeView(){
     <div style="flex:1;font-size:.82rem;line-height:1.45;">Nada aqui é bloqueado — a trilha é só uma sugestão de ordem, nunca uma trava. Com ${diasRestantes} dias até a prova, se preferir ir direto para questões oficiais de provas anteriores, sem seguir ordem nenhuma, é só usar o atalho abaixo.</div>
   </div>
   <button class="btn btn-primary btn-block" data-action="mode" data-mode="oficiais">🏛️ Ir direto para questões oficiais</button>
+  <button class="btn btn-secondary btn-block" data-action="route" data-route="provas">🗂️ Ver provas anteriores em PDF (2005-2025)</button>
   <div class="card">
     <div class="section-title"><h2>Trilha — ${area.emoji} ${area.nome}</h2></div>
     <div class="tabs" style="padding:0 0 10px;">
@@ -1788,7 +1848,7 @@ function assuntoDetailModalHTML(id){
   return `<div class="modal-bg" data-action="close-modal"><div class="modal" onclick="event.stopPropagation()">
     <div class="row-between">
       <span class="badge b-neutral">${a.areaNome} · ${a.materiaNome}</span>
-      <button class="btn btn-ghost btn-sm" data-action="close-modal">✕</button>
+      <button class="btn btn-ghost btn-sm" data-action="close-modal" aria-label="Fechar">✕</button>
     </div>
     <h3 style="margin-top:10px;">${a.nome}</h3>
     <div class="row" style="gap:8px;margin:6px 0 10px;flex-wrap:wrap;">
@@ -1928,6 +1988,7 @@ function questoesView(){
       <button class="btn btn-secondary" data-action="mode" data-mode="fraco" ${!weak?'disabled':''}>🎯 Ponto fraco</button>
       <button class="btn btn-secondary" data-action="mode" data-mode="pas">🔥 Modo PAS</button>
       <button class="btn btn-secondary" data-action="mode" data-mode="oficiais" style="grid-column:1/-1;background:var(--accent);color:var(--accent-ink);border:none;">🏛️ Provas oficiais anteriores (${QUESTOES.filter(q=>q.oficial).length})</button>
+      <button class="btn btn-ghost" style="grid-column:1/-1;" data-route="provas">🗂️ Ver PDFs das provas anteriores (2005-2025)</button>
     </div>
     <div class="footer-note" style="padding-top:6px;">Os filtros acima valem para todos os modos, exceto "Só meus erros" (que sempre mostra todos os seus erros pendentes).</div>
   </div>
@@ -2019,6 +2080,7 @@ function obrasView(){
       <button class="btn btn-secondary" data-action="obras-quiz">🧠 Quiz das obras</button>
       <button class="btn btn-secondary" data-action="obras-review">⏱️ Revisão em 5 min</button>
       <button class="btn btn-secondary" data-action="obras-express">⚡ Obra Express</button>
+      <a class="btn btn-ghost" href="${OBRAS_PLAYLIST}" target="_blank" rel="noopener">▶️ Playlist completa</a>
     </div>
   </div>
   ${cats.map(cat=>{
@@ -2031,18 +2093,22 @@ function obrasView(){
       <div style="display:flex;flex-direction:column;gap:8px;">
       ${list.map(o=>{
         const st = STATE.obrasStatus[o.id]||'novo';
-        return `<div class="obra-card row-between">
-          <div>
-            <div style="font-weight:700;font-size:.88rem;">${o.titulo}${o.qtd?` <span style="color:var(--muted);font-weight:500;">(${o.qtd})</span>`:''}</div>
-            <div style="font-size:.78rem;color:var(--muted);">${o.autor||'—'}</div>
+        return `<div class="obra-card" style="display:flex;flex-direction:column;gap:6px;">
+          <div class="row-between">
+            <div>
+              <div style="font-weight:700;font-size:.88rem;">${o.titulo}${o.qtd?` <span style="color:var(--muted);font-weight:500;">(${o.qtd})</span>`:''}</div>
+              <div style="font-size:.78rem;color:var(--muted);">${o.autor||'—'}</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" data-action="study-obra" data-obra="${o.id}">${st==='dominado'?'🟢':st==='estudando'?'🟠':'Estudar'}</button>
           </div>
-          <button class="btn btn-ghost btn-sm" data-action="study-obra" data-obra="${o.id}">${st==='dominado'?'🟢':st==='estudando'?'🟠':'Estudar'}</button>
+          ${o.resumo? `<p style="font-size:.8rem;line-height:1.4;color:var(--ink-soft);margin:0;">${o.resumo}</p>` : ''}
+          <a class="btn btn-ghost btn-sm" style="align-self:flex-start;" href="${obraLinkUrl(o)}" target="_blank" rel="noopener">${o.link? '🎥 Assistir/ler fonte' : '🔍 Buscar vídeo sobre'}</a>
         </div>`;
       }).join('')}
       </div>
     </div>`;
   }).join('')}
-  <div class="footer-note"><span class="status-official ok">✅ Lista oficial</span> divulgada pela Cebraspe/UnB em 21/01/2026 para o subprograma PAS 2026-2028. A análise interpretativa aprofundada de cada obra (contexto, temas, possíveis cobranças) é a próxima etapa da plataforma — confirme sempre com o material oficial.</div>
+  <div class="footer-note"><span class="status-official ok">✅ Lista oficial</span> divulgada pela Cebraspe/UnB em 21/01/2026 para o subprograma PAS 2026-2028. Resumos e links (vídeo/leitura, quando disponíveis) foram compilados a partir do acervo do <a href="https://passeandounb.com/obras-do-pas-1/" target="_blank" rel="noopener">passeandounb.com</a> — confirme sempre com o material oficial.</div>
   `;
 }
 function startObraStudy(obraId){ ACTIVE_TASK = {type:'obra', obraId}; ROUTE='home'; render(); }
@@ -2052,7 +2118,7 @@ function obraExpressHTML(t){
   const cat = CAT_INFO[o.cat];
   const nivel = t._nivel||1;
   const steps = [
-    {t:'1 min · Contexto', c:'Veja no material oficial (Cebraspe/UnB) quando e onde esta obra foi produzida — a plataforma ainda não tem esse resumo pronto, use este passo pra guiar sua leitura.'},
+    {t:'1 min · Contexto', c: o.resumo || 'Veja no material oficial (Cebraspe/UnB) quando e onde esta obra foi produzida.'},
     {t:'2 min · Ideia principal', c:'Qual é o tema/ideia central desta obra? É o que mais costuma ser cobrado na prova.'},
     {t:'1 min · Relações', c:'Essa obra se conecta com algum outro assunto do PAS (história, sociedade, outra obra do mesmo período)? Pense em 1 conexão.'},
   ];
@@ -2065,6 +2131,7 @@ function obraExpressHTML(t){
     <div class="bar"><div style="width:${Math.min(nivel,3)/3*100}%"></div></div>
     <div class="label-eyebrow">${st.t}</div>
     <p class="qstatement" style="font-size:.95rem;">${st.c}</p>
+    ${nivel===1? `<a class="btn btn-ghost btn-sm" href="${obraLinkUrl(o)}" target="_blank" rel="noopener">${o.link?'🎥 Assistir/ler fonte':'🔍 Buscar vídeo sobre'}</a>` : ''}
     ${nivel<3
       ? `<button class="btn btn-primary" data-action="express-next">Avançar</button>`
       : `<button class="btn btn-primary" data-action="express-quiz" data-obra="${o.id}">⚡ Fazer quiz rápido</button>`}
@@ -2080,6 +2147,30 @@ function startObrasQuiz(){
   });
   ACTIVE_TASK = {type:'banco', mode:'obras'};
   startQuiz(questions, 'obras');
+}
+
+/* ---------- PROVAS ANTERIORES ---------- */
+function provasView(){
+  const anos = [...PROVAS_ANTERIORES].sort((a,b)=>b.ano-a.ano || (b.parte||0)-(a.parte||0));
+  return `
+  <div class="card">
+    <div class="section-title"><h2>🗂️ Provas anteriores do PAS 1</h2></div>
+    <p class="subtitle">${PROVAS_ANTERIORES.length} cadernos de prova, de 2005 a 2025, com gabarito oficial — direto do Cebraspe/UnB e do acervo do <a href="https://passeandounb.com/provas-anteriores-do-pas-1/" target="_blank" rel="noopener">passeandounb.com</a>. Baixe o PDF, treine no papel ou no tempo real de prova, e confira o gabarito depois.</p>
+  </div>
+  <div class="card">
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      ${anos.map(p=>`
+        <div class="obra-card row-between">
+          <div style="font-weight:700;font-size:.9rem;">PAS 1 — ${p.ano}${p.parte?` (Parte ${p.parte})`:''}</div>
+          <div class="row" style="gap:6px;">
+            <a class="btn btn-secondary btn-sm" href="${p.prova}" target="_blank" rel="noopener">📄 Prova</a>
+            <a class="btn btn-ghost btn-sm" href="${p.gabarito}" target="_blank" rel="noopener">✅ Gabarito</a>
+          </div>
+        </div>`).join('')}
+    </div>
+  </div>
+  <div class="footer-note">Os PDFs são hospedados pelo Cebraspe (cdn.cebraspe.org.br) e pelo passeandounb.com — abrem em uma nova aba. As ${QUESTOES.filter(q=>q.oficial).length} questões oficiais já transcritas e comentadas na plataforma (2023) ficam em <b>Questões → 🏛️ Provas oficiais anteriores</b>; as demais provas aqui servem para treino cronometrado direto do PDF.</div>
+  `;
 }
 
 /* ---------- DESAFIO DO DIA ---------- */
@@ -2766,14 +2857,17 @@ function attachEvents(){
   if(dismissPauseBtn) dismissPauseBtn.addEventListener('click',()=>{ QUIZ_SESSION.pauseDismissed = true; render(); });
 }
 
-async function doExport(){
+function doExport(){
   const data = JSON.stringify(STATE, null, 2);
-  const downloads = await (window.claude && window.claude.use ? window.claude.use('downloads') : Promise.resolve(null));
-  if(downloads){
-    await downloads.save({filename:`ipe-pas1-backup-${todayISO()}.json`, data});
-  } else {
-    alert('Exportação de arquivo não disponível neste ambiente.');
-  }
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ipe-pas1-backup-${todayISO()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 function doImport(ev){
   const file = ev.target.files[0]; if(!file) return;
@@ -2799,6 +2893,11 @@ function doImport(ev){
 applyAppearance();
 refreshAchievements();
 render();
+setInterval(()=>{
+  if(!QUIZ_SESSION || !QUIZ_SESSION.simulado) return;
+  const el = document.querySelector('.qcard .timer');
+  if(el) el.textContent = '⏱ ' + fmtElapsed(Date.now()-QUIZ_SESSION.startTs);
+}, 1000);
 </script>
 </body>
 </html>
