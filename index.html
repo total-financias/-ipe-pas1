@@ -256,31 +256,39 @@ html[data-textsize="g"]{ font-size:18px; }
   .bottom-nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;color:var(--muted);font-size:.62rem;font-weight:700;padding:6px 2px;border-radius:10px;}
   .bottom-nav button.active{color:var(--accent);background:var(--surface-2);}
 }
+/* Modo sidebar (lateral direita) só entra em vigor com min-width:900px E com data-force-top
+   ausente — data-force-top é recalculado via JS a partir de window.innerWidth a cada resize,
+   como segunda checagem independente da media query. Isso evita a sidebar "de desktop" tomar
+   conta da tela inteira em telas pequenas caso a media query sozinha se comporte de forma
+   inesperada dentro de algum wrapper/preview (ex.: artifact). */
 @media(min-width:900px){
-  :root[data-menu="sidebar"] #app{flex-direction:row;align-items:flex-start;max-width:1320px;}
-  :root[data-menu="sidebar"] .topbar{position:sticky;top:0;align-self:flex-start;order:2;width:236px;flex-shrink:0;border-bottom:none;border-left:1px solid var(--border);height:100vh;overflow-y:auto;transition:width .18s ease;}
-  :root[data-menu="sidebar"] .topbar-inner{flex-direction:column;align-items:stretch;gap:10px;}
-  :root[data-menu="sidebar"] .brand{justify-content:center;}
-  :root[data-menu="sidebar"] .sidebar-toggle{display:block;position:absolute;top:14px;right:14px;}
-  :root[data-menu="sidebar"] .stat-pills{flex-direction:column;align-items:stretch;width:100%;}
-  :root[data-menu="sidebar"] .tabs{flex-direction:column;overflow-x:visible;padding:6px 10px 16px;}
-  :root[data-menu="sidebar"] .tabs-fade{display:none;}
-  :root[data-menu="sidebar"] .tab-group-label{display:block;font-size:.68rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:12px 10px 4px;}
-  :root[data-menu="sidebar"] .tab-group-label:first-child{padding-top:2px;}
-  :root[data-menu="sidebar"] .tab{width:100%;justify-content:flex-start;border-radius:10px;}
-  :root[data-menu="sidebar"] main{flex:1;min-width:0;order:1;}
-  :root[data-menu="sidebar"][data-sidebar-collapsed="true"] .topbar{width:72px;}
-  :root[data-menu="sidebar"][data-sidebar-collapsed="true"] .sidebar-toggle{position:static;margin:0 auto;}
-  :root[data-menu="sidebar"][data-sidebar-collapsed="true"] .topbar-inner{align-items:center;}
-  :root[data-menu="sidebar"][data-sidebar-collapsed="true"] .brand-text,
-  :root[data-menu="sidebar"][data-sidebar-collapsed="true"] .tab-group-label,
-  :root[data-menu="sidebar"][data-sidebar-collapsed="true"] .tab-label,
-  :root[data-menu="sidebar"][data-sidebar-collapsed="true"] .pill b,
-  :root[data-menu="sidebar"][data-sidebar-collapsed="true"] .pill.days{display:none;}
-  :root[data-menu="sidebar"][data-sidebar-collapsed="true"] .stat-pills{align-items:center;}
-  :root[data-menu="sidebar"][data-sidebar-collapsed="true"] .pill{padding:5px;justify-content:center;}
-  :root[data-menu="sidebar"][data-sidebar-collapsed="true"] .tab{justify-content:center;padding:8px;}
+  :root[data-menu="sidebar"]:not([data-force-top="true"]) #app{flex-direction:row;align-items:flex-start;max-width:1320px;}
+  :root[data-menu="sidebar"]:not([data-force-top="true"]) .topbar{position:sticky;top:0;align-self:flex-start;order:2;width:236px;max-width:80vw;flex-shrink:0;border-bottom:none;border-left:1px solid var(--border);height:100vh;overflow-y:auto;transition:width .18s ease;}
+  :root[data-menu="sidebar"]:not([data-force-top="true"]) .topbar-inner{flex-direction:column;align-items:stretch;gap:10px;}
+  :root[data-menu="sidebar"]:not([data-force-top="true"]) .brand{justify-content:center;}
+  :root[data-menu="sidebar"]:not([data-force-top="true"]) .sidebar-toggle{display:block;position:absolute;top:14px;right:14px;}
+  :root[data-menu="sidebar"]:not([data-force-top="true"]) .stat-pills{flex-direction:column;align-items:stretch;width:100%;}
+  :root[data-menu="sidebar"]:not([data-force-top="true"]) .tabs{flex-direction:column;overflow-x:visible;padding:6px 10px 16px;}
+  :root[data-menu="sidebar"]:not([data-force-top="true"]) .tabs-fade{display:none;}
+  :root[data-menu="sidebar"]:not([data-force-top="true"]) .tab-group-label{display:block;font-size:.68rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:12px 10px 4px;}
+  :root[data-menu="sidebar"]:not([data-force-top="true"]) .tab-group-label:first-child{padding-top:2px;}
+  :root[data-menu="sidebar"]:not([data-force-top="true"]) .tab{width:100%;justify-content:flex-start;border-radius:10px;}
+  :root[data-menu="sidebar"]:not([data-force-top="true"]) main{flex:1;min-width:0;order:1;}
+  :root[data-menu="sidebar"]:not([data-force-top="true"])[data-sidebar-collapsed="true"] .topbar{width:72px;}
+  :root[data-menu="sidebar"]:not([data-force-top="true"])[data-sidebar-collapsed="true"] .sidebar-toggle{position:static;margin:0 auto;}
+  :root[data-menu="sidebar"]:not([data-force-top="true"])[data-sidebar-collapsed="true"] .topbar-inner{align-items:center;}
+  :root[data-menu="sidebar"]:not([data-force-top="true"])[data-sidebar-collapsed="true"] .brand-text,
+  :root[data-menu="sidebar"]:not([data-force-top="true"])[data-sidebar-collapsed="true"] .tab-group-label,
+  :root[data-menu="sidebar"]:not([data-force-top="true"])[data-sidebar-collapsed="true"] .tab-label,
+  :root[data-menu="sidebar"]:not([data-force-top="true"])[data-sidebar-collapsed="true"] .pill b,
+  :root[data-menu="sidebar"]:not([data-force-top="true"])[data-sidebar-collapsed="true"] .pill.days{display:none;}
+  :root[data-menu="sidebar"]:not([data-force-top="true"])[data-sidebar-collapsed="true"] .stat-pills{align-items:center;}
+  :root[data-menu="sidebar"]:not([data-force-top="true"])[data-sidebar-collapsed="true"] .pill{padding:5px;justify-content:center;}
+  :root[data-menu="sidebar"]:not([data-force-top="true"])[data-sidebar-collapsed="true"] .tab{justify-content:center;padding:8px;}
 }
+/* Botão flutuante sempre alcançável (independe de largura/quebra de layout) pra trocar o menu na hora. */
+.menu-fab{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:40;width:44px;height:44px;border-radius:50%;background:var(--accent);color:var(--accent-ink);border:none;box-shadow:var(--shadow);font-size:18px;display:flex;align-items:center;justify-content:center;}
+@media(max-width:640px){.menu-fab{display:none;}} /* no mobile o bottom-nav já resolve navegação; o FAB é só pra telas médias/grandes */
 
 hr{border:none;border-top:1px solid var(--border);margin:2px 0;}
 </style>
@@ -290,6 +298,24 @@ hr{border:none;border-top:1px solid var(--border);margin:2px 0;}
 <div id="app"></div>
 
 <script>
+/* Blindagem de viewport: garante a meta de viewport (caso algum wrapper/preview a remova) e
+   detecta a largura REAL da tela pra nunca deixar o menu lateral (modo desktop) tomar conta
+   de uma tela pequena, mesmo que a media query CSS avalie de forma inesperada dentro de algum
+   iframe/preview. Recalcula a cada resize. */
+(function(){
+  if(!document.querySelector('meta[name="viewport"]')){
+    const m = document.createElement('meta');
+    m.name = 'viewport'; m.content = 'width=device-width, initial-scale=1';
+    document.head.appendChild(m);
+  }
+  function updateForceTop(){
+    const w = (window.visualViewport && window.visualViewport.width) || window.innerWidth;
+    document.documentElement.setAttribute('data-force-top', w<900 ? 'true' : 'false');
+  }
+  updateForceTop();
+  window.addEventListener('resize', updateForceTop);
+  if(window.visualViewport) window.visualViewport.addEventListener('resize', updateForceTop);
+})();
 /* ============================= DATA ============================= */
 const EXAM_DATE = new Date('2026-12-06T13:00:00');
 const STORAGE_KEY = 'ipe_pas1_mvp_v1';
@@ -1219,6 +1245,7 @@ function render(){
     ${inFocusQuiz ? '' : topbarHTML()}
     <main><div class="view">${toast}${viewHTML()}</div></main>
     ${inFocusQuiz ? '' : mobileBottomNavHTML()}
+    ${inFocusQuiz ? '' : menuFabHTML()}
     ${MODAL? modalHTML(): ''}
   `;
   LEVEL_UP_TOAST = null;
@@ -1226,6 +1253,10 @@ function render(){
   attachEvents();
   updateTabsFade();
   window.scrollTo(0,0);
+}
+function menuFabHTML(){
+  const menu = (STATE.appearance && STATE.appearance.menu) || 'sidebar';
+  return `<button class="menu-fab" data-action="quick-toggle-menu" title="Trocar menu: ${menu==='sidebar'?'Superior':'Lateral'}" aria-label="Trocar posição do menu">${menu==='sidebar'?'☰':'▤'}</button>`;
 }
 function updateTabsFade(){
   const wrap = document.querySelector('.tabs-wrap');
@@ -3177,6 +3208,10 @@ function attachEvents(){
   });
   document.querySelectorAll('[data-action="toggle-sidebar"]').forEach(el=>el.addEventListener('click',()=>{
     STATE.appearance.sidebarCollapsed = !STATE.appearance.sidebarCollapsed; save(); applyAppearance(); render();
+  }));
+  document.querySelectorAll('[data-action="quick-toggle-menu"]').forEach(el=>el.addEventListener('click',()=>{
+    STATE.appearance.menu = (STATE.appearance.menu==='sidebar') ? 'top' : 'sidebar';
+    save(); applyAppearance(); render();
   }));
   document.querySelectorAll('[data-action="home-move"]').forEach(el=>el.addEventListener('click',()=>{
     const ap = STATE.appearance;
