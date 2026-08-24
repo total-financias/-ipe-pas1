@@ -45,6 +45,7 @@ html{scroll-behavior:smooth;}
 @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} }
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.5;-webkit-font-smoothing:antialiased;}
 h1,h2,h3{font-family:var(--font-display);font-weight:600;text-wrap:balance;margin:0 0 .3em;}
+h3{font-size:1.15rem;line-height:1.3;}
 .mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;}
 a{color:inherit;}
 button{font-family:var(--font-body);cursor:pointer;}
@@ -106,6 +107,11 @@ main{flex:1;padding:18px 16px 90px;max-width:100%;}
 @media(max-width:560px){.grid2{grid-template-columns:1fr;}}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 @media(max-width:640px){.grid3{grid-template-columns:1fr 1fr;}}
+/* ---- bento grid: usado só em telas de estatistica/progresso, composicao deliberada, nao uniforme ---- */
+.bento{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:minmax(70px,auto);gap:10px;}
+.bento-2x2{grid-column:span 2;grid-row:span 2;display:flex;flex-direction:column;justify-content:center;}
+.bento-metric{display:flex;flex-direction:column;justify-content:center;}
+@media(max-width:640px){.bento{grid-template-columns:repeat(2,1fr);} .bento-2x2{grid-column:span 2;grid-row:span 1;}}
 
 .btn{display:inline-flex;align-items:center;gap:6px;justify-content:center;padding:10px 16px;border-radius:var(--radius-sm);border:none;font-weight:700;font-size:.88rem;transition:transform .1s,background-color .15s ease,border-color .15s ease;position:relative;overflow:hidden;isolation:isolate;}
 .btn:active{transform:scale(.97);}
@@ -2717,33 +2723,49 @@ function errosView(){
   errs.forEach(e=>{byMotivo[e.motivo] = (byMotivo[e.motivo]||0)+1;});
   const topMotivo = Object.entries(byMotivo).sort((a,b)=>b[1]-a[1])[0];
   const today = todayISO();
+  const hoje = errs.filter(e=>e.nextReview<=today);
+  const proximas = errs.filter(e=>e.nextReview>today).sort((a,b)=>a.nextReview.localeCompare(b.nextReview));
+
+  function rowHTML(e){
+    const a = getAssunto(e.assuntoId);
+    const diasDesde = daysBetween(new Date(e.data+'T00:00:00'), new Date());
+    const due = e.nextReview<=today;
+    return `<div class="task">
+      <div class="task-icon">🧠</div>
+      <div class="task-body">
+        <div class="task-title">${a? a.nome : 'Assunto'}</div>
+        <div class="task-sub">${a? a.materiaNome+' · ' : ''}${diasDesde<=0? 'errou hoje' : 'último erro: '+diasDesde+(diasDesde===1?' dia atrás':' dias atrás')}${due? '' : ' · revisão em '+e.nextReview}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" data-action="retry-error" data-err="${e.id}">Revisar</button>
+    </div>`;
+  }
+
   return `
   <div class="card">
-    <div class="section-title"><h2>Caderno de erros</h2></div>
+    <div class="section-title"><h2 class="text-section-title">Revisão</h2></div>
     ${errs.length===0? `
     <div class="empty">
       <div style="font-size:1.6rem;">🧠</div>
-      <p style="font-weight:700;color:var(--ink);margin:6px 0 2px;">Seu cérebro ainda não tropeçou por aqui.</p>
-      <p style="font-size:.85rem;">Quando você errar questões, elas voltam pra cá pra você vencê-las depois.</p>
+      <p style="font-weight:700;color:var(--ink);margin:6px 0 2px;">Nenhuma questão para revisar hoje.</p>
+      <p class="text-secondary">Quando você errar questões, elas voltam pra cá numa fila de revisão espaçada, pra você vencê-las de vez.</p>
       <button class="btn btn-primary" style="margin-top:10px;" data-action="goto-questoes">Fazer questões</button>
     </div>` : `
-    <p class="subtitle">${errs.length} questão(ões) para refazer, com repetição espaçada adaptativa (erra de novo → intervalo encurta; acerta com confiança → intervalo aumenta: 1 → 7 → 15 → 30 dias).</p>
-    ${topMotivo && topMotivo[1]>=3 ? `<div class="card-flat" style="border-left:3px solid var(--accent-2);margin-bottom:10px;">📊 Padrão identificado: você errou ${topMotivo[1]} questões recentes por "${topMotivo[0]}".</div>` : ''}
-    <button class="btn btn-primary btn-block" data-action="mode" data-mode="erros">Refazer todos agora</button>
-    <hr style="margin:14px 0;">
-    ${errs.slice(0,20).map(e=>{
-      const q = getQuestao(e.questionId); const a = getAssunto(e.assuntoId);
-      const due = e.nextReview<=today;
-      return `<div class="task">
-        <div class="task-icon">🧠</div>
-        <div class="task-body">
-          <div class="task-title">${a.nome}</div>
-          <div class="task-sub">${e.motivo} · errou ${e.vezes}x · ${due?'revisão hoje':'próxima revisão '+e.nextReview}</div>
-        </div>
-        <button class="btn btn-ghost btn-sm" data-action="retry-error" data-err="${e.id}">Tentar novamente</button>
-      </div>`;
-    }).join('')}`}
-  </div>`;
+    <p class="text-secondary">Repetição espaçada adaptativa: erra de novo → intervalo encurta; acerta com confiança → intervalo aumenta (1 → 7 → 15 → 30 dias).</p>
+    ${topMotivo && topMotivo[1]>=3 ? `<div class="card-flat" style="border-left:3px solid var(--accent-2);margin-top:10px;">Padrão identificado: você errou ${topMotivo[1]} questões recentes por "${topMotivo[0]}".</div>` : ''}
+    `}
+  </div>
+  ${hoje.length ? `
+  <div class="card">
+    <div class="section-title row-between"><h2 class="text-section-title">Revisar hoje</h2><span class="text-meta mono">${hoje.length}</span></div>
+    <button class="btn btn-primary btn-block" style="margin:8px 0 4px;" data-action="mode" data-mode="erros">Revisar tudo agora</button>
+    <div style="margin-top:6px;">${hoje.slice(0,20).map(rowHTML).join('')}</div>
+  </div>` : ''}
+  ${proximas.length ? `
+  <div class="card">
+    <div class="section-title row-between"><h2 class="text-section-title">Próximas revisões</h2><span class="text-meta mono">${proximas.length}</span></div>
+    <div style="margin-top:6px;">${proximas.slice(0,20).map(rowHTML).join('')}</div>
+  </div>` : ''}
+  `;
 }
 
 /* ---------- OBRAS ---------- */
@@ -3277,25 +3299,24 @@ function progressoView(){
   const simCount = STATE.simulados.length;
   const ultimoSim = simCount? STATE.simulados[simCount-1] : null;
   return `
-  <div class="card">
-    <h3>Evolução recente</h3>
-    ${evolutionInsightHTML()}
-    ${hist.length>=2 ? `<div class="sparkline" style="margin-top:8px;">
-      ${hist.map(h=>`<div class="spark-bar"><div style="height:${Math.max(6,h.accuracy)}%;"></div></div>`).join('')}
-    </div>` : ''}
+  <div class="bento">
+    <div class="card-flat bento-2x2">
+      <h3 class="text-section-title">Evolução recente</h3>
+      ${evolutionInsightHTML()}
+      ${hist.length>=2 ? `<div class="sparkline" style="margin-top:8px;">
+        ${hist.map(h=>`<div class="spark-bar"><div style="height:${Math.max(6,h.accuracy)}%;"></div></div>`).join('')}
+      </div>` : ''}
+    </div>
+    <div class="card-flat bento-metric"><div class="text-label">Acerto geral</div><div class="mono" style="font-size:1.6rem;font-weight:700;">${acc}%</div></div>
+    <div class="card-flat bento-metric"><div class="text-label">Dominados</div><div class="mono" style="font-size:1.6rem;font-weight:700;">${green}/${ASSUNTOS.length}</div></div>
+    <div class="card-flat"><div class="text-label">Questões</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${totalQ}</div></div>
+    <div class="card-flat"><div class="text-label">Sequência</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${STATE.profile.streak} 🔥</div></div>
+    <div class="card-flat"><div class="text-label">XP</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${STATE.profile.xp} ⭐</div></div>
+    <div class="card-flat"><div class="text-label">Tempo médio/questão</div><div class="mono" style="font-size:1.1rem;font-weight:700;">${tempoMedio===null?'—':tempoMedio+'s'}</div></div>
+    <div class="card-flat"><div class="text-label">Erros pendentes</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${STATE.errors.filter(e=>!e.resolvido).length}</div></div>
+    <div class="card-flat"><div class="text-label">Revisões feitas</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${totalRevisoes}</div></div>
+    <div class="card-flat"><div class="text-label">Simulados</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${simCount}${ultimoSim? '' : ''}</div>${ultimoSim ? `<div class="text-meta" style="margin-top:2px;">último: ${Math.round(ultimoSim.acertos/((ultimoSim.total-ultimoSim.brancos)||1)*100)}% · ${fmtDate(new Date(ultimoSim.date+'T00:00:00'))}</div>` : ''}</div>
   </div>
-  <div class="grid3">
-    <div class="card-flat"><div class="label-eyebrow">Questões</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${totalQ}</div></div>
-    <div class="card-flat"><div class="label-eyebrow">Acerto</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${acc}%</div></div>
-    <div class="card-flat"><div class="label-eyebrow">Dominados</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${green}/${ASSUNTOS.length}</div></div>
-    <div class="card-flat"><div class="label-eyebrow">Sequência</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${STATE.profile.streak} 🔥</div></div>
-    <div class="card-flat"><div class="label-eyebrow">XP</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${STATE.profile.xp} ⭐</div></div>
-    <div class="card-flat"><div class="label-eyebrow">Tempo médio/questão</div><div class="mono" style="font-size:1.1rem;font-weight:700;">${tempoMedio===null?'—':tempoMedio+'s'}</div></div>
-    <div class="card-flat"><div class="label-eyebrow">Erros pendentes</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${STATE.errors.filter(e=>!e.resolvido).length}</div></div>
-    <div class="card-flat"><div class="label-eyebrow">Revisões feitas</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${totalRevisoes}</div></div>
-    <div class="card-flat"><div class="label-eyebrow">Simulados</div><div class="mono" style="font-size:1.3rem;font-weight:700;">${simCount}</div></div>
-  </div>
-  ${ultimoSim ? `<div class="card-flat row-between"><span style="font-size:.85rem;">Último simulado</span><span class="mono" style="font-weight:700;">${Math.round(ultimoSim.acertos/((ultimoSim.total-ultimoSim.brancos)||1)*100)}% · ${fmtDate(new Date(ultimoSim.date+'T00:00:00'))}</span></div>` : ''}
   <div class="card">
     <h3>Desempenho por área</h3>
     ${AREAS.map(area=>{
