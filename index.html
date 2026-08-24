@@ -164,8 +164,9 @@ select.chip-input{appearance:none;}
 textarea.chip-input{resize:vertical;min-height:64px;}
 
 .tree-materia{margin-bottom:6px;}
-.tree-materia > summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;padding:11px 4px;font-weight:700;font-size:.94rem;}
+.tree-materia > summary{cursor:pointer;list-style:none;padding:11px 4px;}
 .tree-materia > summary::-webkit-details-marker{display:none;}
+.materia-summary-row{display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:.94rem;}
 .tree-materia[open] > summary{color:var(--accent);}
 .assunto-row{display:flex;align-items:center;gap:10px;padding:9px 4px 9px 14px;border-top:1px solid var(--border);font-size:.86rem;}
 .assunto-row .name{flex:1;}
@@ -2401,15 +2402,31 @@ function mapaView(){
   `;
 }
 
+function materiaStats(mat){
+  let attempts=0, correctW=0, worst=null, worstAcc=1;
+  mat.assuntos.forEach(a=>{
+    const c = contentFor(a.id);
+    attempts += c.attempts||0;
+    correctW += c.correctWeighted!=null ? c.correctWeighted : (c.correct||0);
+    if(c.attempts>=3){ const acc = weightedAcc(c); if(acc!=null && acc<worstAcc){ worstAcc=acc; worst=a; } }
+  });
+  const dom = mat.assuntos.filter(a=>contentFor(a.id).status==='green').length;
+  return {domPct: Math.round(dom/mat.assuntos.length*100), dom, total:mat.assuntos.length, attempts, accPct: attempts? Math.round(correctW/attempts*100) : null, worst};
+}
 function mapaListaView(){
   return `
   ${AREAS.map(area=>`
     <div class="card" style="border-left:3px solid ${area.cor};">
       <div class="section-title"><h2>${area.emoji} ${area.nome}</h2></div>
       ${area.interdisciplinar ? `<p style="font-size:.8rem;color:var(--muted);margin:-6px 0 4px;">No PAS 1, ${area.nome} é cobrada de forma interdisciplinar — as questões costumam misturar as 4 matérias. A divisão abaixo é só organizacional, para facilitar seu estudo.</p>` : ''}
-      ${area.materias.map(mat=>`
+      ${area.materias.map(mat=>{
+        const ms = materiaStats(mat);
+        return `
         <details class="tree-materia">
-          <summary>${mat.nome} <span class="label-eyebrow">${mat.assuntos.filter(a=>contentFor(a.id).status==='green').length}/${mat.assuntos.length}</span></summary>
+          <summary>
+            <div class="materia-summary-row"><span>${mat.nome}</span><span class="mono">${ms.domPct}%</span></div>
+            <div class="text-meta" style="margin-top:2px;font-weight:500;">${ms.dom}/${ms.total} dominados · ${ms.attempts} questões${ms.accPct!=null? ' · '+ms.accPct+'% acerto' : ''}${ms.worst? ' · dificuldade: '+ms.worst.nome : ''}</div>
+          </summary>
           ${mat.assuntos.map(a=>{
             const c = contentFor(a.id);
             const pb = priorityBadge(a);
@@ -2422,7 +2439,8 @@ function mapaListaView(){
             </div>`;
           }).join('')}
         </details>
-      `).join('')}
+      `;
+      }).join('')}
     </div>
   `).join('')}
   <div class="footer-note">Status: 🔴 não iniciado · 🟠 aprendendo (40-69% de acerto) · 🟡 precisa revisar (70-84%) · 🟢 dominado (85%+ com retenção após alguns dias). Prioridade: 🔥 máxima · 🟠 alta · 🟡 média · ⚪ baixa — calculada por importância na matriz, dificuldade, erros, revisão vencida e dias restantes até a prova. Toque no nome de um assunto para ver detalhes, estudar ou buscar uma explicação.</div>
