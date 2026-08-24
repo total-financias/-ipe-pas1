@@ -1604,7 +1604,7 @@ function trilhaView(){
 
   return `
   <div class="card">
-    <div class="section-title"><h2>🧭 Minha Trilha PAS 1</h2></div>
+    <div class="section-title"><h2>Minha trilha</h2></div>
     <p class="subtitle">O caminho recomendado de estudos, com base no seu diagnóstico, desempenho e nos ${daysLeft()} dias até a prova. Nada aqui é travado — é uma sugestão que se recalcula sozinha conforme você estuda.</p>
     <button class="btn btn-primary btn-block" style="margin-top:6px;" data-action="trilha-agora">▶️ O que faço agora?</button>
   </div>
@@ -1644,7 +1644,7 @@ function redacaoView(){
   const recentes = [...entries].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,8);
   return `
   <div class="card">
-    <div class="section-title"><h2>📝 Redação PAS 1</h2></div>
+    <div class="section-title"><h2>Redação</h2></div>
     <p class="subtitle">Treine do parágrafo isolado à redação completa, cronometrada. A correção é um checklist de autoavaliação — não é o critério oficial do Cebraspe.</p>
   </div>
   <div class="card">
@@ -2231,16 +2231,22 @@ function simuladosView(){
   const hist = STATE.simulados.slice(-8);
   return `
   <div class="card">
-    <h2 class="title-md">🏁 Simulados</h2>
+    <h2 class="title-md">Simulados</h2>
     <p class="subtitle">Usam o mesmo banco de questões (🏛️ oficiais + ✍️ treino, sempre identificadas). Uma vez respondida, não dá pra voltar — como na prova real. Em Certo/Errado você também pode deixar em branco.</p>
   </div>
   <div class="grid2">
-    ${SIMULADO_TYPES.map(t=>`
-      <div class="card-flat sim-type-card" data-action="${t.pickArea?'sim-pick-area':'start-simulado'}" data-sim="${t.key}">
+    ${SIMULADO_TYPES.map(t=>{
+      const past = STATE.simulados.filter(sm=>sm.tipo===t.key);
+      const last = past.length? past[past.length-1] : null;
+      const lastPct = last? Math.round(last.acertos/((last.total-last.brancos)||1)*100) : null;
+      const estMin = Math.round(t.n*1.3);
+      return `<div class="card-flat sim-type-card" data-action="${t.pickArea?'sim-pick-area':'start-simulado'}" data-sim="${t.key}">
         <div style="font-size:1.3rem;">${t.emoji}</div>
-        <div style="font-weight:700;margin-top:4px;">${t.nome}</div>
-        <div style="font-size:.78rem;color:var(--muted);margin-top:2px;">${t.desc}</div>
-      </div>`).join('')}
+        <div class="text-card-title" style="margin-top:4px;">${t.nome}</div>
+        <div class="text-meta" style="margin-top:2px;">${t.desc}</div>
+        <div class="text-meta" style="margin-top:6px;">${t.n} questões · ~${estMin} min${lastPct!=null? ' · última vez: '+lastPct+'%':''}</div>
+      </div>`;
+    }).join('')}
   </div>
   ${SIMULADO_AREA_PICK ? `
   <div class="card">
@@ -2870,7 +2876,7 @@ function provasView(){
   const anos = [...PROVAS_ANTERIORES].sort((a,b)=>b.ano-a.ano || (b.parte||0)-(a.parte||0));
   return `
   <div class="card">
-    <div class="section-title"><h2>🗂️ Provas anteriores do PAS 1</h2></div>
+    <div class="section-title"><h2>Provas anteriores</h2></div>
     <p class="subtitle">${PROVAS_ANTERIORES.length} cadernos de prova, de 2005 a 2025, com gabarito oficial — direto do Cebraspe/UnB e do acervo do <a href="https://passeandounb.com/provas-anteriores-do-pas-1/" target="_blank" rel="noopener">passeandounb.com</a>. Baixe o PDF, treine no papel ou no tempo real de prova, e confira o gabarito depois.</p>
   </div>
   <div class="card">
@@ -3394,7 +3400,7 @@ function semanaView(){
   const stateIcon = {hoje:'🎯', completo:'✅', parcial:'🟡', falhou:'❌', futuro:'·'};
   return `
   <div class="card">
-    <h2 class="title-md">📅 Minha semana</h2>
+    <h2 class="title-md">Minha semana</h2>
     <div class="week-grid">
       ${dates.map((d,i)=>`
         <div>
