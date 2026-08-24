@@ -40,6 +40,8 @@
   --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -10px rgba(0,0,0,.5);
 }
 *{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+@media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} }
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.5;-webkit-font-smoothing:antialiased;}
 h1,h2,h3{font-family:var(--font-display);font-weight:600;text-wrap:balance;margin:0 0 .3em;}
 .mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;}
@@ -78,6 +80,24 @@ main{flex:1;padding:18px 16px 90px;max-width:100%;}
 @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
 
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:var(--card-pad,18px);box-shadow:var(--shadow);}
+
+/* ---- entrada suave ao abrir uma tela nova (scroll contínuo) ---- */
+@media (prefers-reduced-motion: no-preference){
+  .reveal{opacity:0;transform:translateY(14px);transition:opacity .5s cubic-bezier(.22,1,.36,1),transform .5s cubic-bezier(.22,1,.36,1);}
+  .reveal.reveal-visible{opacity:1;transform:none;}
+  .view>.reveal:nth-child(2){transition-delay:.05s;} .view>.reveal:nth-child(3){transition-delay:.1s;}
+  .view>.reveal:nth-child(4){transition-delay:.15s;} .view>.reveal:nth-child(5){transition-delay:.2s;}
+  .view>.reveal:nth-child(n+6){transition-delay:.24s;}
+}
+
+/* ---- texto com brilho em degradê (uso pontual, ex.: número de destaque no topo) ---- */
+.text-shine{background-image:linear-gradient(100deg,var(--ink) 30%,var(--accent) 45%,var(--accent-strong) 50%,var(--ink) 65%);background-size:220% auto;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;}
+@media (prefers-reduced-motion: no-preference){.text-shine{animation:shineMove 2.2s ease-in-out 2;}}
+@keyframes shineMove{0%{background-position:200% center;}100%{background-position:-20% center;}}
+
+/* ---- vidro líquido (cartão de destaque) ---- */
+.glass-hero{position:relative;overflow:hidden;background:var(--surface);background:linear-gradient(155deg,color-mix(in srgb,var(--surface) 80%,transparent),color-mix(in srgb,var(--surface-2) 55%,transparent));backdrop-filter:blur(18px) saturate(1.25);-webkit-backdrop-filter:blur(18px) saturate(1.25);}
+.glass-hero::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(180deg,color-mix(in srgb,var(--ink) 16%,transparent) 0%,transparent 35%,transparent 65%,color-mix(in srgb,var(--ink) 10%,transparent) 100%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;}
 .card-flat{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:var(--flat-pad,16px);}
 .row{display:flex;gap:10px;align-items:center;}
 .row-between{display:flex;gap:10px;align-items:center;justify-content:space-between;}
@@ -1353,7 +1373,26 @@ function render(){
   // Só rola pro topo quando a rota/tarefa/quiz realmente muda — não em toda atualização de tela
   // (ex.: marcar um tema, avaliar uma redação), pra não "chutar" o usuário de volta pro topo da página.
   const renderKey = ROUTE + '|' + (ACTIVE_TASK? (ACTIVE_TASK.type+':'+(ACTIVE_TASK.id||ACTIVE_TASK.entryId||ACTIVE_TASK.startedAt||'')) : '') + '|' + (QUIZ_SESSION? ('quiz:'+QUIZ_SESSION.startTs) : '');
-  if(renderKey !== LAST_RENDER_KEY){ window.scrollTo(0,0); LAST_RENDER_KEY = renderKey; }
+  const isNewScreen = renderKey !== LAST_RENDER_KEY;
+  if(isNewScreen){ window.scrollTo(0,0); LAST_RENDER_KEY = renderKey; }
+  initScrollReveal(isNewScreen);
+}
+let REVEAL_OBSERVER = null;
+function initScrollReveal(isNewScreen){
+  if(REVEAL_OBSERVER){ REVEAL_OBSERVER.disconnect(); REVEAL_OBSERVER = null; }
+  if(!isNewScreen) return; // tela igual (só um dado mudou) — não reanima, evita "piscar" a cada clique
+  const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cards = document.querySelectorAll('.view > .card');
+  if(reduced || !window.IntersectionObserver || !cards.length) return;
+  cards.forEach(el=>el.classList.add('reveal'));
+  REVEAL_OBSERVER = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){ entry.target.classList.add('reveal-visible'); REVEAL_OBSERVER.unobserve(entry.target); }
+    });
+  }, {threshold:0.08, rootMargin:'0px 0px -40px 0px'});
+  cards.forEach(el=>REVEAL_OBSERVER.observe(el));
+  // rede de segurança: se por algum motivo o navegador não disparar o observer, o conteúdo não pode ficar preso invisível
+  setTimeout(()=>{ cards.forEach(el=>el.classList.add('reveal-visible')); }, 1200);
 }
 function menuFabHTML(){
   const menu = (STATE.appearance && STATE.appearance.menu) || 'sidebar';
@@ -1803,7 +1842,7 @@ function homeView(){
   }
 
   return `
-  <div class="card">
+  <div class="card glass-hero">
     <div class="hero-greeting">${greeting()} 👋</div>
     <div class="row-between" style="margin-top:6px;">
       <div>
@@ -1811,7 +1850,7 @@ function homeView(){
         <h1 class="title-lg" style="margin-top:2px;">${domPct}% do conteúdo do PAS 1 dominado</h1>
       </div>
       <div style="text-align:right;">
-        <div class="mono" style="font-size:1.6rem;font-weight:700;color:var(--accent);">${daysLeft()}</div>
+        <div class="mono text-shine" style="font-size:1.6rem;font-weight:700;">${daysLeft()}</div>
         <div class="label-eyebrow">dias até a prova ✅</div>
       </div>
     </div>
