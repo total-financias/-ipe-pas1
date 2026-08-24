@@ -106,7 +106,7 @@ main{flex:1;padding:18px 16px 90px;max-width:100%;}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 @media(max-width:640px){.grid3{grid-template-columns:1fr 1fr;}}
 
-.btn{display:inline-flex;align-items:center;gap:6px;justify-content:center;padding:10px 16px;border-radius:100px;border:none;font-weight:700;font-size:.88rem;transition:transform .1s;}
+.btn{display:inline-flex;align-items:center;gap:6px;justify-content:center;padding:10px 16px;border-radius:100px;border:none;font-weight:700;font-size:.88rem;transition:transform .1s;position:relative;overflow:hidden;isolation:isolate;}
 .btn:active{transform:scale(.97);}
 .btn-primary{background:var(--accent);color:var(--accent-ink);}
 .btn-secondary{background:var(--surface-2);color:var(--ink);border:1px solid var(--border);}
@@ -114,6 +114,21 @@ main{flex:1;padding:18px 16px 90px;max-width:100%;}
 .btn-warn{background:var(--accent-2);color:var(--accent-2-ink);}
 .btn-sm{padding:6px 12px;font-size:.78rem;}
 .btn:disabled{opacity:.4;cursor:default;}
+/* ---- onda ao clicar (feedback tátil em qualquer botão) ---- */
+.btn-ripple{position:absolute;border-radius:50%;background:color-mix(in srgb,currentColor 35%,transparent);transform:scale(0);pointer-events:none;z-index:0;}
+@media (prefers-reduced-motion: no-preference){.btn-ripple{animation:btnRipple .6s ease-out;}}
+@keyframes btnRipple{to{transform:scale(2.6);opacity:0;}}
+/* ---- brilho que atravessa (só nos botões principais, no hover) ---- */
+@media (prefers-reduced-motion: no-preference){
+  .btn-primary::after{content:'';position:absolute;top:0;left:-60%;width:35%;height:100%;background:linear-gradient(115deg,transparent,color-mix(in srgb,var(--accent-ink) 55%,transparent),transparent);transform:skewX(-20deg);transition:left .6s cubic-bezier(.22,1,.36,1);pointer-events:none;z-index:0;}
+  .btn-primary:hover::after{left:130%;}
+}
+.btn>*{position:relative;z-index:1;}
+@media (hover:hover) and (prefers-reduced-motion: no-preference){
+  .btn-primary{transition:transform .15s ease,box-shadow .15s ease;}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 18px -8px color-mix(in srgb,var(--accent) 55%,transparent);}
+  .btn-primary:active{transform:scale(.97);}
+}
 .btn-block{width:100%;}
 
 .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:100px;font-size:.72rem;font-weight:700;letter-spacing:.02em;}
@@ -934,6 +949,23 @@ if(window.matchMedia){
     if((STATE.appearance.mode||'system')==='system') applyAppearance();
   });
 }
+/* Onda ao clicar em qualquer botão — delegado no document (registrado uma única vez, funciona
+   mesmo com o DOM sendo trocado inteiro a cada render()). */
+document.addEventListener('pointerdown', (e)=>{
+  const btn = e.target.closest('.btn');
+  if(!btn || btn.disabled) return;
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const rect = btn.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height) * 1.4;
+  const ripple = document.createElement('span');
+  ripple.className = 'btn-ripple';
+  ripple.style.width = ripple.style.height = size+'px';
+  ripple.style.left = (e.clientX - rect.left - size/2)+'px';
+  ripple.style.top = (e.clientY - rect.top - size/2)+'px';
+  btn.appendChild(ripple);
+  ripple.addEventListener('animationend', ()=>ripple.remove());
+  setTimeout(()=>ripple.remove(), 900); // rede de segurança caso animationend não dispare
+});
 
 /* ============================= PHASE & PRIORITY ============================= */
 function daysLeft(){ return Math.max(0, daysBetween(new Date(), EXAM_DATE)); }
