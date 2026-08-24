@@ -1332,6 +1332,7 @@ function fmtMinutes(m){
   return h+'h'+(rest? String(rest).padStart(2,'0') : '');
 }
 
+let LAST_RENDER_KEY = '';
 function render(){
   refreshAllStatuses();
   const app = document.getElementById('app');
@@ -1349,7 +1350,10 @@ function render(){
   attachEvents();
   updateTabsFade();
   wireRedacaoTimer();
-  window.scrollTo(0,0);
+  // Só rola pro topo quando a rota/tarefa/quiz realmente muda — não em toda atualização de tela
+  // (ex.: marcar um tema, avaliar uma redação), pra não "chutar" o usuário de volta pro topo da página.
+  const renderKey = ROUTE + '|' + (ACTIVE_TASK? (ACTIVE_TASK.type+':'+(ACTIVE_TASK.id||ACTIVE_TASK.entryId||ACTIVE_TASK.startedAt||'')) : '') + '|' + (QUIZ_SESSION? ('quiz:'+QUIZ_SESSION.startTs) : '');
+  if(renderKey !== LAST_RENDER_KEY){ window.scrollTo(0,0); LAST_RENDER_KEY = renderKey; }
 }
 function menuFabHTML(){
   const menu = (STATE.appearance && STATE.appearance.menu) || 'sidebar';
