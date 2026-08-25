@@ -1360,6 +1360,44 @@ function wireRedacaoTimer(){
 let MAPA_VIEW = 'lista';
 let MINDMAP_AREA = AREAS[0].id;
 let ASSUNTO_DETAIL_ID = null;
+let SWAP_TASK_ID = null;
+function openSwapTask(taskId){ SWAP_TASK_ID = taskId; MODAL='trocarTarefa'; render(); }
+function swapPlanTask(taskId, newAssuntoId){
+  if(!STATE.dailyPlan) return;
+  const t = STATE.dailyPlan.tasks.find(x=>x.id===taskId);
+  const a = getAssunto(newAssuntoId);
+  if(!t || !a) return;
+  const temQuestoes = questoesPorAssunto(newAssuntoId).length>0;
+  t.assuntoId = newAssuntoId;
+  t.type = temQuestoes ? 'questoes' : 'aprender';
+  t.titulo = (t.type==='aprender' ? 'Aprender — ' : 'Questões — ') + a.nome;
+  t.sub = a.materiaNome + (t.type==='aprender' ? ' · nível 1-4' : ' · treino');
+  t.status = 'pendente';
+  save();
+}
+function trocarTarefaModalHTML(){
+  const t = STATE.dailyPlan ? STATE.dailyPlan.tasks.find(x=>x.id===SWAP_TASK_ID) : null;
+  return `<div class="modal-bg" data-action="close-modal"><div class="modal" onclick="event.stopPropagation()">
+    <div class="row-between"><h3 style="margin:0;">Trocar por outro assunto</h3><button class="btn btn-ghost btn-sm" data-action="close-modal">✕</button></div>
+    <p class="text-secondary" style="margin-top:4px;">A recomendação automática continua funcionando nos outros dias — isso troca só esta tarefa de hoje.</p>
+    <div style="margin-top:10px;max-height:55vh;overflow-y:auto;">
+      ${AREAS.map(area=>`
+        <details class="tree-materia" ${t && area.materias.some(m=>m.assuntos.some(a=>a.id===t.assuntoId))?'open':''}>
+          <summary><div class="materia-summary-row" style="font-weight:700;font-size:.9rem;">${area.emoji} ${area.nome}</div></summary>
+          ${area.materias.map(mat=>`
+            <div class="text-label" style="margin:8px 0 4px;">${mat.nome}</div>
+            ${mat.assuntos.map(a=>`
+              <div class="assunto-row" style="cursor:pointer;${t && t.assuntoId===a.id?'background:var(--accent-soft);border-radius:var(--radius-sm);':''}" data-action="confirm-swap-task" data-assunto="${a.id}">
+                <span class="status-dot dot-${contentFor(a.id).status}"></span>
+                <span class="name">${a.nome}</span>
+                <span class="hab">${questoesPorAssunto(a.id).length} questões</span>
+              </div>`).join('')}
+          `).join('')}
+        </details>
+      `).join('')}
+    </div>
+  </div></div>`;
+}
 let FILTERS = {tipo:'all', dif:'all'};
 let SIMULADO_AREA_PICK = false;
 const SIMULADO_TYPES = [
@@ -1927,7 +1965,10 @@ function homeView(){
       <div class="text-card-title" style="font-size:1.05rem;margin-top:2px;">${firstPending.titulo.replace(/^[^—]+—\s*/,'')}</div>
       <div class="text-meta" style="margin-top:2px;">${firstPending.dur} min · ${firstPending.sub}</div>
       ${firstPending.assuntoId ? `<p class="text-secondary" style="margin-top:8px;">${whyTaskHTML(firstPending)}</p>` : ''}
-      <button class="btn btn-primary btn-block" style="margin-top:12px;" data-action="start-mission">Começar estudo</button>
+      <div class="row" style="gap:8px;margin-top:12px;">
+        <button class="btn btn-primary" style="flex:1;" data-action="start-mission">Começar estudo</button>
+        <button class="btn btn-secondary" data-action="open-swap-task" data-task="${firstPending.id}">Trocar</button>
+      </div>
     </div>` : `<p class="text-secondary" style="margin-top:8px;">Tudo concluído por hoje. Bom trabalho.</p>`}
     ${plan.tasks.length>1 ? `<details style="margin-top:14px;">
       <summary class="text-meta" style="cursor:pointer;font-weight:700;">Ver todas as atividades de hoje (${plan.tasks.length})</summary>
@@ -1955,6 +1996,7 @@ function taskRowHTML(t){
     </div>
     ${done ? `<span class="badge b-green">✓</span>` : skipped ? `<button class="btn btn-ghost btn-sm" data-action="start-task" data-task="${t.id}">Retomar</button>` : `
       <div class="row" style="gap:6px;">
+        <button class="btn btn-ghost btn-sm" data-action="open-swap-task" data-task="${t.id}" title="Trocar por outro assunto">🔀</button>
         <button class="btn btn-ghost btn-sm" data-action="skip-task" data-task="${t.id}">Pular</button>
         <button class="btn btn-primary btn-sm" data-action="start-task" data-task="${t.id}">Iniciar</button>
       </div>`}
@@ -3436,6 +3478,7 @@ function modalHTML(){
   }
   if(MODAL==='moreMenu') return moreMenuHTML();
   if(MODAL==='dayRecap') return dayRecapHTML();
+  if(MODAL==='trocarTarefa') return trocarTarefaModalHTML();
   return '';
 }
 
@@ -3462,6 +3505,11 @@ function attachEvents(){
   }));
 
   document.querySelectorAll('[data-action="start-task"]').forEach(el=>el.addEventListener('click',()=>startTaskById(el.dataset.task)));
+  document.querySelectorAll('[data-action="open-swap-task"]').forEach(el=>el.addEventListener('click',()=>openSwapTask(el.dataset.task)));
+  document.querySelectorAll('[data-action="confirm-swap-task"]').forEach(el=>el.addEventListener('click',()=>{
+    swapPlanTask(SWAP_TASK_ID, el.dataset.assunto);
+    MODAL=null; SWAP_TASK_ID=null; render();
+  }));
   const missionBtn = document.querySelector('[data-action="start-mission"]');
   if(missionBtn) missionBtn.addEventListener('click',()=>{
     const t = STATE.dailyPlan.tasks.find(x=>x.status==='pendente');
