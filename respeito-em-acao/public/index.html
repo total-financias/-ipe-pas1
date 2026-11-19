@@ -29,6 +29,7 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div class="progress" aria-hidden="true"><span></span></div>
   <a class="skip" href="#conteudo">Pular para o conteúdo</a>
 
   <header class="nav">
@@ -61,7 +62,7 @@
           </div>
         </div>
         <figure class="hero-art">
-          <img src="img/abertura-roda.svg" width="900" height="760" alt="Ilustração vista de cima: dez pessoas, a maioria negras, de idades, corpos e crenças diferentes (uma criança, uma senhora de cabelo grisalho, uma mulher de hijab, uma mulher de turbante, uma pessoa em cadeira de rodas e outras) de mãos dadas em círculo ao redor de uma flor-sol.">
+          <div class="spin-box"><img class="spin" src="img/abertura-roda.svg" width="900" height="760" alt="Ilustração vista de cima: dez pessoas, a maioria negras, de idades, corpos e crenças diferentes (uma criança, uma senhora de cabelo grisalho, uma mulher de hijab, uma mulher de turbante, uma pessoa em cadeira de rodas e outras) de mãos dadas em círculo ao redor de uma flor-sol."></div>
           <figcaption>Dez pessoas, uma roda. Ninguém fica de fora.</figcaption>
         </figure>
       </div>
@@ -73,12 +74,24 @@
       </div>
     </section>
 
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee-track">
+        <span>20 de novembro</span><i></i><span>Dia da Consciência Negra</span><i></i><span>Zumbi dos Palmares</span><i></i><span>Palavras que aproximam</span><i></i>
+        <span>20 de novembro</span><i></i><span>Dia da Consciência Negra</span><i></i><span>Zumbi dos Palmares</span><i></i><span>Palavras que aproximam</span><i></i>
+      </div>
+    </div>
+
     <!-- 2. CONSCIÊNCIA NEGRA -->
     <section class="sec" id="consciencia">
       <div class="wrap sec-grid">
         <header class="sec-side"><span class="kicker">Consciência Negra</span></header>
         <div class="sec-main">
           <h2 class="title">A data não é só sobre dor. É sobre resistência e orgulho.</h2>
+          <div class="stats">
+            <div class="stat"><b><span data-count="55.5" data-dec="1">55,5</span>%</b><span>dos brasileiros se declaram pretos ou pardos (Censo 2022)</span></div>
+            <div class="stat"><b><span data-count="4.8" data-dec="1">4,8</span> mi</b><span>de africanos trazidos à força pro Brasil</span></div>
+            <div class="stat"><b>+<span data-count="7" data-dec="0">7</span> em 10</b><span>vítimas de homicídio no país são negras</span></div>
+          </div>
           <div class="story-grid">
             <div class="prose">
               <p>O 20 de novembro é o dia em que Zumbi morreu, em 1695. O movimento negro escolheu essa data nos anos 1970 pra fugir do 13 de maio, dia da Lei Áurea. A ideia era simples: o povo negro não ficou esperando ser libertado. Fugiu, montou quilombo, foi pra Justiça, escreveu, se organizou. Durante séculos.</p>
@@ -101,7 +114,13 @@
         </div>
       </div>
       <div class="wrap">
-        <div class="people">
+        <div class="people-ctrl">
+          <span class="people-hint">Arraste ou use as setas</span>
+          <span class="people-progress" aria-hidden="true"><i></i></span>
+          <button class="ctrl" type="button" data-dir="-1" aria-label="Pessoa anterior">←</button>
+          <button class="ctrl" type="button" data-dir="1" aria-label="Próxima pessoa">→</button>
+        </div>
+        <div class="people" id="people" tabindex="0" role="region" aria-label="Pessoas que fazem a história, role para os lados">
           <article class="person person-1">
             <figure class="pphoto"><img src="img/autores/zumbi.jpg" alt="Imagem de Zumbi dos Palmares" loading="lazy"><figcaption><a href="https://commons.wikimedia.org/wiki/File:Ant%C3%B4nio_Parreiras_-_Zumbi_2.jpg" target="_blank" rel="noopener">Pintura de Antônio Parreiras · domínio público. Não existem retratos feitos em vida: é uma representação artística.</a></figcaption></figure>
             <div class="ptext">
@@ -483,5 +502,6 @@
   </footer>
 
   <script src="app.js" defer></script>
+  <script src="fx.js" defer></script>
 </body>
 </html>
