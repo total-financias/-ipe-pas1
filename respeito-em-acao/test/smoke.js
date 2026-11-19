@@ -24,13 +24,14 @@ const post = (b) => call('/api/messages', { method: 'POST', body: JSON.stringify
   try {
     let r = await post({ type: 'apoio', name: 'Ana', text: 'Você não está sozinha.' });
     assert.equal(r.status, 201); const id = r.body.message.id;
-    r = await post({ type: 'apoio', text: 'outra logo em seguida' });
+    r = await post({ type: 'apoio', name: 'Bia', text: 'outra logo em seguida' });
     assert.equal(r.status, 429, 'limite de frequência');
-    r = await post({ type: 'apoio', text: 'oi' }); assert.equal(r.status, 400, 'mínimo de 3');
-    r = await post({ type: 'xx', text: 'texto ok' }); assert.equal(r.status, 400, 'tipo inválido');
-    r = await post({ type: 'apoio', text: 'a'.repeat(601) }); assert.equal(r.status, 400, 'máx 600');
+    r = await post({ type: 'apoio', name: 'Bia', text: 'oi' }); assert.equal(r.status, 400, 'mínimo de 3');
+    r = await post({ type: 'apoio', text: 'sem nome nenhum' }); assert.equal(r.status, 400, 'nome obrigatório');
+    r = await post({ type: 'xx', name: 'Bia', text: 'texto ok' }); assert.equal(r.status, 400, 'tipo inválido');
+    r = await post({ type: 'apoio', name: 'Bia', text: 'a'.repeat(601) }); assert.equal(r.status, 400, 'máx 600');
     r = await post({ type: 'apoio', name: 'n'.repeat(41), text: 'texto ok' }); assert.equal(r.status, 400, 'nome máx 40');
-    r = await post({ type: 'apoio', text: 'veja www.spam.com agora' }); assert.equal(r.status, 400, 'links bloqueados');
+    r = await post({ type: 'apoio', name: 'Bia', text: 'veja www.spam.com agora' }); assert.equal(r.status, 400, 'links bloqueados');
 
     const v1 = 'visitante-um-0000000001', v2 = 'visitante-dois-000000002';
     r = await call(`/api/messages/${id}/hug`, { method: 'POST', headers: { 'X-Visitor': v1 }, body: '{}' });
