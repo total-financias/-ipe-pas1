@@ -206,7 +206,7 @@
   // ═════════════════════════════════════════════════════════
   //  MURAL
   // ═════════════════════════════════════════════════════════
-  const TYPE_LABEL = { apoio: '💛 Apoio', relato: '🗣️ Relato', compromisso: '🤝 Compromisso' };
+  const TYPE_LABEL = { apoio: 'Apoio', relato: 'Relato', compromisso: 'Compromisso' };
   const feed = $('#feed');
   const stateEl = $('#feed-state');
   const moreBtn = $('#more');
