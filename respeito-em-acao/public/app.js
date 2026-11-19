@@ -368,6 +368,7 @@
     const type = form.elements.type.value;
     if (text.length < 3) { setStatus('Escreva pelo menos 3 caracteres.', 'err'); textEl.focus(); return; }
     if (text.length > 600) { setStatus('A mensagem pode ter no máximo 600 caracteres.', 'err'); return; }
+    if (name.length < 2) { setStatus('Escreva seu nome (pelo menos 2 letras).', 'err'); form.elements.name.focus(); return; }
     if (name.length > 40) { setStatus('O nome pode ter no máximo 40 caracteres.', 'err'); return; }
     const wait = Math.ceil((cooldownUntil - Date.now()) / 1000);
     if (wait > 0) { setStatus(`Calma, a gente respira junto. Espere ${wait} s para enviar outra mensagem.`, 'err'); return; }

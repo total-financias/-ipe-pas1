@@ -20,6 +20,7 @@ const TRUST_PROXY = process.env.TRUST_PROXY === '1'; // atrás de nginx/Render/e
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || ''; // opcional: habilita moderação (DELETE)
 
 const LIMITS = {
+  nameMin: 2,
   nameMax: 40,
   textMin: 3,
   textMax: 600,
@@ -118,6 +119,7 @@ function validateMessage(body) {
   if (!TYPES.has(type)) return { error: 'Escolha o tipo da mensagem.' };
   const name = clean(body.name).replace(/\n/g, ' ');
   const text = clean(body.text);
+  if (name.length < LIMITS.nameMin) return { error: 'Escreva seu nome (pelo menos 2 letras).' };
   if (name.length > LIMITS.nameMax) return { error: `O nome pode ter no máximo ${LIMITS.nameMax} caracteres.` };
   if (text.length < LIMITS.textMin) return { error: `Escreva pelo menos ${LIMITS.textMin} caracteres.` };
   if (text.length > LIMITS.textMax) return { error: `A mensagem pode ter no máximo ${LIMITS.textMax} caracteres.` };
