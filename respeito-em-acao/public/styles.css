@@ -360,3 +360,8 @@ legend, label.lab { display: block; font-weight: 800; font-size: 0.95rem; margin
 }
 
 [hidden] { display: none !important; }
+
+.outcome .ask { margin: 16px 0 0; font-family: var(--serif); font-weight: 700; font-size: 1.15rem; line-height: 1.35; }
+.prayer { margin: 44px 0 0; padding: 26px 30px; max-width: 640px; border-left: 4px solid var(--sun); background: rgba(255, 249, 236, 0.07); border-radius: 0 22px 22px 0; }
+.prayer blockquote { margin: 0 0 8px; font-family: var(--serif); font-size: 1.3rem; line-height: 1.4; color: var(--cream); }
+.prayer figcaption { font-size: 0.92rem; color: #e0cfb6; }

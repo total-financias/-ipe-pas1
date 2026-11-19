@@ -35,6 +35,7 @@
   const SCENARIOS = [
     {
       title: 'O trabalho em grupo',
+      ask: 'Quantas vezes você já foi o Davi? E quantas vezes foi quem não chamou?',
       who: 'Davi',
       story: 'Na hora de formar os grupos do trabalho, a turma combina, entre risinhos, de “esquecer” o Davi. Ele fica na carteira, fingindo procurar algo na mochila para não ter que olhar para ninguém. Você percebeu tudo.',
       options: [
@@ -50,6 +51,7 @@
     },
     {
       title: 'A figurinha no grupo da turma',
+      ask: 'Se a figurinha fosse sua, de quem você gostaria de receber uma mensagem?',
       who: 'Marina',
       story: 'Alguém monta uma figurinha com a foto da Marina, que vive com vergonha do próprio corpo, e manda no grupo da turma. Em poucos minutos, chovem risadinhas e reações. A Marina ainda não respondeu nada.',
       options: [
@@ -65,6 +67,7 @@
     },
     {
       title: 'A piada com a religião da Bruna',
+      ask: 'Você defenderia a fé de alguém que não é a sua?',
       who: 'Bruna',
       story: 'A Bruna é de candomblé e usa suas guias (colares) na escola. No pátio, um garoto faz piada dizendo que ela “tem pacto” e “faz macumba contra a turma”. Alguns riem. A Bruna abaixa a cabeça e segura o colar.',
       options: [
@@ -80,6 +83,7 @@
     },
     {
       title: 'A foto que não era para existir',
+      ask: 'O que você gostaria que fizessem com uma foto sua chorando?',
       who: 'Caio',
       story: 'Chega no seu celular uma foto do Caio chorando no banheiro da escola, tirada escondido, com a legenda “chorão”. Ela já passou por vários grupos. Todo mundo está comentando.',
       options: [
@@ -145,6 +149,7 @@
         el('h4', { text: `O que isso provoca em ${s.who}` }),
         el('p', { text: o.effect }));
       if (!o.good && o.better) out.append(el('p', { class: 'better', text: o.better }));
+      out.append(el('p', { class: 'ask', text: 'Pergunte-se: ' + s.ask }));
       outcomeSlot.replaceChildren(out);
       const last = qIndex === SCENARIOS.length - 1;
       nextSlot.replaceChildren(el('button', { class: 'btn', type: 'button', text: last ? 'Ver meu resultado' : 'Próxima situação', onclick: () => { qIndex += 1; last ? renderScore() : renderScenario(); } }));
