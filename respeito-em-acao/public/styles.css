@@ -388,3 +388,33 @@ legend, label.lab { display: block; font-weight: 800; font-size: 0.95rem; margin
 .person p { margin: 0; font-size: 1rem; line-height: 1.6; color: var(--ink); }
 .people-close { margin-top: 32px; max-width: 70ch; font-family: var(--serif); font-size: 1.2rem; line-height: 1.5; }
 @media (max-width: 900px) { .story-grid { grid-template-columns: 1fr; } }
+
+/* ── Fotos dos autores ── */
+.person { padding-top: 0; overflow: hidden; }
+.pphoto { margin: 0 -24px 18px; }
+.pphoto img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; object-position: 50% 18%; background: var(--cream-2); }
+.pphoto figcaption { padding: 8px 24px 0; font-size: 0.78rem; line-height: 1.4; color: var(--ink-soft); }
+.pphoto figcaption a { color: inherit; }
+.ph-box { aspect-ratio: 4 / 5; display: grid; place-items: center; background: var(--tone); }
+.ph-box span { font-family: var(--serif); font-weight: 800; font-size: 3.4rem; color: var(--ink); opacity: 0.55; }
+.person .years { display: block; }
+/* ── Epistemicídio ── */
+.epi { background: var(--paper); border-block: 1px solid var(--line); }
+.epi-intro { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(20px, 4vw, 52px); margin-top: 30px; align-items: start; }
+.epi-intro p { margin: 0; font-size: 1.12rem; max-width: 60ch; }
+.epi-def { font-family: var(--serif); font-size: clamp(1.3rem, 2.4vw, 1.7rem) !important; line-height: 1.4; }
+.epi-def em { font-style: normal; color: var(--terra-dark); font-weight: 700; }
+.epi-list { list-style: none; counter-reset: e; padding: 0; margin: 26px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 20px; }
+.epi-list li { counter-increment: e; background: var(--cream-2); border-radius: var(--radius); padding: 24px 26px 26px; position: relative; }
+.epi-list li::before { content: counter(e); font-family: var(--serif); font-weight: 800; font-size: 2.2rem; color: var(--terra); opacity: 0.7; line-height: 1; }
+.epi-list h4 { font-size: 1.28rem; margin: 6px 0 8px; }
+.epi-list p { margin: 0; font-size: 1.02rem; line-height: 1.6; }
+.epi-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 24px; margin-top: 30px; }
+.epi-test, .epi-act { border-radius: var(--radius); padding: 28px 30px; }
+.epi-test { background: var(--deep); color: var(--cream); }
+.epi-test h3 { color: var(--sun); font-size: 1.4rem; margin-bottom: 10px; }
+.epi-test p { margin: 0; font-family: var(--serif); font-size: 1.2rem; line-height: 1.5; }
+.epi-act { background: var(--leaf-soft); }
+.epi-act h3 { color: var(--leaf); font-size: 1.4rem; margin-bottom: 12px; }
+.epi-act ul { margin: 0; padding-left: 20px; display: grid; gap: 10px; }
+@media (max-width: 860px) { .epi-intro, .epi-grid { grid-template-columns: 1fr; } }
