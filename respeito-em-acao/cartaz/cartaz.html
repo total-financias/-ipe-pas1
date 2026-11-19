@@ -23,24 +23,20 @@ body { width: 210mm; height: 297mm; background: #fff; font-family: 'Nunito Sans'
 .content { position: relative; z-index: 1; width: 100%; display: flex; flex-direction: column; align-items: center; height: 100%; }
 .seal { display: inline-flex; align-items: center; gap: 3mm; background: var(--sun); border-radius: 99mm; padding: 2.4mm 6mm; font-weight: 800; font-size: 11pt; letter-spacing: .03em; }
 .seal b { font-family: 'Fraunces', serif; font-size: 13pt; color: #fff; background: var(--terra); border-radius: 99mm; padding: 0.6mm 3mm; }
-h1 { font-family: 'Fraunces', serif; font-weight: 800; font-size: 40pt; line-height: 1; letter-spacing: -.035em; text-align: center; margin: 4mm 0 0; white-space: nowrap; }
+h1 { font-family: 'Fraunces', serif; font-weight: 800; font-size: 44pt; line-height: 1; letter-spacing: -.035em; text-align: center; margin: 5mm 0 0; white-space: nowrap; }
 h1 em { font-style: normal; color: var(--terra); }
-.sub { font-size: 13pt; text-align: center; margin: 3mm 0 0; line-height: 1.3; }
-.stage { position: relative; flex: none; width: 126mm; height: 124mm; margin-top: 3mm; }
-.ring { position: absolute; left: 0; top: 0; width: 126mm; height: 126mm; object-fit: cover; border-radius: 50%; }
-.qrcard { position: absolute; left: 50%; top: 2mm; transform: translateX(-50%); background: #fff; border: 2mm solid var(--terra); border-radius: 6mm; padding: 6.5mm; width: 76mm; height: 76mm; box-shadow: 0 0 0 3mm var(--cream); }
+.sub { font-size: 14pt; text-align: center; margin: 3.5mm 0 0; line-height: 1.3; }
+.stage { position: relative; flex: none; width: 156mm; height: 154mm; margin-top: 5mm; }
+.ring { position: absolute; left: 0; top: 0; width: 156mm; height: 156mm; object-fit: cover; border-radius: 50%; }
+.qrcard { position: absolute; left: 50%; top: 5mm; transform: translateX(-50%); background: #fff; border: 2.4mm solid var(--terra); border-radius: 7mm; padding: 8mm; width: 100mm; height: 100mm; box-shadow: 0 0 0 3.2mm var(--cream); }
 .qrcard svg { width: 100%; height: 100%; display: block; }
-.cta { position: absolute; bottom: 4mm; left: 50%; transform: translateX(-50%); background: var(--terra); color: #fff; font-weight: 800; font-size: 13pt; padding: 2.4mm 7mm; border-radius: 99mm; white-space: nowrap; box-shadow: 0 0 0 2.2mm var(--cream); letter-spacing: .02em; }
+.cta { position: absolute; bottom: 6mm; left: 50%; transform: translateX(-50%); background: var(--terra); color: #fff; font-weight: 800; font-size: 15pt; padding: 3mm 9mm; border-radius: 99mm; white-space: nowrap; box-shadow: 0 0 0 2.6mm var(--cream); letter-spacing: .02em; }
 .url { flex: none; font-size: 10pt; margin-top: 2mm; font-weight: 700; letter-spacing: .02em; }
-.grid { flex: none; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3.2mm; width: 100%; margin-top: 4mm; }
-.card { border-radius: 5mm; padding: 3.6mm 4mm; background: var(--sunsoft); }
-.card:nth-child(2), .card:nth-child(5) { background: var(--blush); }
-.card:nth-child(3), .card:nth-child(4) { background: var(--leafpale); }
-.card:nth-child(4) { background: #f3e7c9; }
-.card h3 { font-family: 'Fraunces', serif; font-size: 11.5pt; line-height: 1.1; margin: 0 0 1.2mm; letter-spacing: -.01em; }
-.card p { margin: 0; font-size: 8.4pt; line-height: 1.3; }
+.trio { flex: none; display: flex; gap: 5mm; justify-content: center; margin-top: 6mm; width: 100%; }
+.trio div { display: flex; align-items: center; gap: 3mm; background: #fff; border-radius: 99mm; padding: 2.4mm 5.5mm 2.4mm 2.6mm; font-weight: 800; font-size: 11.5pt; box-shadow: 0 0 0 .5mm var(--blush); }
+.trio b { width: 8mm; height: 8mm; border-radius: 50%; background: var(--terra); color: #fff; display: grid; place-items: center; font-family: 'Fraunces', serif; font-size: 13pt; }
 .foot { margin-top: auto; width: 100%; display: flex; justify-content: space-between; align-items: flex-end; gap: 6mm; padding-top: 3mm; }
-.help { font-size: 8.6pt; line-height: 1.35; }
+.help { font-size: 10pt; line-height: 1.35; }
 .help b { font-family: 'Fraunces', serif; font-size: 13pt; color: var(--terra); }
 .note { font-size: 7.6pt; opacity: .8; margin-top: 1mm; }
 .paz { font-family: 'Fraunces', serif; font-weight: 800; font-size: 17pt; color: var(--terra); text-align: right; line-height: 1; }
@@ -61,17 +57,13 @@ h1 em { font-style: normal; color: var(--terra); }
       <div class="cta">Aponte a câmera do celular</div>
     </div>
     <div class="url">claude.ai/artifact/6MG7zTVgVfvsNj9cZXEHiU</div>
-    <div class="grid">
-      <div class="card"><h3>A história do 20 de novembro</h3><p>Por que a data é a morte de Zumbi, e o que os números do Censo 2022 contam.</p></div>
-      <div class="card"><h3>Três nomes pra conhecer</h3><p>Zumbi dos Palmares, Carolina Maria de Jesus e Sueli Carneiro, com fotos e linha do tempo.</p></div>
-      <div class="card"><h3>Epistemicídio</h3><p>Como o saber negro foi apagado e o que cada pessoa pode fazer a respeito.</p></div>
-      <div class="card"><h3>12 palavras pra dar nome</h3><p>Racismo, preconceito, cyberbullying, exclusão, antirracismo e outras.</p></div>
-      <div class="card"><h3>O que você faria?</h3><p>Cinco situações do dia a dia. Escolha e veja na hora o que a sua atitude provoca.</p></div>
-      <div class="card"><h3>Mural de apoio</h3><p>Deixe um recado, um relato ou um compromisso e abrace as mensagens de quem passou por lá.</p></div>
+    <div class="trio">
+      <div><b>1</b><span>Conheça a história</span></div>
+      <div><b>2</b><span>Escolha o que você faria</span></div>
+      <div><b>3</b><span>Deixe seu apoio</span></div>
     </div>
     <div class="foot">
-      <div class="help"><b>Precisa de ajuda?</b> Disque 100 (Direitos Humanos) · 180 (Central da Mulher) · 188 (CVV, apoio emocional). Ligações gratuitas, 24 horas.
-        <div class="note">Para escrever no mural, abra o site com a sua conta do Claude.</div></div>
+      <div class="help"><b>Precisa de ajuda?</b> Ligue 100, 180 ou 188. Grátis, 24 horas.</div>
       <div class="paz">Respeito em Ação<small>Paz e Bem</small></div>
     </div>
   </div>
