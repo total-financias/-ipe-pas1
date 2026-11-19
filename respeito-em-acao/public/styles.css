@@ -350,3 +350,40 @@ legend, label.lab { display: block; font-weight: 600; font-size: 0.92rem; margin
   .opt { grid-template-columns: 34px 1fr; gap: 12px; padding: 12px; }
   .opt .letter { width: 32px; height: 32px; }
 }
+
+/* ═════════ fluidez (discreta) ═════════ */
+:root { --ease: cubic-bezier(0.22, 0.7, 0.2, 1); }
+html { scroll-behavior: smooth; }
+body { overflow-x: clip; }
+
+.nav { transition: background 0.3s, box-shadow 0.3s; }
+.nav.scrolled { background: rgba(249, 248, 246, 0.9); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.nav-links a:not(.btn).active { color: var(--ink); }
+.nav-links a:not(.btn).active::after { right: 0; }
+
+/* abertura entra em sequência, uma vez */
+@keyframes flow-up { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+.hero-copy > * { animation: flow-up 0.8s var(--ease) both; }
+.hero-copy > *:nth-child(2) { animation-delay: 0.08s; }
+.hero-copy > *:nth-child(3) { animation-delay: 0.16s; }
+.hero-copy > *:nth-child(4) { animation-delay: 0.24s; }
+.hero-copy > *:nth-child(5) { animation-delay: 0.32s; }
+.hero-art { animation: flow-up 1s 0.15s var(--ease) both; }
+
+/* deslize curto ao rolar */
+.rv { opacity: 0.55; transform: translateY(16px); transition: opacity 0.7s var(--ease), transform 0.7s var(--ease); }
+.rv.in { opacity: 1; transform: none; }
+
+/* transições mais macias em tudo que reage */
+.btn, .opt, .hug, .msg, .term, .step, .epi-list li, .q-list li, .person img, .link-arrow::after, .type-opt span { transition-timing-function: var(--ease); }
+.btn { transition-duration: 0.3s; }
+.term, .step, .epi-list li, .q-list li { transition: padding-left 0.35s var(--ease), background 0.35s var(--ease); }
+.person .pphoto img { transition: transform 0.5s var(--ease); }
+.person:hover .pphoto img { transform: translateY(-3px); }
+.msg { transition: transform 0.3s var(--ease), border-color 0.3s; }
+.msg:hover { transform: translateY(-1px); }
+
+/* situações: uma tela desliza para a outra */
+@keyframes flow-side { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+.quiz-body { animation: flow-side 0.45s var(--ease) both; }
+.outcome { animation: flow-up 0.4s var(--ease) both; }
