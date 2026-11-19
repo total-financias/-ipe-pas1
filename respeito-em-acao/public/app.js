@@ -35,82 +35,82 @@
   const SCENARIOS = [
     {
       title: 'O apelido do Thiago',
-      ask: 'Se ele já pediu duas vezes para parar, por que ainda chamam de brincadeira?',
+      ask: 'Se ele já pediu duas vezes pra parar, por que ainda chamam de brincadeira?',
       who: 'Thiago',
-      story: 'Desde o começo do ano, alguns colegas chamam o Thiago, que é negro, de “Carvão”. Ele ri junto, mas já pediu duas vezes que parassem. Hoje o apelido volta, diante da turma inteira. Você está do lado dele.',
+      story: 'Desde o começo do ano, uns colegas chamam o Thiago, que é negro, de “Carvão”. Ele ri junto, mas já pediu duas vezes pra parar. Hoje o apelido volta, na frente da turma toda, e você está do lado dele.',
       options: [
-        { text: 'Rir. Ele também está rindo, então deve estar tudo bem.', good: false,
-          effect: 'O riso do Thiago é defesa, não graça. Quem ri para não virar o próximo alvo aprende que rir é o jeito mais seguro de sobreviver ali. Ele continua rindo por fora e se apagando por dentro, e a sua risada confirma para os outros que está tudo certo.',
-          better: 'Quem pediu duas vezes para parar já disse que não é brincadeira.' },
+        { text: 'Rir. Ele também está rindo, deve estar tudo bem.', good: false,
+          effect: 'O riso do Thiago é defesa, não graça. Quem ri pra não ser o próximo alvo aprende que rir é o jeito mais seguro de sobreviver ali. Ele ri por fora e se apaga por dentro, e a sua risada ajuda os outros a achar que está tudo certo.',
+          better: 'Quem pediu duas vezes pra parar já avisou que não é brincadeira.' },
         { text: 'Esperar o intervalo e comentar com outros colegas que o pessoal exagera.', good: false,
-          effect: 'A conversa acontece longe de quem faz e longe de quem sofre. O Thiago passa a aula inteira ouvindo o apelido sem ninguém dizer nada, e entende que a turma só “acha ruim” quando ele não está por perto.',
-          better: 'Comentar depois é melhor do que nada, mas quem estava sendo ferido precisava de você na hora.' },
-        { text: 'Dizer ali mesmo, com calma: “O Thiago já pediu para parar. Chama pelo nome.”', good: true,
-          effect: 'O Thiago levanta os olhos. Pela primeira vez alguém disse em voz alta o que ele já tinha dito sozinho. O apelido perde a graça, o grupo se cala e ele entende que não precisa rir para ser aceito. Um “para” dito no momento certo vale mais do que um discurso depois.' },
+          effect: 'A conversa rola longe de quem faz e longe de quem sofre. O Thiago passa a aula inteira ouvindo o apelido sem ninguém dizer nada e entende que a turma só “acha ruim” quando ele não está por perto.',
+          better: 'Comentar depois é melhor que nada, mas ele precisava de você na hora.' },
+        { text: 'Dizer ali mesmo, com calma: “O Thiago já pediu pra parar. Chama pelo nome.”', good: true,
+          effect: 'O Thiago levanta os olhos. Alguém disse em voz alta o que ele já tinha dito sozinho. O apelido perde a graça, o grupo se cala e ele percebe que não precisa rir pra ser aceito. Um “para” na hora vale mais que um discurso depois.' },
       ],
     },
     {
       title: 'A figurinha do cabelo',
       ask: 'Se a figurinha fosse sua, de quem você gostaria de receber uma mensagem?',
       who: 'Marina',
-      story: 'A Marina, que é negra, passou anos alisando o cabelo para fugir das piadas. Hoje veio com o cabelo natural pela primeira vez. Alguém monta uma figurinha zombando do volume do cabelo dela e manda no grupo da turma. Em minutos, chovem risadinhas. Ela ainda não respondeu nada.',
+      story: 'A Marina, que é negra, passou anos alisando o cabelo pra escapar das piadas. Hoje veio com o cabelo natural pela primeira vez. Alguém faz uma figurinha zoando o volume do cabelo dela e joga no grupo da turma. Em minutos chovem risadinhas. Ela ainda não respondeu nada.',
       options: [
-        { text: 'Não reagir nem repassar, chamar a Marina no privado para dizer que o cabelo dela está lindo e que você está com ela, e avisar um adulto da escola sobre a figurinha.', good: true,
-          effect: 'No meio da humilhação, a Marina recebe uma mensagem só dela: “o seu cabelo é lindo e ninguém tem o direito de rir dele”. Ela chora, mas de alívio. Seu cabelo é parte da sua história e da sua família, e ela percebe que não precisa se esconder de novo. Com um adulto sabendo, a figurinha tem chance de ser apagada antes de ir mais longe.' },
-        { text: 'Reagir com 😂 só para não parecer chato. Você não escreveu nada, foi só uma reação.', good: false,
-          effect: 'Cada reação vira uma pequena pancada que a Marina conta uma por uma. Ela vê o seu nome entre os risos e conclui que o cabelo natural não é bem-vindo ali. No dia seguinte, volta a alisar, e o racismo ganha mais uma vez. Não existe “só uma reação” quando ela vale como aplauso.',
+        { text: 'Não reagir nem repassar, mandar mensagem pra Marina no privado dizendo que o cabelo dela está lindo e que você está com ela, e avisar um adulto da escola sobre a figurinha.', good: true,
+          effect: 'No meio da humilhação, a Marina recebe uma mensagem só dela: “seu cabelo é lindo e ninguém tem o direito de rir dele”. Ela chora, mas de alívio. O cabelo faz parte da história dela e da família dela, e ela percebe que não precisa se esconder de novo. Com um adulto sabendo, a figurinha tem chance de sumir antes de ir mais longe.' },
+        { text: 'Reagir com 😂 só pra não parecer chato. Você não escreveu nada, foi só uma reação.', good: false,
+          effect: 'Cada reação é uma pancada pequena, e a Marina conta todas. Ela vê seu nome no meio dos risos e conclui que o cabelo natural não é bem-vindo ali. No dia seguinte volta a alisar, e o racismo ganhou de novo. “Só uma reação” vale como aplauso.',
           better: 'Silêncio no grupo e apoio no privado teriam virado o jogo.' },
         { text: 'Sair do grupo em silêncio e esquecer o assunto.', good: false,
-          effect: 'Você sai ileso, mas a Marina continua lá dentro, sem ninguém. Ela nota que os que não riram também não fizeram nada. Passa a noite relendo os comentários, sozinha, achando que o problema é o cabelo e não quem riu dele.',
-          better: 'Sair protege você, mas não ajuda ela. Dava para sair e ainda mandar uma mensagem de apoio.' },
+          effect: 'Você sai sem arranhão, mas a Marina continua lá dentro, sozinha. Ela repara que quem não riu também não fez nada. Passa a noite relendo os comentários e achando que o problema é o cabelo, e não quem riu dele.',
+          better: 'Sair protege você, mas não ajuda ela. Dava pra sair e ainda mandar uma mensagem.' },
       ],
     },
     {
       title: 'A piada com a religião da Bruna',
       ask: 'Você defenderia a fé de alguém que não é a sua?',
       who: 'Bruna',
-      story: 'A Bruna, negra, é de candomblé e usa suas guias (colares) na escola. No pátio, um garoto faz piada dizendo que ela “tem pacto” e “faz macumba contra a turma”. Alguns riem. A Bruna abaixa a cabeça e segura o colar.',
+      story: 'A Bruna, negra, é de candomblé e usa as guias (colares) na escola. No pátio, um garoto faz piada dizendo que ela “tem pacto” e “faz macumba contra a turma”. Alguns riem. A Bruna abaixa a cabeça e segura o colar.',
       options: [
-        { text: 'Rir de leve para não criar clima. É só zoeira, né?', good: false,
-          effect: 'Para a Bruna, a risada vem de todos os lados. Ela passa a esconder o colar e a evitar falar de onde vem. Quando a fé e a cultura de alguém viram piada, a pessoa aprende a sentir vergonha de quem é.',
-          better: 'Não é “só zoeira”: religiões de matriz africana são alvo recorrente de intolerância, e isso tem consequências reais.' },
-        { text: 'Dizer, com firmeza e sem agressão, que aquilo é desrespeito, ficar ao lado da Bruna e, se a situação se repetir, procurar a coordenação.', good: true,
-          effect: 'A Bruna levanta a cabeça. Alguém, em voz alta, disse que ela merece respeito. O garoto perde a plateia, e os outros pensam duas vezes. Ela sabe que, se acontecer de novo, não vai estar sozinha.' },
-        { text: 'Responder com ofensas, para o garoto sentir o que é ser humilhado.', good: false,
-          effect: 'A briga muda de dono: agora o assunto é a discussão, não a Bruna. Ela fica no meio, com vergonha e medo, e a coordenação pode acabar punindo todo mundo igual. A violência ganhou dois lados em vez de perder um.',
-          better: 'Defender alguém não precisa de humilhação em troca; firmeza e calma pesam mais.' },
+        { text: 'Rir de leve pra não criar clima. É só zoeira, né?', good: false,
+          effect: 'Pra Bruna, a risada vem de todos os lados. Ela passa a esconder o colar e a evitar falar de onde vem. Quando a fé e a cultura de alguém viram piada, a pessoa aprende a ter vergonha de quem é.',
+          better: 'Não é “só zoeira”. Religião de matriz africana é alvo constante de intolerância, e isso tem consequência real.' },
+        { text: 'Dizer com firmeza e sem agressão que aquilo é desrespeito, ficar ao lado da Bruna e, se repetir, procurar a coordenação.', good: true,
+          effect: 'A Bruna levanta a cabeça. Alguém disse em voz alta que ela merece respeito. O garoto perde a plateia, os outros pensam duas vezes, e ela sabe que, se acontecer de novo, não vai estar sozinha.' },
+        { text: 'Responder com ofensas, pro garoto saber como é ser humilhado.', good: false,
+          effect: 'A briga muda de dono: agora o assunto é a discussão, e não a Bruna. Ela fica no meio, com vergonha e medo, e a coordenação pode acabar punindo todo mundo igual. A violência ganhou dois lados em vez de perder um.',
+          better: 'Defender alguém não pede humilhação em troca. Firmeza e calma pesam mais.' },
       ],
     },
     {
       title: 'A “consciência branca”',
-      ask: 'Se todos já fossem tratados com igualdade, o que faria a data ainda ser necessária?',
+      ask: 'Se todo mundo já fosse tratado com igualdade, o que ainda faria essa data ser necessária?',
       who: 'Aline',
-      story: 'Na semana de 20 de novembro, a escola monta um mural sobre Zumbi e a história negra. Um colega diz, bem alto: “Cadê o Dia da Consciência Branca? Todo mundo é igual, isso é só mimimi!” Alguns riem. A Aline, uma das poucas alunas negras da sala, fica em silêncio, olhando o mural.',
+      story: 'Na semana do 20 de novembro, a escola monta um mural sobre Zumbi e a história negra. Um colega fala bem alto: “Cadê o Dia da Consciência Branca? Todo mundo é igual, isso é só mimimi!” Alguns riem. A Aline, uma das poucas alunas negras da sala, fica quieta olhando o mural.',
       options: [
-        { text: 'Responder com calma que a data existe porque a história e a contribuição negra foram apagadas durante séculos, e depois procurar a Aline para ouvir como ela está.', good: true,
-          effect: 'A Aline percebe que alguém ali entende por que aquele mural existe. O colega não é humilhado, mas ouve uma resposta que pode levar para casa e pensar. O silêncio perde força, e ela deixa de ser a única a segurar aquele peso.' },
-        { text: 'Rir ou ficar quieto. Vai criar confusão se responder.', good: false,
-          effect: 'O riso confirma que o mural é enfeite e que a história e a dor ali expostas podem virar piada. A Aline aprende que, até no dia que deveria ser dela, está sozinha. O silêncio dos que “não concordam” pesa tanto quanto o riso dos que concordam.',
-          better: 'Dizer “isso não é verdade” com calma já muda o rumo da conversa.' },
-        { text: 'Gritar que ele é racista, na frente de todos, e chamar a turma para vaiar.', good: false,
-          effect: 'A discussão vira briga. O colega se fecha em vez de pensar, e o assunto passa a ser quem gritou mais. A Aline fica de plateia do próprio tema, e o mural, que servia para ensinar, vira cenário de confusão.',
-          better: 'Firmeza não precisa de grito: explicar com calma ensina, humilhar só divide.' },
+        { text: 'Responder com calma que a data existe porque a história e a contribuição negra foram apagadas por séculos, e depois procurar a Aline pra ouvir como ela está.', good: true,
+          effect: 'A Aline percebe que alguém ali entende por que aquele mural existe. O colega não é humilhado, mas ouve uma resposta que dá pra levar pra casa. O silêncio perde força, e ela deixa de ser a única a segurar esse peso.' },
+        { text: 'Rir ou ficar quieto. Responder vai dar confusão.', good: false,
+          effect: 'O riso confirma que o mural é enfeite e que a história e a dor expostas ali podem virar piada. A Aline aprende que até no dia que devia ser dela está sozinha. O silêncio de quem “não concorda” pesa quase tanto quanto o riso de quem concorda.',
+          better: 'Dizer “isso não é verdade”, com calma, já muda o rumo da conversa.' },
+        { text: 'Gritar que ele é racista na frente de todo mundo e chamar a turma pra vaiar.', good: false,
+          effect: 'Vira briga. O colega se fecha em vez de pensar, e o assunto passa a ser quem gritou mais. A Aline fica de plateia do próprio tema, e o mural, que servia pra ensinar, vira cenário de confusão.',
+          better: 'Firmeza não precisa de grito. Explicar ensina; humilhar só separa.' },
       ],
     },
     {
-      title: 'A foto que não era para existir',
+      title: 'A foto que não era pra existir',
       ask: 'O que você gostaria que fizessem com uma foto sua chorando?',
       who: 'Caio',
-      story: 'Chega no seu celular uma foto do Caio chorando no banheiro da escola, tirada escondido, com a legenda “chorão”. Ela já passou por vários grupos. Todo mundo está comentando.',
+      story: 'Chega no seu celular uma foto do Caio chorando no banheiro da escola, tirada escondido, com a legenda “chorão”. Já passou por vários grupos e todo mundo está comentando.',
       options: [
-        { text: 'Encaminhar para só mais um amigo. Afinal, já está em todo lugar.', good: false,
-          effect: 'Cada encaminhamento leva a humilhação do Caio para mais uma casa, mais um celular, mais uma pessoa que nunca vai esquecer. A foto não some quando a gente cansa de olhar. Ele passa a ter medo de chorar e de voltar à escola.',
+        { text: 'Mandar pra só mais um amigo. Já está em todo lugar mesmo.', good: false,
+          effect: 'Cada reenvio leva a humilhação do Caio pra mais uma casa, mais um celular, mais uma pessoa que nunca vai esquecer. A foto não some quando a gente cansa de olhar. Ele passa a ter medo de chorar e de voltar pra escola.',
           better: 'O “já está em todo lugar” é justamente o que mantém a foto viva.' },
         { text: 'Apagar a foto e fingir que nada aconteceu.', good: false,
-          effect: 'Do seu lado, a foto sumiu; do dele, não. O Caio continua achando que ninguém se importa e que todo mundo viu e riu. Sem um adulto saber, nada impede que ela continue circulando.',
-          better: 'Apagar é um bom começo, mas só ajuda de verdade se vier acompanhado de apoio e de um adulto de confiança.' },
-        { text: 'Não repassar, mostrar a um adulto de confiança e procurar o Caio para dizer que não concorda com aquilo.', good: true,
-          effect: 'O Caio descobre que ao menos uma pessoa viu a foto e ficou do lado dele. Com a escola sabendo, a circulação pode ser contida e quem expôs responde pelo que fez. A dor não some na hora, mas ele deixa de enfrentá-la no escuro.' },
+          effect: 'Do seu lado, a foto sumiu. Do dele, não. O Caio continua achando que ninguém se importa e que todo mundo viu e riu. Sem adulto sabendo, nada impede a foto de continuar circulando.',
+          better: 'Apagar é um bom começo, mas só ajuda de verdade com apoio e com um adulto de confiança.' },
+        { text: 'Não repassar, mostrar pra um adulto de confiança e procurar o Caio pra dizer que você não concorda com aquilo.', good: true,
+          effect: 'O Caio descobre que pelo menos uma pessoa viu a foto e ficou do lado dele. Com a escola sabendo, dá pra conter a circulação e quem expôs responde pelo que fez. A dor não passa na hora, mas ele deixa de encarar isso no escuro.' },
       ],
     },
   ];
@@ -183,10 +183,10 @@
   }
 
   function scoreMessage(n, total) {
-    if (n === total) return 'Você enxergou o custo humano de cada escolha. Agora o desafio é o de sempre: repetir isso na vida real, quando há amigos olhando e é mais fácil rir junto. É nesses momentos que o que você escolheu aqui vira atitude.';
-    if (n >= total - 1) return 'Quase lá. A escolha em que você escorregou é, muito provavelmente, uma das mais comuns — e justamente por isso vale a pena pensar nela de novo. Ninguém está livre de errar; o que conta é perceber e mudar.';
-    if (n >= 2) return 'Você acertou o que muita gente erra por medo de ficar de fora. Releia as consequências das alternativas que machucam: elas mostram como atitudes pequenas pesam muito do outro lado. Não é sobre se culpar, é sobre escolher melhor da próxima vez.';
-    return 'Esse resultado não diz quem você é: diz o que ainda é difícil para a maioria de nós. Todo mundo aprende a acolher, e você acabou de dar um passo ao parar para pensar. Tente de novo e observe o que muda quando você se coloca no lugar de quem sofre.';
+    if (n === total) return 'Você enxergou o que cada escolha faz com a pessoa do outro lado. O difícil é repetir isso na vida real, com amigo olhando e rindo do seu lado. É nessa hora que o que você escolheu aqui vira atitude.';
+    if (n >= total - 1) return 'Quase. A escolha em que você escorregou provavelmente é das mais comuns, e por isso mesmo vale pensar nela de novo. Todo mundo erra. O que conta é perceber e mudar.';
+    if (n >= 2) return 'Você acertou o que muita gente erra por medo de ficar de fora. Releia o que as alternativas que machucam provocam: atitude pequena pesa muito do outro lado. Não é pra se culpar, é pra escolher melhor da próxima vez.';
+    return 'Esse resultado não diz quem você é. Diz o que ainda é difícil pra quase todos nós. Aprender a acolher leva tempo, e você deu um passo ao parar pra pensar. Tente de novo e repare no que muda quando você se coloca no lugar de quem sofre.';
   }
 
   function renderScore() {
