@@ -1,0 +1,14 @@
+{
+  "name": "respeito-em-acao",
+  "version": "1.0.0",
+  "description": "Respeito em Ação — Palavras que Aproximam: site de conscientização com mural de apoio.",
+  "private": true,
+  "main": "server.js",
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node test/smoke.js"
+  },
+  "license": "MIT"
+}
